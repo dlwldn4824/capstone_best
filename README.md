@@ -1,6 +1,7 @@
 # WESAD Phase 1 — REST vs STRESS fact extractor
 
 연구 질문·선행연구·실험 단계(Exp 0–3)는 [`docs/연구설계.md`](docs/연구설계.md)에 논문 형식으로 정리했다.  
+핵심 3편 번역본은 [`docs/papers/`](docs/papers/)에 있다.  
 이 폴더의 코드는 **Experiment 0**: WESAD 손목 데이터로 전처리·window·feature pipeline이 도는지 확인하는 단계다. REST vs STRESS 분류 자체가 졸프 주장이 아니다.
 
 ```text
