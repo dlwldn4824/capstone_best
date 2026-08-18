@@ -1,0 +1,45 @@
+# Phase 1: WESAD wrist REST vs STRESS fact extractor
+# Amusement / meditation / exercise / disease are out of scope.
+
+data:
+  raw_dir: data/raw
+  cache_dir: data/cache
+  processed_dir: data/processed
+  zip_name: WESAD.zip
+
+sensors:
+  bvp_fs: 64
+  eda_fs: 4
+  temp_fs: 4
+  acc_fs: 32
+  label_fs: 700
+
+window:
+  length_sec: 60
+  hop_sec: 30
+  # 1.0 = window must lie entirely inside a BASELINE or STRESS segment
+  min_purity: 1.0
+
+labels:
+  # WESAD raw IDs at 700 Hz
+  transient: 0
+  baseline: 1
+  stress: 2
+  amusement: 3
+  meditation: 4
+  # Phase-1 training labels
+  rest: 0
+  stress_class: 1
+
+split:
+  train: [S2, S3, S4, S5, S6, S7, S8, S9, S10, S11]
+  val: [S13, S14]
+  test: [S15, S16, S17]
+
+# Subject-wise REST baseline comparison. Not ECG clinical cutoffs.
+facts:
+  hr_high_ratio: 1.10
+  hrv_low_ratio: 0.90
+  eda_high_ratio: 1.15
+  temp_delta_c: 0.15
+  activity_high_ratio: 1.50
