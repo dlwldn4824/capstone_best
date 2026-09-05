@@ -114,7 +114,7 @@ def load_events(survey_path):
         "ID", "subject_id", "Start time", "End time", "duration", "date",
         "Stress level", "level", "start", "end", "Description")]
     d["causes"] = d[cause_cols].apply(
-        lambda r: ",".join(c.strip() for c in cause_cols
+        lambda r: "|".join(c.strip() for c in cause_cols
                            if pd.to_numeric(r[c], errors="coerce") == 1), axis=1)
     d["description"] = d.get("Description", "")
     return d[["subject_id", "start", "end", "level", "causes",
