@@ -51,10 +51,20 @@ FACT_DEFS = {
     # high 와 low 를 같은 값으로 두어 "움직인다/안 움직인다"의 단일 경계로 쓴다.
     "ACTIVITY_HIGH": ("acc_dyn_mean", +1,
                       {"strategy": "absolute", "high": 0.020, "low": 0.020}),
+    # 2단계 활동량. acc_dyn_mean 은 문헌의 MAD(mean amplitude deviation)와
+    # 같은 양이며, 가속도 강도 구간을 나누는 것은 신체활동 연구의 표준 방식이다
+    # (Vähä-Ypyä 2015: MAD 91 mg = 3 MET, 414 mg = 6 MET / Hildebrand 2014 ENMO
+    #  손목 50·110·440 mg). 다만 그 기준값들은 보행·달리기를 전제로 유도된 것이라
+    # 손잡이를 잡고 하는 고정식 자전거에는 그대로 쓸 수 없다 — 실제로 본 데이터의
+    # 운동 윈도 중앙값은 42 mg 로 문헌의 '가벼움' 경계에도 못 미친다.
+    # 따라서 구간을 나눈다는 개념만 가져오고 값은 fold 안에서 정한다.
+    "ACTIVITY_VERY_HIGH": ("acc_dyn_mean", +1,
+                           {"strategy": "absolute", "high": 0.045, "low": 0.045}),
 }
 
 # Day 10 민감도 분석에서 훑을 절대 임계 후보 (g)
 ACTIVITY_ABS_SWEEP = (0.010, 0.015, 0.020, 0.030, 0.050)
+ACTIVITY_VH_SWEEP = (0.030, 0.035, 0.040, 0.045, 0.050, 0.060, 0.070)
 
 FACT_NAMES = list(FACT_DEFS)
 
@@ -217,12 +227,24 @@ def compute_scores(df, strategy="subject_z", baseline="low_activity",
 
 # fact 가 물리적으로 겨냥하는 상태. 임계 적합의 기준이며 규칙 구조와는 무관하다.
 FACT_TARGET = {
-    "HR_HIGH":       lambda y: y != "REST",       # 각성 (스트레스든 운동이든)
-    "HRV_LOW":       lambda y: y == "STRESS",
-    "EDA_HIGH":      lambda y: y != "REST",
-    "SCR_HIGH":      lambda y: y != "REST",
-    "ACTIVITY_HIGH": lambda y: y == "EXERCISE",
+    "HR_HIGH":            lambda y: y != "REST",   # 각성 (스트레스든 운동이든)
+    "HRV_LOW":            lambda y: y == "STRESS",
+    "EDA_HIGH":           lambda y: y != "REST",
+    "SCR_HIGH":           lambda y: y != "REST",
+    "ACTIVITY_HIGH":      lambda y: y == "EXERCISE",
+    "ACTIVITY_VERY_HIGH": lambda y: y == "EXERCISE",
 }
+
+# 임계 선택 기준.
+#   youden    : TPR - FPR 최대. 균형 잡힌 경계용.
+#   precision : train 정밀도가 min_precision 이상인 것 중 가장 낮은 임계.
+#               ACTIVITY_VERY_HIGH 처럼 "이 정도 움직이면 운동이 확실하다"는
+#               고정밀 fact 에 쓴다. ACTIVITY_HIGH 와 같은 목표를 두고 Youden 을
+#               쓰면 둘이 같은 값으로 붕괴하므로 기준을 달리해야 한다.
+FACT_CRITERION = {"ACTIVITY_VERY_HIGH": ("precision", 0.85)}
+
+# fact 별 절대 임계 후보. 없으면 ACTIVITY_ABS_SWEEP 를 쓴다.
+FACT_ABS_GRID = {"ACTIVITY_VERY_HIGH": ACTIVITY_VH_SWEEP}
 
 Z_GRID = tuple(np.round(np.arange(0.0, 2.01, 0.25), 2))
 
@@ -238,7 +260,6 @@ def fit_thresholds(scores, labels, train_mask=None, z_grid=Z_GRID,
     돌려주는 값: {fact: (hi, lo)}. z 기반 fact 는 lo = -hi 로 대칭이고,
     절대 임계 fact 는 hi = lo (움직인다/안 움직인다의 단일 경계).
     """
-    abs_grid = abs_grid or ACTIVITY_ABS_SWEEP
     y = np.asarray(labels, dtype=object)
     m = np.ones(len(y), dtype=bool) if train_mask is None else np.asarray(train_mask, dtype=bool)
 
@@ -246,7 +267,11 @@ def fit_thresholds(scores, labels, train_mask=None, z_grid=Z_GRID,
     for fact in FACT_DEFS:
         s = scores[fact].to_numpy(dtype=float)
         target = FACT_TARGET[fact](y)
-        grid = abs_grid if is_absolute(fact) else z_grid
+        if is_absolute(fact):
+            grid = FACT_ABS_GRID.get(fact, abs_grid or ACTIVITY_ABS_SWEEP)
+        else:
+            grid = z_grid
+        criterion, arg = FACT_CRITERION.get(fact, ("youden", None))
 
         ok = m & np.isfinite(s)
         if ok.sum() < 10 or target[ok].sum() == 0 or (~target[ok]).sum() == 0:
@@ -255,14 +280,23 @@ def fit_thresholds(scores, labels, train_mask=None, z_grid=Z_GRID,
             cuts[fact] = ((d["high"], d["low"]) if is_absolute(fact) else (0.5, -0.5))
             continue
 
-        best, best_j = grid[0], -np.inf
-        for t in grid:
-            pred = s[ok] > t
-            tpr = pred[target[ok]].mean()
-            fpr = pred[~target[ok]].mean()
-            j = tpr - fpr
-            if j > best_j:
-                best, best_j = t, j
+        if criterion == "precision":
+            # 정밀도 조건을 만족하는 가장 낮은(=재현율이 가장 큰) 임계
+            best = None
+            for t in sorted(grid):
+                pred = s[ok] > t
+                if pred.sum() >= 5 and target[ok][pred].mean() >= arg:
+                    best = t
+                    break
+            if best is None:
+                best = max(grid)
+        else:
+            best, best_j = grid[0], -np.inf
+            for t in grid:
+                pred = s[ok] > t
+                j = pred[target[ok]].mean() - pred[~target[ok]].mean()
+                if j > best_j:
+                    best, best_j = t, j
         cuts[fact] = (float(best), float(best) if is_absolute(fact) else -float(best))
     return cuts
 
