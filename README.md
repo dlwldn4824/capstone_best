@@ -1,163 +1,210 @@
-# Wearable NeSy — Stress vs Exercise
+# 캡스톤 — Wearable Neuro-Symbolic
 
-웨어러블 생체신호에서 **Stress / Exercise / Rest** 를 구분할 때, Neural 모델의
-출력을 생리학적 규칙으로 감사(audit)하면 **운동에 의한 생리 변화를 스트레스로
-오인하는 비율이 줄어드는가**를 확인한다.
+연구 질문·선행연구·실험 단계(Exp 0–3)는 [`docs/연구설계.md`](docs/연구설계.md)에 논문 형식으로 정리했다.  
+핵심 3편 번역본은 [`docs/papers/`](docs/papers/)에 있다.
 
-2주 1차 실험 범위. 최종 시스템(개인 baseline anomaly detection → 설명되지 않는
-변화 → 질병 검증)은 이후 단계다.
+현재 두 실험이 나란히 들어 있다.
+
+| | 패키지 | 데이터 | 상태 | 문서 |
+|---|---|---|---|---|
+| **Exp 0** | `src/wesad_phase1/` | WESAD 손목 15명 | REST / STRESS | 아래 |
+| **Exp 1** | `src/nesy/` | Stress & Exercise 36명 | REST / STRESS / **EXERCISE** | [`docs/EXP1_STRESS_EXERCISE.md`](docs/EXP1_STRESS_EXERCISE.md) |
 
 ---
 
-## 빠른 시작
+# Experiment 0 — WESAD REST vs STRESS fact extractor
 
-```bash
-pip install -r requirements.txt
+`src/wesad_phase1/` 의 코드는 WESAD 손목 데이터로 전처리·window·feature pipeline이 도는지 확인하는 단계다. REST vs STRESS 분류 자체가 졸프 주장이 아니다.
+
+```text
+WESAD wrist (E4)
+BVP / EDA / TEMP / ACC
+        ↓
+BASELINE vs STRESS only
+        ↓
+60s window / 30s overlap
+        ↓
+HR · HRV · EDA · TEMP · Activity features
+        ↓
+stress probability 준비
++ HR↑ / HRV↓ / EDA↑ / TEMP / Activity facts
 ```
 
-### 실데이터 없이 지금 바로 (권장 — 첫 실행)
+Amusement, exercise, sleep, 질병 라벨은 넣지 않는다. 하드웨어 연동도 이 단계의 범위가 아니다.
+
+## 왜 WESAD인가
+
+최종 프로토타입 센서와 손목 E4 구성이 같다.
+
+| Proto | WESAD wrist |
+|---|---|
+| PPG | BVP 64 Hz |
+| EDA | EDA 4 Hz |
+| TEMP | TEMP 4 Hz |
+| ACC | ACC 32 Hz |
+
+데이터: [WESAD (UCI)](https://archive.ics.uci.edu/dataset/465/wesad+wearable+stress+and+affect+detection), [원 배포 페이지](https://ubi29.informatik.uni-siegen.de/usi/data_wesad.html).  
+비영리 연구 목적이고, 사용 시 Schmidt et al., ICMI 2018을 인용한다.
+
+## 환경
+
+```bash
+cd "/Users/LEEJIWOO/Desktop/캡스톤"
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+디스크가 빠듯하면 zip을 풀지 않는다. pickle에서 **손목 채널만** `data/cache/SX_wrist.npz`로 저장한다.
+
+## 첫 작업 3개
+
+```bash
+# 1) WESAD 다운로드 + wrist cache
+python -m wesad_phase1.cli download
+
+# 2–3) REST/STRESS window + feature + fact table
+python -m wesad_phase1.cli windows
+```
+
+결과:
+
+- `data/cache/S2_wrist.npz` … `S17_wrist.npz` (15명, 손목만 ~19 MB)
+- `data/processed/wesad_wrist_rest_stress_windows.parquet`
+- `data/processed/wesad_wrist_rest_stress_windows.csv`
+
+현재 빌드: **859 windows** (train 569 / val 116 / test 174). REST 557, STRESS 302. 신호는 채널별 native rate로 feature를 계산하며, 전체를 한 주파수로 resampling하지 않는다.
+
+zip(`data/raw/WESAD.zip`, 2.25 GB)은 cache가 생긴 뒤 지워도 된다.
+
+## 입력 / 라벨
+
+```text
+BVP, EDA, TEMP, ACC_x, ACC_y, ACC_z
+
+0 = BASELINE (REST)
+1 = STRESS
+```
+
+WESAD raw ID `3=amusement`, `4=meditation`, `0/5/6/7` 는 window에 넣지 않는다.  
+window는 **해당 구간이 전부 BASELINE이거나 전부 STRESS**일 때만 채택한다 (`min_purity=1.0`).
+
+## Feature (18 + quality)
+
+| 그룹 | feature | 주의 |
+|---|---|---|
+| BVP / HR | `HR_mean`, `HR_std`, `HR_min`, `HR_max` | BVP peak 기반 |
+| HRV | `RMSSD`, `SDNN`, `mean_IBI` | pulse interval ≠ ECG RR. 20% IBI jump는 제거 |
+
+손목 BVP HRV는 ECG보다 노이즈가 크다. 1차에서는 **방향성 확인용**이지 clinical HRV가 아니다.
+| EDA | `EDA_mean`, `EDA_std`, `SCL_mean`, `SCR_count`, `SCR_mean_amplitude` | 4 Hz 유지 |
+| TEMP | `TEMP_mean`, `TEMP_std`, `TEMP_slope` | slope는 °C/s |
+| ACC | `ACC_magnitude_mean`, `ACC_magnitude_std`, `ACC_energy` | 운동 구분용 씨앗 |
+
+## Subject split
+
+랜덤 row split 금지. 같은 사람이 train/test에 동시에 들어가면 사람 특성을 외운다.
+
+```text
+Train  S2 S3 S4 S5 S6 S7 S8 S9 S10 S11
+Val    S13 S14
+Test   S15 S16 S17
+```
+
+다음 실험에서 LOSO를 추가한다.
+
+## Fact 출력 구조
+
+window feature를 그 사람의 REST median과 비교한다. Neural이 아직 없어도 symbolic 입력 스키마는 고정한다.
+
+```text
+hr_state        HIGH | NORMAL | LOW
+hrv_state       HIGH | NORMAL | LOW
+eda_state       HIGH | NORMAL | LOW
+temp_state      HIGH | NORMAL | LOW
+activity_state  HIGH | NORMAL | LOW
+
+HR_INCREASED
+HRV_DECREASED
+EDA_ACTIVATED
+ACTIVITY_LOW
+stress_rule_hit   # 위 네 fact가 동시에 참
+```
+
+1차 symbolic rule (아직 엔진 연결 전):
+
+```text
+IF HR_INCREASED AND HRV_DECREASED AND EDA_ACTIVATED AND ACTIVITY_LOW
+THEN STRESS_EXPLANATION
+```
+
+## 1차 성공 기준
+
+**데이터**
+
+- [x] WESAD wrist loader
+- [x] subject별 REST/STRESS window
+- [x] 공통 feature dataset
+
+**모델 (아직 안 함)**
+
+- [ ] Logistic / RF / XGBoost subject-independent baseline
+- [ ] MLP vs 1D-CNN 비교
+
+**NeSy 준비**
+
+- [x] `HR↑ / HRV↓ / EDA↑ / Activity` fact 컬럼
+- [ ] rule engine 입력 연결
+
+## 다음 단계
+
+전체 설계는 [`docs/연구설계.md`](docs/연구설계.md).
+
+1. WESAD feature table로 Logistic / RF / XGBoost (subject-independent) — pipeline sanity
+2. ~~PhysioNet Stress & Exercise (Hongn 2025) 4-class~~ → **Exp 1 에서 구현됨**
+3. ~~Neural vs Neural+Symbolic에서 stress ↔ exercise 혼동 비교~~ → **Exp 1 에서 구현됨**
+
+---
+
+# Experiment 1 — Stress vs Exercise, Neuro-Symbolic
+
+`src/nesy/` · PhysioNet Wearable Stress & Exercise (Hongn 2025) · 2주 1차 실험
+
+> Neural 모델만 쓸 때 발생하는 **Stress ↔ Exercise 오분류**가, 생리적 fact 와
+> 활동 맥락을 규칙으로 결합했을 때 줄어드는가. 줄지 않는다면, 규칙이 최소한
+> **틀릴 예측을 미리 표시**할 수 있는가.
+
+Exp 0 이 만든 fact 스키마(`hr_state` / `hrv_state` / `eda_state` /
+`activity_state`)를 `HR_HIGH` / `HRV_LOW` / `EDA_HIGH` / `ACTIVITY_HIGH` 로
+이어받고, 그 위에 rule engine · evidence audit · correction 을 얹었다.
+
+PhysioNet 다운로드를 기다리지 않고 지금 전 구간을 돌릴 수 있다. 실제 프로토콜과
+동일한 태그 구조로 합성 E4 세션을 만드는 생성기가 들어 있다.
 
 ```bash
 python scripts/00_make_synthetic.py
-python scripts/01_audit.py --raw data/raw/SYNTHETIC
 python scripts/02_build_features.py --raw data/raw/SYNTHETIC
-python scripts/03_baseline_ml.py
-python scripts/04_stress_vs_exercise.py
-python scripts/05_subject_independent.py
-python scripts/06_neural.py
 python scripts/07_nesy.py
-python scripts/08_report.py
 ```
 
-합성 데이터는 코드 검증 전용이다. 성능 수치는 연구 결과가 아니다
-(`src/nesy/synthetic.py` 상단 설명 참조).
+합성 데이터의 성능 수치는 **연구 결과가 아니다** — 코드 검증 전용이다.
 
-### 실데이터
+실행 순서, 역할 분담(A/B/C), CSV 인터페이스, 이미 발견된 설계 함정 세 개는
+[`docs/EXP1_STRESS_EXERCISE.md`](docs/EXP1_STRESS_EXERCISE.md) 에 있다.
 
-```bash
-python scripts/00_download.py
-```
+| 문서 | 내용 |
+|---|---|
+| [`docs/SCHEMAS.md`](docs/SCHEMAS.md) | A/B/C 공통 CSV 인터페이스 — 먼저 읽을 것 |
+| [`docs/RESEARCH_REVIEW.md`](docs/RESEARCH_REVIEW.md) | 심사자 관점 비판적 리뷰 + 일정 수정안 |
+| [`docs/LITERATURE_VERIFICATION.md`](docs/LITERATURE_VERIFICATION.md) | 선행연구 인용 수치 검증 (**Li 2026 은 인용 보류**) |
 
-받은 뒤 `configs/config.yaml` 의 `paths.raw` 를 `STRESS/`, `AEROBIC/`,
-`ANAEROBIC/` 폴더가 있는 디렉터리로 맞춘다. 그다음 `01_audit.py` 부터
-`--raw` 없이 다시 돌린다.
+---
 
-> **`01_audit.py` 의 출력을 반드시 눈으로 확인할 것.**
-> `configs/protocol.yaml` 의 tags→라벨 매핑은 논문 본문 서술로부터 재구성한
-> 것이며 실제 `tags.csv` 로 검증되지 않았다. 태그 개수가 기대와 다른 세션은
-> 자동으로 제외되므로, 대부분의 세션이 제외된다면 매핑을 고쳐야 한다.
-
-### 테스트
+## 테스트
 
 ```bash
 python -m pytest tests -q
 ```
 
----
-
-## 역할 분담
-
-| 역할 | 책임 | 주 파일 |
-| --- | --- | --- |
-| **A** 데이터 파이프라인 | 데이터가 맞는지 책임진다 | `io_e4.py`, `protocol.py`, `preprocess_{bvp,eda,acc}.py`, `feature_extraction.py` |
-| **B** 예측 | 성능과 평가를 책임진다 | `subject_split.py`, `evaluate.py`, `baseline_ml.py`, `neural_model.py` |
-| **C** 추론 | NeSy 가 왜 그렇게 판단했는지와 연구 논리를 책임진다 | `facts.py`, `rules.py`, `nesy_audit.py`, `nesy_correction.py` |
-
-셋은 서로를 기다리지 않는다. `docs/SCHEMAS.md` 의 CSV 인터페이스에서만 만난다.
-합성 데이터 생성기가 있으므로 B 와 C 는 A 의 전처리 완료 전에도 전체 코드를
-돌릴 수 있다.
-
----
-
-## 파이프라인
-
-```
-E4 raw (BVP 64Hz / ACC 32Hz / EDA·TEMP 4Hz / HR 1Hz)
-        │
-        │  tags.csv → 프로토콜 구간 분할 (protocol.yaml)
-        │  60초 윈도 / 30초 step
-        ▼
-   [A] 전처리 + 51 feature ──────────► outputs/features.csv
-        │
-        ├─► [B] XGBoost / LR / RF        ──► results.csv
-        │       subject-independent 평가
-        │
-        └─► [B] MLP  (HR+HRV+EDA)        ──► predictions_neural.csv
-                MLP  (+ACC = Neural+Context)
-                     │
-                     ▼
-            [C] facts.py  →  rules.py  →  audit / correction
-                     │
-                     ▼
-              최종 비교표 + Fig 4/6
-```
-
-### 왜 `neural` 이 ACC 를 안 보는가
-
-세 조건을 갈라야 질문에 답할 수 있다.
-
-| 모델 | 활동 맥락을 | 
-| --- | --- |
-| `neural` | 전혀 안 본다 → NeSy 가 개선할 수 있는 상한 |
-| `neural_context` | **숫자로** 본다 (ACC feature) |
-| `nesy_audit` / `nesy_correction` | **규칙으로** 본다 |
-
-NeSy 가 `neural` 만 이기고 `neural_context` 를 못 이기면, 이득은 "ACC 정보
-추가"이지 "symbolic reasoning" 이 아니다. 이 구분을 흐리면 결과를 주장할 수 없다.
-
----
-
-## 핵심 지표
-
-정확도보다 **방향성 있는 오분류**가 연구 질문에 직접 답한다.
-
-```
-stress_to_exercise = P(pred=EXERCISE | true=STRESS)
-exercise_to_stress = P(pred=STRESS   | true=EXERCISE)
-```
-
-Audit 은 라벨을 바꾸지 않으므로 분류 지표가 Neural 과 동일하다. Audit 의
-가치는 **오류 탐지**로만 평가한다.
-
-```
-flag_precision = 표시한 것 중 실제 오류 비율
-flag_recall    = 실제 오류 중 표시한 비율
-```
-
-Correction 은 반드시 장부와 함께 보고한다: `fixed`(고침) / `broken`(망침) /
-`net_gain`. `net_gain` 이 음수인데 Macro F1 만 보고하면 결과를 왜곡하는 것이다.
-
----
-
-## 이미 발견된 설계 함정
-
-첫 실행에서 실제로 밟은 것들이다. 실데이터에서도 그대로 나타난다.
-
-1. **개인 baseline 을 모든 윈도로 만들면 안 된다.**
-   운동 세션(HR 130–170)이 분포를 지배해 스트레스 HR(86)이 개인 평균 *아래*로
-   내려간다. `HR_HIGH` 가 스트레스에서 한 번도 참이 되지 않아 규칙이 발화하지
-   못한다. → `facts.baseline_mask(mode="low_activity")` 로 저활동 윈도만
-   참조한다.
-
-2. **활동량은 개인 z-score 로 판정하면 안 된다.**
-   참조 윈도가 거의 정지 상태라 분산이 0 에 가깝고, 미세한 움직임도 z 가
-   폭발해 `ACTIVITY_HIGH` 가 항상 참이 된다. 그러면 `ACTIVITY_LOW` 를 요구하는
-   스트레스 규칙이 영원히 못 쓰인다. → 가속도는 물리량이므로 절대 임계(g)를
-   쓰고 민감도를 함께 보고한다.
-
-3. **분포 백분위(global_pct)도 답이 아니다.**
-   클래스 균형이 바뀌면 같은 움직임이 데이터셋 구성에 따라 HIGH 가 되기도
-   안 되기도 한다.
-
----
-
-## 문서
-
-| 파일 | 내용 |
-| --- | --- |
-| `docs/SCHEMAS.md` | **CSV 인터페이스 (Day 1 합의)** — 먼저 읽을 것 |
-| `docs/DATA_AUDIT.md` | 데이터 감사 결과 (01 실행 시 생성) |
-| `docs/RULES.md` | 규칙 정의 + 생리학적 근거 + coverage (07 실행 시 생성) |
-| `docs/EXPERIMENT_LOG.md` | 전체 결과 색인 (08 실행 시 생성) |
-| `docs/LITERATURE_VERIFICATION.md` | 선행연구 수치 검증 결과 |
-| `configs/protocol.yaml` | tags→라벨 매핑 — **실데이터로 검증 필요** |
+Exp 0 + Exp 1 합쳐 19개. 루트 `conftest.py` 가 `src/` 를 경로에 넣으므로
+`pip install -e .` 없이도 돈다.

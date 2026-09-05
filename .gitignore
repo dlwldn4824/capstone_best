@@ -1,13 +1,22 @@
-data/raw/
-data/interim/
-outputs/cache/
-*.zip
-__pycache__/
-*.pyc
 .venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+.pytest_cache/
+*.egg-info/
 .ipynb_checkpoints/
 
-# 실행 산출물 — 스크립트가 다시 만든다
+data/raw/*
+data/cache/*
+data/processed/*
+data/interim/
+*.pkl
+*.zip
+!data/raw/.gitkeep
+!data/cache/.gitkeep
+!data/processed/.gitkeep
+
+# Exp 1 실행 산출물 — 스크립트가 다시 만든다
 outputs/
 
 # 자동 생성 문서 (07_nesy.py / 08_report.py 등이 생성)

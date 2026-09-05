@@ -1,9 +1,13 @@
+# 공통
 numpy>=1.26
+pandas>=2.2
 scipy>=1.11
-pandas>=2.1
+PyYAML>=6.0
+tqdm>=4.66
+pyarrow>=15.0
+
+# Exp 1 (src/nesy) — 모델·평가·그림
 scikit-learn>=1.4
 xgboost>=2.0
 torch>=2.1
 matplotlib>=3.8
-pyyaml>=6.0
-tqdm>=4.66
