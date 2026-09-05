@@ -109,17 +109,62 @@ def robust_z(df, features=None, ref_mask=None, mode="low_activity",
     return out
 
 
-def score(df, features=None, mode="low_activity", agg="mean",
-          scope="subject_session", ref_mask=None):
+# 채널 묶음. 실환경(Nurse) 검증에서 EDA 계열만 유의했고 HRV 는 두 데이터 모두에서
+# 무반응이었다. |z| 평균은 무반응 채널이 반응 채널을 희석한다.
+DEVIATION_SETS = {
+    "all4":     ["hr_mean", "rmssd", "mean_tonic_eda", "peaks_density"],
+    "eda":      ["mean_tonic_eda", "peaks_density"],
+    "eda_only": ["mean_tonic_eda"],
+    "scr_only": ["peaks_density"],
+    "cardiac":  ["hr_mean", "rmssd"],
+    "eda_hr":   ["mean_tonic_eda", "peaks_density", "hr_mean"],
+}
+
+# 각 채널이 각성 시 움직이는 방향. signed 집계에서 쓴다.
+# HRV 는 감소가 각성이라고 알려져 있으나 우리 두 데이터 모두에서 무반응이었다.
+AROUSAL_SIGN = {"hr_mean": +1, "rmssd": -1, "sdnn": -1,
+                "mean_tonic_eda": +1, "peaks_density": +1,
+                "std_phasic_eda": +1}
+
+
+def score(df, features=None, mode="low_activity", agg="signed",
+          scope="subject_session", ref_mask=None, weights=None, feature_set=None):
     """개인 baseline 이탈 점수 (클수록 평소와 다름).
 
+    features / feature_set
+      feature_set 이 주어지면 DEVIATION_SETS 에서 채널 묶음을 가져온다.
+
     agg
-      mean  채널별 |z| 의 평균. 여러 채널이 함께 움직일 때 커진다. **기본값**
-      max   가장 크게 벗어난 채널 하나. 단일 채널 이상에 민감하다.
+      signed  각성 방향으로 벗어난 만큼만 더한다 (반대 방향은 0). **기본값**
+              "평소와 다르다" 가 아니라 "각성 쪽으로 벗어났다" 를 잰다.
+              두 데이터 모두에서 mean 보다 일관되게 낫다
+              (Nurse 0.593->0.629, Hongn 0.724->0.778).
+              AROUSAL_SIGN 은 생리학적 방향 사전지식이지 데이터에 맞춘 값이 아니다.
+      mean    채널별 |z| 평균. 방향을 무시한다. 이전 기본값
+      max     가장 크게 벗어난 채널 하나
+
+    weights
+      {채널: 가중치}. 주면 가중 평균을 쓴다.
     """
+    if feature_set is not None:
+        features = DEVIATION_SETS[feature_set]
     z = robust_z(df, features, ref_mask=ref_mask, mode=mode, scope=scope)
-    a = z.abs()
-    s = a.mean(axis=1) if agg == "mean" else a.max(axis=1)
+
+    if agg == "signed":
+        v = pd.DataFrame({c: (z[c] * AROUSAL_SIGN.get(c, 1)).clip(lower=0)
+                          for c in z.columns})
+    else:
+        v = z.abs()
+
+    if weights:
+        w = np.array([weights.get(c, 1.0) for c in v.columns], dtype=float)
+        s = (v.to_numpy() * w).sum(axis=1) / max(w.sum(), 1e-9)
+        s = pd.Series(s, index=v.index)
+    elif agg == "max":
+        s = v.max(axis=1)
+    else:
+        s = v.mean(axis=1)
+
     return pd.DataFrame({
         "deviation": s.to_numpy(),
         **{"z_" + c: z[c].to_numpy() for c in z.columns},
