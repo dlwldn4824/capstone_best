@@ -181,3 +181,99 @@ interpretation and implications for psychophysiology*, Autonomic Neuroscience
 CovIdentify 는 PhysioNet credentialed 계정 + CITI 교육 이수 + DUA 서명이
 필요하고 승인까지 수 주가 걸린다. Phase 8 은 2주 계획 밖이지만 **신청은
 다른 작업과 무관하게 지금 넣어야** 나중에 병목이 되지 않는다.
+
+
+---
+
+## 추가 조사 (2026-09-05) — 계획서에 없던 선행연구
+
+계획서 작성 후 문헌 검색에서 나온 것들. **두 편은 우리 연구와 거의 겹친다.**
+
+### ⚠ Shahriar 2025 — 우리 1주차와 거의 동일
+
+*Multimodal Physiological Signal Classification from Wearables: Towards
+Interpretable Stress and Exercise Recognition*, IEEE SPICSCON 2025.
+
+| | Shahriar | 우리 |
+| --- | --- | --- |
+| 기기 | Empatica E4 | 동일 |
+| 과제 | 스트레스 vs 운동 | 동일 |
+| 신호 | EDA, HR/HRV, TEMP, ACC | 동일(TEMP 제외) |
+| 창 | 30초 / 15초 겹침 | 60초 / 30초 |
+| 최고 모델 | XGBoost 96.1% ± 0.4% | XGBoost |
+| Ablation | **ACC 가 최강 기여** | 동일 |
+| LOSO | **72% ± 15%** | group_kfold 79.5% |
+| 해석 | SHAP / LIME / saliency | Symbolic audit |
+
+**데이터셋 명시는 미확인이나 Hongn 2025 일 가능성이 매우 높다.** E4 로 스트레스 +
+유산소 + 무산소를 모두 담은 공개 데이터는 사실상 그것뿐이다.
+
+**시사점.** 우리 1주차 전체(전처리 → feature → XGBoost → ablation → LOSO)는 이미
+출판된 것과 같다. "ACC 가 결정적", "개인차가 문제"라는 결론까지 동일하다.
+차별점을 다음과 같이 재정의해야 한다.
+
+| | Shahriar | 우리 |
+| --- | --- | --- |
+| 해석 시점 | 사후 (SHAP) | 사전 지식 (규칙) |
+| 모르는 상황 | 반드시 답해야 함 | **기권 가능(UNEXPLAINED)** |
+| 개인차 | 문제로 지적만 | 개인 baseline 으로 대응 |
+| 맥락 은닉 실험 | 없음 | 있음 |
+
+SHAP 은 "모델이 왜 그렇게 답했는가" 를 설명하지만 **틀린 답도 설명한다.**
+우리 audit 은 "이 답을 믿을 근거가 있는가" 를 판정하고 없으면 모른다고 답한다.
+
+**조치: 전문 확보 필수.** 모르고 발표하면 첫 질문이 "이미 있는 연구 아닌가" 다.
+
+### ⚠ Sevil 2021 — 가장 직접적인 선행연구
+
+*Discrimination of simultaneous psychological and physical stressors using
+wristband biosignals*, Computer Methods and Programs in Biomedicine.
+
+심리 스트레스(APS)와 신체활동(PA)을 **동시 발생 상황에서** 구분. 117시간.
+PA 99% / APS 92%.
+
+| 활동 상태 | APS 탐지 정확도 |
+| --- | --- |
+| 좌식 | 97.3% |
+| 러닝 | 94.1% |
+| **자전거** | **84.5%** |
+
+**우리 데이터가 자전거다. 84.5% 가 벤치마크가 된다.**
+데이터 공개 여부는 확인되지 않음(저자 연락 필요).
+
+### 우리 결과를 뒷받침하는 논문
+
+**Kaya 2026** (arXiv), *Differentiating Physical and Psychological Stress Using
+Wearable Physiological Signals and Salivary Cortisol* — 웨어러블만으로는 심리
+스트레스와 휴식/회복 구분이 어렵다(심리 스트레스 recall 50.0%, 회복 54.2%).
+타액 코르티솔 추가 시 77.8% → 94.4%.
+
+**우리가 찾은 것과 같은 결론이다** (오류의 85% 가 휴식↔스트레스). 다른 팀, 다른
+데이터에서 같은 결과가 나왔다는 것은 우리 수치가 파이프라인 결함이 아니라는
+독립적 근거다. 단 n=6 으로 매우 작으므로 인용 시 명시할 것.
+
+### 연구 동기에 인용할 논문
+
+- **Goodday & Friend 2019**, npj Digital Medicine — 스트레스 징후가 질병으로
+  전이되는 과정을 웨어러블+AI 로 예측하는 프레임워크. 우리 Phase 7-8 의 개념적 근거.
+- **Ryan 2024**, Frontiers in Network Physiology — Oura Ring COVID 양성 73명.
+  감염이 "정형화된 이탈" 을 일으킨다는 가정을 반박하고 발현 유형을 지도화.
+  우리 "설명되지 않는 변화" 와 개념이 가장 가깝다.
+
+### 비교 대상이 아닌 논문
+
+Xu 2024 (Nature Electronics, e-skin + 땀 분자), Pei 2026 (Nat Commun, SQC-SAS),
+Chu 2025 (ACS Nano, 코르티솔), McNaboe 2022, Marchi 2024 는 모두 **자체 제작
+하드웨어**로 땀 분자나 코르티솔을 직접 측정한다. 98% 같은 수치가 눈에 띄지만
+손목 PPG/EDA 와는 정보량이 달라 비교 대상이 아니며 공개 데이터도 없다.
+
+다만 한 가지는 쓸 수 있다 — **"손목 생체신호만으로는 부족하다"** 가 이 분야의
+공통 인식임을 보여준다. 우리 한계 서술의 근거가 된다.
+
+Jambhale 2022 의 "RespiBAN 15명" 은 **WESAD** 다. 새 데이터가 아니다.
+
+### 공개 데이터 관점 결론
+
+조사한 12편 중 **새로 쓸 수 있는 공개 데이터는 없다.** 대부분 자체 하드웨어이거나
+미공개다. 실환경 개인 baseline 검증에는 여전히 Nurse Stress Dataset(CC-BY,
+즉시 다운로드)이 최선이다.
