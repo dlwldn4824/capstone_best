@@ -189,6 +189,37 @@ def test_baseline_mask_modes():
     assert not m_low[(df["label"] == "EXERCISE").to_numpy()].any()
 
 
+def test_fit_thresholds_ignores_test_rows():
+    """임계가 train 구간에서만 정해지는지 확인.
+
+    테스트 구간의 라벨을 전부 뒤집어도 임계가 그대로여야 누수가 없는 것이다.
+    """
+    df = _toy_df(n_subj=6, n_per=12)
+    scores = facts_mod.compute_scores(df, strategy="subject_z")
+    y = df["label"].to_numpy().copy()
+    train = np.ones(len(df), dtype=bool)
+    train[df["subject_id"].isin(["S04", "S05"]).to_numpy()] = False
+
+    a = facts_mod.fit_thresholds(scores, y, train_mask=train)
+    y_corrupted = y.copy()
+    y_corrupted[~train] = "EXERCISE"          # 테스트 구간 라벨 오염
+    b = facts_mod.fit_thresholds(scores, y_corrupted, train_mask=train)
+    assert a == b, "테스트 구간 라벨이 임계에 영향을 줬다: {} != {}".format(a, b)
+
+
+def test_build_facts_cv_uses_own_fold_thresholds():
+    """fold 별 임계가 실제로 그 fold 의 test 행에만 적용되는지."""
+    df = _toy_df(n_subj=6, n_per=12)
+    folds = np.where(df["subject_id"].isin(["S00", "S01"]), "f0",
+                     np.where(df["subject_id"].isin(["S02", "S03"]), "f1", "f2"))
+    facts, cuts = facts_mod.build_facts_cv(df, folds)
+    assert len(cuts) == 3
+    assert len(facts) == len(df)
+    for name in facts_mod.FACT_NAMES:
+        assert name in cuts.columns
+        assert facts[name].dtype == bool
+
+
 def test_rules_produce_expected_evidence():
     df = _toy_df()
     f = facts_mod.build_facts(df, strategy="subject_z")

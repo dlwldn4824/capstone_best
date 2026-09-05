@@ -31,6 +31,8 @@ def main():
                     choices=["low_activity", "all", "labeled_rest"],
                     help="개인 baseline 참조 윈도 (facts.baseline_mask 참조)")
     ap.add_argument("--split", default="group_kfold")
+    ap.add_argument("--fixed-thresholds", action="store_true",
+                    help="fold 적합 대신 --z-high 고정값을 쓴다 (비교용, 누수 있음)")
     args = ap.parse_args()
 
     cfg, _ = setup()
@@ -49,9 +51,26 @@ def main():
     df = df.set_index("sample_id").loc[preds["sample_id"]].reset_index()
 
     # --- 1. Facts --------------------------------------------------------
-    facts = facts_mod.build_facts(df, strategy=args.strategy,
-                                  z_high=args.z_high, z_low=-args.z_high,
-                                  baseline=args.baseline)
+    # 임계는 각 fold 의 train 구간에서만 정한다. 전체 데이터를 보고 정하면
+    # "테스트 데이터로 하이퍼파라미터를 튜닝했다"는 지적을 피할 수 없다.
+    if args.fixed_thresholds or "fold" not in preds.columns:
+        if "fold" not in preds.columns:
+            print("[경고] predictions 에 fold 컬럼이 없어 고정 임계를 씁니다.")
+        facts = facts_mod.build_facts(df, strategy=args.strategy,
+                                      z_high=args.z_high, z_low=-args.z_high,
+                                      baseline=args.baseline)
+        cuts_tbl = None
+    else:
+        facts, cuts_tbl = facts_mod.build_facts_cv(
+            df, preds["fold"].to_numpy(), strategy=args.strategy,
+            baseline=args.baseline)
+        cuts_tbl.to_csv(out / "tables" / "fitted_thresholds.csv", index=False)
+        print("\n[fold 별 적합된 임계] — 변동이 크면 그 임계는 불안정함")
+        print(cuts_tbl.round(3).to_string(index=False))
+        spread = cuts_tbl.drop(columns=["fold"]).agg(["min", "max"]).T
+        spread["range"] = spread["max"] - spread["min"]
+        print("  폭:", ", ".join("{}={:.3g}".format(k, v)
+                                 for k, v in spread["range"].items()))
     facts.to_csv(out / "facts.csv", index=False)
 
     dist = facts_mod.fact_distribution(facts)

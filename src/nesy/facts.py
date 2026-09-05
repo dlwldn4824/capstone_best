@@ -175,43 +175,144 @@ def build_facts(df, strategy="subject_z", z_high=0.5, z_low=-0.5,
     대상이다 (Day 10). baseline 의 의미는 baseline_mask() 설명을 볼 것.
     abs_overrides 예: {"ACTIVITY_HIGH": 0.08, "ACTIVITY_HIGH_LOW": 0.03}
     """
-    abs_overrides = abs_overrides or {}
+    scores = compute_scores(df, strategy, baseline, train_mask)
+    cuts = {}
+    for fact, (_, _, override) in FACT_DEFS.items():
+        if isinstance(override, dict) and override.get("strategy") == "absolute":
+            cuts[fact] = ((abs_overrides or {}).get(fact, override["high"]),
+                          (abs_overrides or {}).get(fact + "_LOW", override["low"]))
+        else:
+            cuts[fact] = (z_high, z_low)
+    return apply_thresholds(df, scores, cuts)
+
+
+# --- 점수 / 임계 분리 -------------------------------------------------------
+# 누수를 막으려면 "점수 계산"과 "임계 결정"을 갈라야 한다.
+#   점수  : 라벨을 쓰지 않는다. 전체 데이터로 계산해도 무방하다.
+#           (subject_z 는 테스트 피험자 자신의 윈도 분포를 쓰지만 라벨은
+#            보지 않는다 = 개인화이지 누수가 아니다. 논문에 명시할 것.)
+#   임계  : 라벨을 쓴다. 반드시 train fold 에서만 정해야 한다.
+
+def is_absolute(fact):
+    override = FACT_DEFS[fact][2]
+    return isinstance(override, dict) and override.get("strategy") == "absolute"
+
+
+def compute_scores(df, strategy="subject_z", baseline="low_activity",
+                   train_mask=None):
+    """fact 별 점수 (라벨 미사용). 절대 임계 fact 는 원값을 그대로 쓴다."""
     ref = baseline_mask(df, baseline)
+    out = pd.DataFrame(index=range(len(df)))
+    for fact, (feature, direction, override) in FACT_DEFS.items():
+        if feature not in df.columns:
+            out[fact] = np.nan
+            continue
+        if is_absolute(fact):
+            out[fact] = df[feature].to_numpy(dtype=float) * direction
+            continue
+        strat = override if isinstance(override, str) else (override or strategy)
+        out[fact] = _scores(df, feature, strat, train_mask, ref) * direction
+    return out
+
+
+# fact 가 물리적으로 겨냥하는 상태. 임계 적합의 기준이며 규칙 구조와는 무관하다.
+FACT_TARGET = {
+    "HR_HIGH":       lambda y: y != "REST",       # 각성 (스트레스든 운동이든)
+    "HRV_LOW":       lambda y: y == "STRESS",
+    "EDA_HIGH":      lambda y: y != "REST",
+    "SCR_HIGH":      lambda y: y != "REST",
+    "ACTIVITY_HIGH": lambda y: y == "EXERCISE",
+}
+
+Z_GRID = tuple(np.round(np.arange(0.0, 2.01, 0.25), 2))
+
+
+def fit_thresholds(scores, labels, train_mask=None, z_grid=Z_GRID,
+                   abs_grid=None):
+    """**train 구간에서만** fact 별 cut point 를 고른다.
+
+    기준은 Youden J = TPR - FPR. fact 가 겨냥하는 상태(FACT_TARGET)를 양성으로
+    두고 J 가 최대인 임계를 고른다. 조정하는 것은 스칼라 절단점 하나뿐이며
+    규칙 구조나 fact 정의는 건드리지 않는다 (= 보정이지 학습이 아니다).
+
+    돌려주는 값: {fact: (hi, lo)}. z 기반 fact 는 lo = -hi 로 대칭이고,
+    절대 임계 fact 는 hi = lo (움직인다/안 움직인다의 단일 경계).
+    """
+    abs_grid = abs_grid or ACTIVITY_ABS_SWEEP
+    y = np.asarray(labels, dtype=object)
+    m = np.ones(len(y), dtype=bool) if train_mask is None else np.asarray(train_mask, dtype=bool)
+
+    cuts = {}
+    for fact in FACT_DEFS:
+        s = scores[fact].to_numpy(dtype=float)
+        target = FACT_TARGET[fact](y)
+        grid = abs_grid if is_absolute(fact) else z_grid
+
+        ok = m & np.isfinite(s)
+        if ok.sum() < 10 or target[ok].sum() == 0 or (~target[ok]).sum() == 0:
+            # train 에 한쪽 클래스가 없으면 기본값을 쓴다.
+            d = FACT_DEFS[fact][2]
+            cuts[fact] = ((d["high"], d["low"]) if is_absolute(fact) else (0.5, -0.5))
+            continue
+
+        best, best_j = grid[0], -np.inf
+        for t in grid:
+            pred = s[ok] > t
+            tpr = pred[target[ok]].mean()
+            fpr = pred[~target[ok]].mean()
+            j = tpr - fpr
+            if j > best_j:
+                best, best_j = t, j
+        cuts[fact] = (float(best), float(best) if is_absolute(fact) else -float(best))
+    return cuts
+
+
+def apply_thresholds(df, scores, cuts):
+    """점수 + cut point -> facts DataFrame."""
     out = pd.DataFrame({
         "sample_id": df["sample_id"].to_numpy(),
         "subject_id": df["subject_id"].to_numpy(),
     })
-    if "label" in df.columns:
-        out["true_label"] = df["label"].to_numpy()
-    else:
-        out["true_label"] = np.nan
-
-    for fact, (feature, direction, override) in FACT_DEFS.items():
-        if feature not in df.columns:
-            out[fact] = False
-            out[fact + "_LOW"] = False
-            out["z_" + fact] = np.nan
-            continue
-
-        if isinstance(override, dict) and override.get("strategy") == "absolute":
-            # 절대 임계: 개인 분포와 무관하게 물리량으로 판정한다.
-            hi = abs_overrides.get(fact, override["high"])
-            lo = abs_overrides.get(fact + "_LOW", override["low"])
-            x = df[feature].to_numpy(dtype=float)
-            out["z_" + fact] = x
-            out[fact] = (x > hi) if direction > 0 else (x < hi)
-            out[fact + "_LOW"] = (x < lo) if direction > 0 else (x > lo)
-            continue
-
-        strat = override if isinstance(override, str) else (override or strategy)
-        z = _scores(df, feature, strat, train_mask, ref) * direction
-        out["z_" + fact] = z
-        out[fact] = z > z_high
-        out[fact + "_LOW"] = z < z_low
-
-    # ACTIVITY_LOW 는 규칙에서 자주 쓰므로 별칭을 만든다.
+    out["true_label"] = (df["label"].to_numpy() if "label" in df.columns
+                         else np.nan)
+    for fact in FACT_DEFS:
+        s = scores[fact].to_numpy(dtype=float)
+        hi, lo = cuts[fact]
+        out["z_" + fact] = s
+        out[fact] = s > hi
+        out[fact + "_LOW"] = s < lo
     out["ACTIVITY_LOW"] = out["ACTIVITY_HIGH_LOW"]
     return out
+
+
+def build_facts_cv(df, folds, strategy="subject_z", baseline="low_activity"):
+    """fold 별로 train 에서 임계를 적합해 test 에 적용한다 (누수 없음).
+
+    folds : df 각 행의 fold 라벨. 테스트 fold 가 곧 평가 대상이다.
+    반환  : (facts, cuts_table)
+            cuts_table 은 fold 별로 고른 임계값. 폴드 간 변동이 크면 그
+            임계는 불안정하다는 뜻이므로 반드시 함께 보고할 것.
+    """
+    folds = np.asarray(folds, dtype=object)
+    scores = compute_scores(df, strategy, baseline)   # 라벨 미사용
+    labels = df["label"].to_numpy()
+
+    facts = None
+    rows = []
+    for f in pd.unique(folds):
+        te = folds == f
+        tr = ~te
+        cuts = fit_thresholds(scores, labels, train_mask=tr)
+        part = apply_thresholds(df, scores, cuts)
+        facts = part if facts is None else facts
+        # 테스트 fold 행만 이번 cut 으로 덮어쓴다
+        for col in part.columns:
+            if col.startswith("z_") or col in ("sample_id", "subject_id",
+                                               "true_label"):
+                continue
+            facts.loc[te, col] = part.loc[te, col]
+        rows.append({"fold": f, **{k: v[0] for k, v in cuts.items()}})
+    return facts, pd.DataFrame(rows)
 
 
 def fact_distribution(facts, by="true_label"):
