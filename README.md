@@ -1,185 +1,154 @@
-# 캡스톤 — Wearable Neuro-Symbolic
+# 설명되지 않는 몸의 변화 찾기
 
-연구 질문·선행연구·실험 단계(Exp 0–3)는 [`docs/연구설계.md`](docs/연구설계.md)에 논문 형식으로 정리했다.  
-핵심 3편 번역본은 [`docs/papers/`](docs/papers/)에 있다.
+스마트워치가 "오늘 컨디션이 안 좋다"고 알려줍니다.
+그런데 **어제 술을 마셔서 그런 건데요.**
 
-현재 두 실험이 나란히 들어 있다.
+기기는 그걸 모릅니다. 그냥 매일 빨간불을 켭니다.
+그러다 **진짜 몸이 아플 때도 무시하게 됩니다.**
 
-| | 패키지 | 데이터 | 상태 | 문서 |
-|---|---|---|---|---|
-| **Exp 0** | `src/wesad_phase1/` | WESAD 손목 15명 | REST / STRESS | 아래 |
-| **Exp 1** | `src/nesy/` | Stress & Exercise 36명 | REST / STRESS / **EXERCISE** | [`docs/EXP1_STRESS_EXERCISE.md`](docs/EXP1_STRESS_EXERCISE.md) |
+이 프로젝트는 그 문제를 다룹니다.
 
 ---
 
-# Experiment 0 — WESAD REST vs STRESS fact extractor
+## 왜 어려운가
 
-`src/wesad_phase1/` 의 코드는 WESAD 손목 데이터로 전처리·window·feature pipeline이 도는지 확인하는 단계다. REST vs STRESS 분류 자체가 졸프 주장이 아니다.
+감염이든 스트레스든, 몸에서 나타나는 반응은 결국 하나로 모입니다.
+심박이 오르고, 땀이 나고, 체온이 변합니다.
 
-```text
-WESAD wrist (E4)
-BVP / EDA / TEMP / ACC
+**손목에서 재는 신호로는 원리적으로 구별이 안 됩니다.**
+
+실제로 선행연구(Mishra 2020)에서 **건강한 사람에게도 한 달에 0.66번**
+헛경보가 떴습니다. 운동·수면부족·스트레스·음주를 감염과 가를 방법이 없어서입니다.
+
+## 그래서 질문을 바꿨습니다
+
+감염을 **찾으려** 하지 말고, **설명되는 것을 걸러내자.**
+
+```
+이 사람의 평소와 다른가?
+        ↓ 다르다
+운동으로 설명되나?      (가속도)
+스트레스로 설명되나?    (피부전도)
+술·잠 부족으로 설명되나? (사용자에게 물어봄)
+        ↓ 전부 아니다
+   설명되지 않는 변화
         ↓
-BASELINE vs STRESS only
+   며칠 지속되는가?
         ↓
-60s window / 30s overlap
-        ↓
-HR · HRV · EDA · TEMP · Activity features
-        ↓
-stress probability 준비
-+ HR↑ / HRV↓ / EDA↑ / TEMP / Activity facts
+      알림
 ```
 
-Amusement, exercise, sleep, 질병 라벨은 넣지 않는다. 하드웨어 연동도 이 단계의 범위가 아니다.
-
-## 왜 WESAD인가
-
-최종 프로토타입 센서와 손목 E4 구성이 같다.
-
-| Proto | WESAD wrist |
-|---|---|
-| PPG | BVP 64 Hz |
-| EDA | EDA 4 Hz |
-| TEMP | TEMP 4 Hz |
-| ACC | ACC 32 Hz |
-
-데이터: [WESAD (UCI)](https://archive.ics.uci.edu/dataset/465/wesad+wearable+stress+and+affect+detection), [원 배포 페이지](https://ubi29.informatik.uni-siegen.de/usi/data_wesad.html).  
-비영리 연구 목적이고, 사용 시 Schmidt et al., ICMI 2018을 인용한다.
-
-## 환경
-
-```bash
-cd "/Users/LEEJIWOO/Desktop/캡스톤"
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-```
-
-디스크가 빠듯하면 zip을 풀지 않는다. pickle에서 **손목 채널만** `data/cache/SX_wrist.npz`로 저장한다.
-
-## 첫 작업 3개
-
-```bash
-# 1) WESAD 다운로드 + wrist cache
-python -m wesad_phase1.cli download
-
-# 2–3) REST/STRESS window + feature + fact table
-python -m wesad_phase1.cli windows
-```
-
-결과:
-
-- `data/cache/S2_wrist.npz` … `S17_wrist.npz` (15명, 손목만 ~19 MB)
-- `data/processed/wesad_wrist_rest_stress_windows.parquet`
-- `data/processed/wesad_wrist_rest_stress_windows.csv`
-
-현재 빌드: **859 windows** (train 569 / val 116 / test 174). REST 557, STRESS 302. 신호는 채널별 native rate로 feature를 계산하며, 전체를 한 주파수로 resampling하지 않는다.
-
-zip(`data/raw/WESAD.zip`, 2.25 GB)은 cache가 생긴 뒤 지워도 된다.
-
-## 입력 / 라벨
-
-```text
-BVP, EDA, TEMP, ACC_x, ACC_y, ACC_z
-
-0 = BASELINE (REST)
-1 = STRESS
-```
-
-WESAD raw ID `3=amusement`, `4=meditation`, `0/5/6/7` 는 window에 넣지 않는다.  
-window는 **해당 구간이 전부 BASELINE이거나 전부 STRESS**일 때만 채택한다 (`min_purity=1.0`).
-
-## Feature (18 + quality)
-
-| 그룹 | feature | 주의 |
-|---|---|---|
-| BVP / HR | `HR_mean`, `HR_std`, `HR_min`, `HR_max` | BVP peak 기반 |
-| HRV | `RMSSD`, `SDNN`, `mean_IBI` | pulse interval ≠ ECG RR. 20% IBI jump는 제거 |
-
-손목 BVP HRV는 ECG보다 노이즈가 크다. 1차에서는 **방향성 확인용**이지 clinical HRV가 아니다.
-| EDA | `EDA_mean`, `EDA_std`, `SCL_mean`, `SCR_count`, `SCR_mean_amplitude` | 4 Hz 유지 |
-| TEMP | `TEMP_mean`, `TEMP_std`, `TEMP_slope` | slope는 °C/s |
-| ACC | `ACC_magnitude_mean`, `ACC_magnitude_std`, `ACC_energy` | 운동 구분용 씨앗 |
-
-## Subject split
-
-랜덤 row split 금지. 같은 사람이 train/test에 동시에 들어가면 사람 특성을 외운다.
-
-```text
-Train  S2 S3 S4 S5 S6 S7 S8 S9 S10 S11
-Val    S13 S14
-Test   S15 S16 S17
-```
-
-다음 실험에서 LOSO를 추가한다.
-
-## Fact 출력 구조
-
-window feature를 그 사람의 REST median과 비교한다. Neural이 아직 없어도 symbolic 입력 스키마는 고정한다.
-
-```text
-hr_state        HIGH | NORMAL | LOW
-hrv_state       HIGH | NORMAL | LOW
-eda_state       HIGH | NORMAL | LOW
-temp_state      HIGH | NORMAL | LOW
-activity_state  HIGH | NORMAL | LOW
-
-HR_INCREASED
-HRV_DECREASED
-EDA_ACTIVATED
-ACTIVITY_LOW
-stress_rule_hit   # 위 네 fact가 동시에 참
-```
-
-1차 symbolic rule (아직 엔진 연결 전):
-
-```text
-IF HR_INCREASED AND HRV_DECREASED AND EDA_ACTIVATED AND ACTIVITY_LOW
-THEN STRESS_EXPLANATION
-```
-
-## 1차 성공 기준
-
-**데이터**
-
-- [x] WESAD wrist loader
-- [x] subject별 REST/STRESS window
-- [x] 공통 feature dataset
-
-**모델 (아직 안 함)**
-
-- [ ] Logistic / RF / XGBoost subject-independent baseline
-- [ ] MLP vs 1D-CNN 비교
-
-**NeSy 준비**
-
-- [x] `HR↑ / HRV↓ / EDA↑ / Activity` fact 컬럼
-- [ ] rule engine 입력 연결
-
-## 다음 단계
-
-전체 설계는 [`docs/연구설계.md`](docs/연구설계.md).
-
-1. WESAD feature table로 Logistic / RF / XGBoost (subject-independent) — pipeline sanity
-2. ~~PhysioNet Stress & Exercise (Hongn 2025) 4-class~~ → **Exp 1 에서 구현됨**
-3. ~~Neural vs Neural+Symbolic에서 stress ↔ exercise 혼동 비교~~ → **Exp 1 에서 구현됨**
+**분류기는 "모른다"고 말할 수 없습니다.** 배운 것 중에 반드시 하나를 골라야 하니까요.
+그런데 진짜 몸에 이상이 생기면 그건 우리가 가르쳐준 적 없는 상황입니다.
+**모른다고 답하는 게 정답인 상황**입니다.
 
 ---
 
-# Experiment 1 — Stress vs Exercise, Neuro-Symbolic
+## 무엇을 확인했나
 
-`src/nesy/` · PhysioNet Wearable Stress & Exercise (Hongn 2025) · 2주 1차 실험
+공개 데이터 **세 개**로 직접 돌려봤습니다.
 
-> Neural 모델만 쓸 때 발생하는 **Stress ↔ Exercise 오분류**가, 생리적 fact 와
-> 활동 맥락을 규칙으로 결합했을 때 줄어드는가. 줄지 않는다면, 규칙이 최소한
-> **틀릴 예측을 미리 표시**할 수 있는가.
+| 데이터 | 무엇 | 규모 |
+| --- | --- | --- |
+| **Hongn 2025** | 실험실, 자전거 운동과 암산 과제 | 34명 / 1,251 구간 |
+| **Nurse Stress 2022** | 실제 병원에서 근무하는 간호사 | 15명 / **1,241시간** |
+| **WESAD 2018** | 가슴 ECG와 손목을 **동시에** 측정 | 15명 / 877 구간 |
 
-Exp 0 이 만든 fact 스키마(`hr_state` / `hrv_state` / `eda_state` /
-`activity_state`)를 `HR_HIGH` / `HRV_LOW` / `EDA_HIGH` / `ACTIVITY_HIGH` 로
-이어받고, 그 위에 rule engine · evidence audit · correction 을 얹었다.
+### 1. 논문 수치를 그대로 믿으면 안 됩니다
 
-PhysioNet 다운로드를 기다리지 않고 지금 전 구간을 돌릴 수 있다. 실제 프로토콜과
-동일한 태그 구조로 합성 E4 세션을 만드는 생성기가 들어 있다.
+원 논문이 93% 나왔다고 하는데, **같은 사람 데이터가 학습과 평가에 같이 들어가 있었습니다.**
+사람 단위로 제대로 나누니 성적이 **0.09 떨어집니다.**
+
+### 2. 우리가 원래 잡은 질문이 틀렸습니다
+
+"운동을 스트레스로 착각하는 걸 줄이자"였는데, 실제로 틀린 걸 세어보니
+**85%가 휴식↔스트레스**였습니다. 운동은 가속도만 넣으면 그냥 갈립니다.
+
+**진짜 어려운 건 가만히 있을 때 편안한지 긴장했는지 구별하는 것**이고,
+그건 "이 사람 평소랑 다른가"와 같은 질문입니다.
+
+### 3. 개인차가 반응보다 큽니다
+
+| | |
+| --- | --- |
+| 사람마다 평소 심박 | 53 ~ 101 bpm |
+| 한 사람이 스트레스 받으면 | **+7.7 bpm** (34명 중 30명) |
+
+반응은 분명히 있는데 **그게 사람 사이 차이보다 작습니다.**
+피부전도는 41배 차이입니다. 누구인지 모르면 판단이 불가능합니다.
+
+### 4. 실험실에서 만든 규칙은 절반만 통합니다
+
+실제 병원 근무 1,241시간에 그대로 적용해봤습니다.
+
+| | 실환경에서 |
+| --- | --- |
+| 피부전도 · 땀 반응 | ✅ 통함 |
+| 심박 | △ 약함 |
+| **심박변이도 (HRV)** | ❌ **전혀 안 통함** |
+
+### 5. HRV는 손목으로 못 재는 것이었습니다
+
+WESAD로 **같은 사람, 같은 시각**에 가슴 ECG와 손목을 동시에 봤습니다.
+
+| | 가슴 ECG | 손목 |
+| --- | --- | --- |
+| HRV | 27% 감소 (10/15명) | **방향 반대** |
+| **심박수** | +21 bpm (**15/15명**) | +24 bpm (**15/15명**) |
+
+**심박수는 손목으로도 완벽하게 잡힙니다.**
+신호가 나쁜 게 아니라 **HRV라는 지표가 손목에서 못 쓰이는 것**입니다.
+
+> HRV는 스트레스에 반응합니다. **다만 손목으로는 잴 수 없습니다.**
+
+### 6. 모르는 것을 모른다고 합니다
+
+운동 규칙을 **통째로 지우고** 운동하는 사람 데이터를 넣었습니다.
+비교 대상도 공정하게 **운동을 한 번도 배우지 않은** 분류기로 맞췄습니다.
+
+| | 운동 중인 사람을 보고 |
+| --- | --- |
+| 분류기 | **96%를 "스트레스"라고 단정** |
+| 우리 구조 | **95%를 "설명 안 됨"** |
+
+**이게 규칙을 두는 이유 전체입니다.**
+
+---
+
+## 서비스는 이렇게 생겼습니다
+
+문제 정의로 되돌아갑니다 — **"사용자 입력이 없는 기기는 구별할 수 없다."**
+그러면 입력을 받으면 됩니다.
+
+```
+새벽    잘 때 잽니다        ← 움직임이 없어 방해 요소가 사라집니다
+아침    "어젯밤 평소와 달랐어요"
+        "혹시 어제 이런 일이 있었나요?"
+          □ 운동  □ 늦게까지 일  □ 음주  □ 스트레스
+             ↓
+        체크함       →  "그럴 만해요"      (끝)
+        짚이는 것 없음 →  미해결로 쌓임
+             ↓
+        3일 연속 → "컨디션 확인해 보시는 게 좋겠어요"
+```
+
+**이 화면이 제품이자 동시에 데이터 수집기입니다.**
+
+> **진단하지 않습니다.** "감염이 의심됩니다"는 의료기기 영역입니다.
+> 우리는 **설명하지 못한 변화가 있다는 사실**만 알립니다.
+
+데모 앱: [`watch/ExcuseGauge/`](watch/ExcuseGauge/) (watchOS, Xcode 필요)
+
+---
+
+## 코드 돌려보기
+
+```bash
+pip install -r requirements.txt
+python -m pytest tests -q          # 21개 통과하면 환경 정상
+```
+
+데이터 없이 파이프라인만 확인하려면:
 
 ```bash
 python scripts/00_make_synthetic.py
@@ -187,24 +156,67 @@ python scripts/02_build_features.py --raw data/raw/SYNTHETIC
 python scripts/07_nesy.py
 ```
 
-합성 데이터의 성능 수치는 **연구 결과가 아니다** — 코드 검증 전용이다.
+가짜 데이터의 성능 수치는 **연구 결과가 아닙니다.** 코드가 도는지만 확인하는 용도입니다.
 
-실행 순서, 역할 분담(A/B/C), CSV 인터페이스, 이미 발견된 설계 함정 세 개는
-[`docs/EXP1_STRESS_EXERCISE.md`](docs/EXP1_STRESS_EXERCISE.md) 에 있다.
-
-| 문서 | 내용 |
-|---|---|
-| [`docs/SCHEMAS.md`](docs/SCHEMAS.md) | A/B/C 공통 CSV 인터페이스 — 먼저 읽을 것 |
-| [`docs/RESEARCH_REVIEW.md`](docs/RESEARCH_REVIEW.md) | 심사자 관점 비판적 리뷰 + 일정 수정안 |
-| [`docs/LITERATURE_VERIFICATION.md`](docs/LITERATURE_VERIFICATION.md) | 선행연구 인용 수치 검증 (**Li 2026 은 인용 보류**) |
+실제 데이터는 [`docs/EXP1_STRESS_EXERCISE.md`](docs/EXP1_STRESS_EXERCISE.md) 참고.
 
 ---
 
-## 테스트
+## 문서 어디부터 볼까
 
-```bash
-python -m pytest tests -q
+| 처음이라면 | |
+| --- | --- |
+| [`docs/NARRATIVE.md`](docs/NARRATIVE.md) | **전체 이야기.** 문제 → 접근 → 검증 → 서비스 |
+| [`docs/HRV_VERDICT.md`](docs/HRV_VERDICT.md) | 가장 견고한 발견 하나만 본다면 |
+
+| 코드를 만진다면 | |
+| --- | --- |
+| [`docs/SCHEMAS.md`](docs/SCHEMAS.md) | 파일 주고받는 규칙. **먼저 읽을 것** |
+| [`docs/EXP1_STRESS_EXERCISE.md`](docs/EXP1_STRESS_EXERCISE.md) | 실행 순서, 역할 분담 |
+
+| 결과를 확인한다면 | |
+| --- | --- |
+| [`docs/RESULTS_20260905.md`](docs/RESULTS_20260905.md) | 실험실 데이터 전체 결과 |
+| [`docs/NURSE_TRANSFER.md`](docs/NURSE_TRANSFER.md) | 실환경 이식 검증 |
+| [`docs/DEVIATION_REDESIGN.md`](docs/DEVIATION_REDESIGN.md) | 이탈 점수 설계 |
+
+| 다음 단계라면 | |
+| --- | --- |
+| [`docs/RESEARCH_REVIEW.md`](docs/RESEARCH_REVIEW.md) | 심사에서 나올 질문과 대응 |
+| [`docs/LITERATURE_VERIFICATION.md`](docs/LITERATURE_VERIFICATION.md) | 인용 검증 (**Li 2026은 보류**) |
+| [`docs/EXPERIMENT_PROTOCOL.md`](docs/EXPERIMENT_PROTOCOL.md) | 자체 측정 절차 |
+
+---
+
+## 이 폴더에 뭐가 있나
+
+```
+src/nesy/          분석 코드
+  io_e4            Empatica E4 파일 읽기
+  preprocess_*     맥박·피부전도·움직임 전처리
+  deviation        개인 평소 대비 얼마나 벗어났나
+  facts / rules    생리 상태 판정과 규칙
+  nesy_audit       "이 판단을 믿을 근거가 있나"
+  wesad / nurse    데이터셋별 로더
+
+scripts/           00부터 순서대로 실행
+watch/ExcuseGauge/ watchOS 데모 앱
+docs/              문서
 ```
 
-Exp 0 + Exp 1 합쳐 19개. 루트 `conftest.py` 가 `src/` 를 경로에 넣으므로
-`pip install -e .` 없이도 돈다.
+## 먼저 밟은 함정들
+
+같은 실수를 반복하지 않도록 적어둡니다. 전부 실제로 겪은 것입니다.
+
+- **개인 기준을 여러 날 합쳐서 만들면 안 됩니다.** 밴드를 다시 차면 기준선이
+  통째로 튑니다 (심박 19 bpm, 피부전도 15배). 같은 착용 구간 안에서만 비교합니다.
+- **움직임은 개인 z-score로 판정하면 안 됩니다.** 물리량이므로 절대 기준을 씁니다.
+- **임계값을 전체 데이터 보고 정하면 안 됩니다.** 학습 구간 안에서만 정합니다.
+- **파일 형식이 문서와 다릅니다.** Hongn은 날짜 문자열, Nurse는 epoch 숫자입니다.
+- **시각을 반드시 맞춰야 합니다.** Nurse에서 시간대를 안 맞춰 라벨 21%를 잃었습니다.
+- **한 사람이 두 폴더로 쪼개져 있을 수 있습니다** (`S11_a`, `S11_b`).
+
+---
+
+데이터 출처 · Hongn 2025 (PhysioNet) · Nurse Stress 2022 (Dryad, CC-BY) ·
+WESAD 2018 (UCI, 비영리 연구용)
