@@ -83,8 +83,11 @@ def load_subject(pkl_path):
 
 
 def _flat(x):
+    """(N, 1) 로 저장된 단일 채널을 (N,) 으로 편다. ACC 같은 (N, 3) 은 그대로 둔다."""
     a = np.asarray(x, dtype=float)
-    return a.ravel() if a.ndim > 1 and a.shape[1] == 1 else a
+    if a.ndim > 1 and a.shape[1] == 1:
+        return a.ravel()
+    return a
 
 
 def label_segments(labels, fs=CHEST_FS, min_sec=60.0):
@@ -121,8 +124,12 @@ def windows(start, end, length, step):
 
 
 def slice_signal(arr, fs, t0, t1):
-    """상대 시각 [t0, t1) 구간을 잘라낸다."""
-    a = _flat(arr) if np.asarray(arr).ndim == 1 else np.asarray(arr, dtype=float)
+    """상대 시각 [t0, t1) 구간을 잘라낸다.
+
+    WESAD 의 단일 채널은 (N, 1) 로 저장되어 있다. 펴 주지 않으면 filtfilt 가
+    길이 1인 축을 따라 필터링하려다 실패한다.
+    """
+    a = _flat(arr)
     i0 = max(0, int(np.ceil(t0 * fs)))
     i1 = min(len(a), int(np.floor(t1 * fs)))
     if i1 <= i0:

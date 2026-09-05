@@ -46,8 +46,14 @@ def peaks_to_ibi(peaks, fs, min_bpm=40, max_bpm=200, rel_thresh=0.30):
 
     2단계 artefact 제거
       1) 생리적 범위(60/max_bpm ~ 60/min_bpm 초) 밖 제거
-      2) 직전 유효 IBI 대비 변화율이 rel_thresh 를 넘으면 제거
-         (ectopic beat 또는 peak 누락)
+      2) **윈도 중앙값** 대비 변화율이 rel_thresh 를 넘으면 제거
+         (ectopic beat, dicrotic notch 오검출, peak 누락)
+
+    기준을 '직전 채택 IBI' 가 아니라 '중앙값' 으로 두는 것이 중요하다.
+    직전 값을 기준으로 하면 첫 IBI 하나가 어긋났을 때 그 뒤가 연쇄로 무너진다.
+    WESAD 손목 BVP 에서 실제로 그 일이 일어났다 — peak 은 96개(≈98 bpm, ECG 와
+    일치)로 제대로 잡혔는데 채택된 IBI 가 5개뿐이었다. 중앙값 기준은 국소 오류가
+    전체로 번지지 않는다.
     """
     peaks = np.asarray(peaks)
     if len(peaks) < 2:
@@ -62,13 +68,11 @@ def peaks_to_ibi(peaks, fs, min_bpm=40, max_bpm=200, rel_thresh=0.30):
     if len(ibi) < 2:
         return ibi, tm
 
-    good = [0]
-    for i in range(1, len(ibi)):
-        ref = ibi[good[-1]]
-        if abs(ibi[i] - ref) / ref <= rel_thresh:
-            good.append(i)
-    idx = np.asarray(good)
-    return ibi[idx], tm[idx]
+    med = np.median(ibi)
+    if not np.isfinite(med) or med <= 0:
+        return ibi, tm
+    keep2 = np.abs(ibi - med) / med <= rel_thresh
+    return ibi[keep2], tm[keep2]
 
 
 TIME_HRV_KEYS = ("ibi_mean", "ibi_max", "ibi_min", "hr_from_ibi",
