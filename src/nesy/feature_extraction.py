@@ -19,7 +19,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import io_e4, preprocess_acc, preprocess_bvp, preprocess_eda, protocol
+from . import (io_e4, preprocess_acc, preprocess_bvp, preprocess_eda, protocol,
+               selfreport)
 
 # --- feature 그룹 (역할 B 의 ablation 이 이 정의를 그대로 쓴다) -------------
 FEATURE_GROUPS = {
@@ -44,7 +45,8 @@ ABLATION_SETS = {
 
 META_COLS = ["sample_id", "subject_id", "session_type", "session_id", "version",
              "segment_name", "seg_index", "condition", "label",
-             "t_start", "t_end", "needs_review", "ml_excluded", "flagged"]
+             "t_start", "t_end", "needs_review", "ml_excluded", "flagged",
+             "self_report", "self_report_delta", "self_report_approx"]
 
 
 def _window_features(sess, t0, t1, cfg):
@@ -146,6 +148,8 @@ def build(cfg, proto, session_index=None, verbose=True):
 
     df = pd.DataFrame(rows)
     if not df.empty:
+        # 자기보고 스트레스 점수(1-10) 연결. 없으면 NaN 컬럼만 생긴다.
+        df = selfreport.attach(df, raw_root)
         cols = META_COLS + [c for c in ALL_FEATURES if c in df.columns]
         extra = [c for c in df.columns if c not in cols]
         df = df[cols + extra]
