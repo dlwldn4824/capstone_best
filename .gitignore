@@ -33,3 +33,6 @@ data/raw/nurse_stress/sessions/
 docs/NURSE_AUDIT.md
 docs/NURSE_RESULTS.md
 outputs/nurse_features.csv
+data/raw/wesad/
+outputs/wesad_hrv.csv
+docs/WESAD_HRV.md
