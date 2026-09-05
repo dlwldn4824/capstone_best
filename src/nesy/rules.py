@@ -161,6 +161,7 @@ def coverage(facts, labels, rules=None):
         tgt = target.get(r.produces)
         rows.append({
             "rule": r.name, "produces": r.produces, "weight": r.weight,
+            "active": r.active,
             "fire_rate": float(np.mean(f)),
             "n_fired": int(f.sum()),
             "precision": float(np.mean(labels[f] == tgt)) if f.sum() else np.nan,

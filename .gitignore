@@ -30,3 +30,6 @@ docs/RULES.md
 docs/EXPERIMENT_LOG.md
 
 data/raw/nurse_stress/sessions/
+docs/NURSE_AUDIT.md
+docs/NURSE_RESULTS.md
+outputs/nurse_features.csv
