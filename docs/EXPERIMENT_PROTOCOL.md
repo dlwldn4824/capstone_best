@@ -19,11 +19,11 @@ Watch Stress Score* (HCI International) 의 설계를 따라, 우리 규모로 �
 
 | 항목 | 비고 |
 | --- | --- |
-| Galaxy Watch (4 이상) | 스트레스 점수 기능 필요. 1~2대 있으면 회전 운용 |
+| Galaxy Watch (4 이상) | 스트레스 점수 기능 필요. 1–2대 있으면 회전 운용 |
 | **Polar H10** 가슴 스트랩 | 10만 원대. ECG·RR 기준 측정 |
 | 안드로이드 폰 | `Polar Sensor Logger` (무료) 설치 |
 | 노트북 | 구간 타임스탬프 기록 |
-| 자기보고 용지 | 구간마다 1~10 |
+| 자기보고 용지 | 구간마다 1–10 |
 
 ### 데이터 경로
 
@@ -78,7 +78,7 @@ Hongn v2 를 압축하되 **baseline 을 늘렸다.** Hongn 은 자극 전 안�
 
 ### 각 구간 전후
 
-- 자기보고 스트레스 **1~10** 을 구두로 받아 기록
+- 자기보고 스트레스 **1–10** 을 구두로 받아 기록
 - 구간 시작·종료 시각을 **노트북에서 버튼으로 기록** (tags 역할)
 
 ### 진행 스크립트 (요약)
@@ -99,9 +99,9 @@ Hongn v2 를 압축하되 **baseline 을 늘렸다.** Hongn 은 자극 전 안�
 
 | | |
 | --- | --- |
-| 목표 | **15~20명** (Spang et al. 은 45명) |
+| 목표 | **15–20명** (Spang et al. 은 45명) |
 | 소요 | 1인당 40분 (준비·정리 포함) |
-| 기간 | 팀 3명이 나눠 진행하면 2~3주 |
+| 기간 | 팀 3명이 나눠 진행하면 2–3주 |
 | 기록 | 나이, 성별, 카페인 섭취, 수면 시간, 운동 여부 |
 
 **동의**: 생체신호 수집과 익명 분석에 대한 서면 동의를 받는다.
@@ -155,7 +155,7 @@ Spang et al. 은 **심박수(bpm)가 지배적**이라고 보고했다. 재현�
 | `data/own/{ID}/watch/` | Samsung Health export |
 | `data/own/{ID}/polar/` | Polar Sensor Logger 파일 |
 | `data/own/{ID}/tags.csv` | 구간 시작·종료 epoch |
-| `data/own/{ID}/report.csv` | 구간별 자기보고 1~10 |
+| `data/own/{ID}/report.csv` | 구간별 자기보고 1–10 |
 | `data/own/{ID}/sync_start.jpg` | 시계 동기 사진 |
 | `data/own/subjects.csv` | 인구통계·카페인·수면 |
 

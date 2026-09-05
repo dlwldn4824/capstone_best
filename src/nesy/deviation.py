@@ -176,9 +176,12 @@ EXPLAINED_EXERCISE = "EXPLAINED_EXERCISE"
 EXPLAINED_STRESS = "EXPLAINED_STRESS"
 UNEXPLAINED = "UNEXPLAINED"
 NOT_DEVIATING = "NOT_DEVIATING"
+# 설명은 붙었으나 그 설명이 감당할 크기를 넘음 -> 닫지 않고 넘긴다
+EXCEEDS_EXPLANATION = "EXCEEDS_EXPLANATION"
 
 
-def explain(dev, evidence, dev_thresh, min_evidence=0.5, margin=0.15):
+def explain(dev, evidence, dev_thresh, min_evidence=0.5, margin=0.15,
+            ceiling=None):
     """이탈 -> 설명 판정.
 
     dev       deviation 점수 배열
@@ -201,7 +204,46 @@ def explain(dev, evidence, dev_thresh, min_evidence=0.5, margin=0.15):
     out[dv] = UNEXPLAINED
     out[best_ex] = EXPLAINED_EXERCISE
     out[best_st] = EXPLAINED_STRESS
+
+    # 설명이 붙어도 그 설명이 감당할 수 있는 크기를 넘으면 닫지 않는다.
+    # 운동한 날에도 아플 수 있다. 설명은 이탈을 지우지 않고 일부만 상쇄한다.
+    if ceiling:
+        for cause, tag in ((EXPLAINED_EXERCISE, EXPLAINED_EXERCISE),
+                           (EXPLAINED_STRESS, EXPLAINED_STRESS)):
+            cap = ceiling.get(cause)
+            if cap is None or not np.isfinite(cap):
+                continue
+            out[(out == tag) & (dev > cap)] = EXCEEDS_EXPLANATION
     return out
+
+
+def fit_cause_ceiling(dev, labels, train_mask=None, q=0.95):
+    """원인별 '이 설명으로 감당되는 이탈 크기'의 상한을 train 에서만 정한다.
+
+    labels 는 explain() 이 낸 것과 같은 태그 배열이어야 한다.
+    반환값을 explain(..., ceiling=...) 로 넘기면 설명이 붙은 창이라도
+    그 상한을 넘을 경우 EXCEEDS_EXPLANATION 으로 남는다 (닫히지 않는다).
+
+    표본이 부족하면(<20) 그 원인은 상한을 두지 않는다 — 근거 없이
+    자르는 것보다 닫아두는 편이 오탐을 덜 만든다.
+    """
+    dev = np.asarray(dev, dtype=float)
+    labels = np.asarray(labels, dtype=object)
+    if train_mask is None:
+        train_mask = np.ones(len(dev), dtype=bool)
+    train_mask = np.asarray(train_mask, dtype=bool)
+
+    out = {}
+    for cause in (EXPLAINED_EXERCISE, EXPLAINED_STRESS):
+        sel = train_mask & (labels == cause) & np.isfinite(dev)
+        out[cause] = float(np.quantile(dev[sel], q)) if sel.sum() >= 20 else None
+    return out
+
+
+def carried_forward(tags):
+    """아침 확인 뒤에도 닫히지 않고 다음 날로 넘어가는 창."""
+    tags = np.asarray(tags, dtype=object)
+    return (tags == UNEXPLAINED) | (tags == EXCEEDS_EXPLANATION)
 
 
 def fit_dev_threshold(dev, labels, train_mask=None, grid=None):
