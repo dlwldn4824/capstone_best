@@ -166,18 +166,45 @@ def main():
         print("  RMSSD  손목 PPG  {:+.2f} ms, {}/{}명 감소, p={:.4f}".format(
             w["diff"], w["n_down"], w["n"], w["p"]))
         print()
-        if e["p"] < 0.05 and w["p"] >= 0.05:
+        # p 값만으로 가르지 않는다. n=15 는 검정력이 낮아 실제 효과도
+        # 유의에 못 미칠 수 있다. 방향 · 효과 크기 · 일관성을 함께 본다.
+        def responds(row, base):
+            frac = row["n_down"] / row["n"]
+            rel = abs(row["diff"]) / max(base, 1e-9)
+            return (row["diff"] < 0) and (frac >= 0.6) and (rel >= 0.15)
+
+        e_ok = responds(e, e["rest"])
+        w_ok = responds(w, w["rest"])
+        print("  가슴 ECG  감소 방향 {}, {}/{}명, 상대변화 {:.0%}".format(
+            "O" if e["diff"] < 0 else "X", e["n_down"], e["n"],
+            abs(e["diff"]) / max(e["rest"], 1e-9)))
+        print("  손목 PPG  감소 방향 {}, {}/{}명, 상대변화 {:.0%}".format(
+            "O" if w["diff"] < 0 else "X", w["n_down"], w["n"],
+            abs(w["diff"]) / max(w["rest"], 1e-9)))
+        print()
+
+        if e_ok and not w_ok:
             print("  => ECG 는 반응하고 손목은 못 잡는다. **측정 한계**다.")
             print("     우리 두 데이터의 HRV 음성 결과는 기기 한계로 설명된다.")
-        elif e["p"] >= 0.05 and w["p"] >= 0.05:
+        elif not e_ok and not w_ok:
             print("  => 둘 다 반응하지 않는다. **생리적 사실**에 가깝다.")
-            print("     60초 윈도에서 HRV 로 스트레스를 잡는다는 전제 자체를")
-            print("     재검토해야 한다.")
-        elif e["p"] < 0.05 and w["p"] < 0.05:
+        elif e_ok and w_ok:
             print("  => 둘 다 반응한다. 우리 두 데이터의 음성 결과는")
-            print("     WESAD 와 다른 조건(윈도 길이, 자극 강도) 탓일 수 있다.")
+            print("     다른 조건(윈도 길이, 자극 강도) 탓일 수 있다.")
         else:
             print("  => 손목만 반응한다. 예상 밖이므로 신호 품질을 재확인할 것.")
+
+        # HR 은 같은 신호에서 잘 잡히는가 — 신호 품질과 지표를 분리하는 열쇠
+        hr_e = resp[(resp["측정"] == "가슴 ECG") & (resp["지표"] == "hr_from_ibi")]
+        hr_w = resp[(resp["측정"] == "손목 PPG") & (resp["지표"] == "hr_from_ibi")]
+        if len(hr_e) and len(hr_w):
+            he, hw = hr_e.iloc[0], hr_w.iloc[0]
+            print()
+            print("  [대조] 같은 윈도에서 HR 은?")
+            print("    가슴 ECG {:+.1f} bpm (p={:.4f})".format(he["diff"], he["p"]))
+            print("    손목 PPG {:+.1f} bpm (p={:.4f})".format(hw["diff"], hw["p"]))
+            print("    HR 이 손목으로도 잘 잡히는데 HRV 만 안 잡힌다면,")
+            print("    신호 품질이 아니라 **지표의 문제**다.")
 
     print("\n[대조] 우리 기존 결과")
     print("  Hongn (실험실, 손목)  36명 중 18명 감소 — 우연")
