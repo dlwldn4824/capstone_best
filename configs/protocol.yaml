@@ -1,24 +1,27 @@
 # ---------------------------------------------------------------------------
 # tags.csv 세그먼트 -> 라벨 매핑
 #
-# !! Day 1 에 반드시 검증할 것 !!
-#   이 매핑은 Hongn et al. (Sci Data 2025) 본문의 프로토콜 서술로부터
-#   재구성한 것이며, 실제 tags.csv 의 태그 개수로 확인되지 않았다.
-#   `python scripts/01_audit.py` 가 피험자별 실제 태그 수를 출력한다.
-#   expected_segments 와 다르면 그 피험자는 needs_review 로 표시되고
-#   feature 추출에서 자동 제외된다. 눈으로 확인한 뒤 여기를 고칠 것.
+# 이 매핑은 **실데이터로 검증**되었다 (2026-09-05).
+# 근거는 세 가지를 교차 확인한 것이다.
+#   1) 세그먼트 개수: 그룹 내 거의 모든 피험자가 동일 (아래 n 참조)
+#   2) 세그먼트 길이: 논문이 명시한 3분/5분/30초/11:15 등과 일치
+#   3) 구간별 HR: baseline 대비 휴식은 낮고(-3~-5 bpm) 과제는 높다(+3~+6 bpm)
+# 재확인: python scripts/01_audit.py
 #
 # 규칙
 #   - N개의 태그는 N-1개의 구간을 만든다 (태그 = 구간 경계).
 #   - labels 는 그 구간들에 순서대로 대응한다.
-#   - null  = 그 구간은 사용하지 않는다 (전이/쿨다운 등).
+#   - null  = 사용하지 않는다 (쿨다운, 전이, 정체 불확실한 구간).
 #   - portion: all | second_half | middle_60s
-#       원 논문의 세그먼트 선택 규칙을 반영한다.
-#         rest 블록  -> second_half (잔여 스트레스 효과 최소화)
-#         aerobic 블록-> middle_60s  (블록 중앙 1분)
-#         sprint     -> all
+#       rest 블록  -> second_half (잔여 각성 효과 배제, 원 논문과 동일)
+#       운동 블록  -> middle_60s  (블록 중앙 1분, 원 논문과 동일)
+#       스프린트   -> all
 #
-# 버전: 피험자 ID 접두사로 결정 (S* = cohort 1 = v1, f* = cohort 2 = v2)
+# !! REST 는 STRESS 세션에서만 뽑는다 !!
+#   운동 세션의 baseline 은 "저항 없이 페달을 밟는" 상태이고 종료 후 휴식도
+#   자전거에 앉은 상태다. 둘 다 정지가 아니므로 REST 로 쓰면 활동량 규칙이
+#   오염된다. STRESS 세션의 baseline 과 휴식 블록만으로 REST 는 충분하다
+#   (피험자당 v1 약 410초 / v2 약 870초).
 # ---------------------------------------------------------------------------
 
 version_by_prefix:
@@ -26,43 +29,57 @@ version_by_prefix:
   f: v2
 
 STRESS:
+  # v1: 18/18명이 12구간. 길이 중앙값 190/103/109/326/137/308/32/34/31/31/32/34
+  #     HR(baseline 대비): +0/+3.9/+3.4/-3.6/+6.0/-4.8/+1.6/+4.6/+3.2/+3.6/+0.3/-0.2
+  #     -> s3, s5 가 5분 휴식. s10, s11 은 HR 상승이 없어 과제가 아니다(제외).
   v1:
-    # 3분 baseline / Stroop / 5분 rest / TMCT / 5분 rest / Opinion / Subtract
-    expected_segments: 7
-    labels:   [REST,        STRESS,  REST,        STRESS, REST,        STRESS,  STRESS]
-    portions: [second_half, all,     second_half, all,    second_half, all,     all]
-    names:    [baseline,    stroop,  rest1,       tmct,   rest2,       opinion, subtract]
+    expected_segments: 12
+    labels:   [REST,        STRESS,   STRESS,   REST,        STRESS, REST,        STRESS, STRESS, STRESS, STRESS, null,  null]
+    portions: [second_half, all,      all,      second_half, all,    second_half, all,    all,    all,    all,    all,   all]
+    names:    [baseline,    stroop_a, stroop_b, rest1,       tmct,   rest2,       task1,  task2,  task3,  task4,  wrap1, wrap2]
+  # v2: 18/19명이 8구간 (f18 은 태그 0개 -> 자동 제외).
+  #     길이 중앙값 94/258/848/38/26/38/804/38
+  #     HR: +0/+3.1/-1.3/+3.1/+2.8/+3.8/-2.9/+1.2
+  #     -> s2(848초), s6(804초)가 논문이 말한 '이완 영상이 들어간 긴 휴식'.
+  #        그 사이 30초 블록 셋이 opinion, 마지막 38초가 1022에서 13씩 빼기.
   v2:
-    # Stroop 제거, 두 번째 rest 를 opinion 과 subtract 사이로 이동
-    expected_segments: 6
-    labels:   [REST,        STRESS, REST,        STRESS,  REST,        STRESS]
-    portions: [second_half, all,    second_half, all,     second_half, all]
-    names:    [baseline,    tmct,   rest1,       opinion, rest2,       subtract]
+    expected_segments: 8
+    labels:   [REST,        STRESS, REST,        STRESS,   STRESS,   STRESS,   REST,        STRESS]
+    portions: [second_half, all,    second_half, all,      all,      all,      second_half, all]
+    names:    [baseline,    tmct,   rest_video1, opinion1, opinion2, opinion3, rest_video2, subtract]
 
 AEROBIC:
+  # v1: 14/18명이 11구간. 길이 182/176/181/182/179 | 119/119/120/119/121 | 237
+  #     논문의 "60,70,75 rpm 3분 + 80,85 rpm 3분" = 3분 블록 5개,
+  #     "90,95 rpm 2분 + 100,105,110 rpm 2분" = 2분 블록 5개, 그리고 4분 쿨다운.
+  #     => 태그는 baseline 이 아니라 60 rpm 블록에서 시작한다.
   v1:
-    # 3분 baseline / 60,70,75 / 80,85,90,95 / 100,105,110 / 4분 cool-down / 2분 rest
-    expected_segments: 13
-    labels:   [REST,        AEROBIC,   AEROBIC,   AEROBIC,   AEROBIC,   AEROBIC,   AEROBIC,   AEROBIC,   AEROBIC,   AEROBIC,   AEROBIC,   null,     REST]
-    portions: [second_half, middle_60s,middle_60s,middle_60s,middle_60s,middle_60s,middle_60s,middle_60s,middle_60s,middle_60s,middle_60s,all,      second_half]
-    names:    [baseline,    rpm60,     rpm70,     rpm75,     rpm80,     rpm85,     rpm90,     rpm95,     rpm100,    rpm105,    rpm110,    cooldown, rest_end]
+    expected_segments: 11
+    labels:   [AEROBIC,    AEROBIC,    AEROBIC,    AEROBIC,    AEROBIC,    AEROBIC,    AEROBIC,    AEROBIC,    AEROBIC,    AEROBIC,    null]
+    portions: [middle_60s, middle_60s, middle_60s, middle_60s, middle_60s, middle_60s, middle_60s, middle_60s, middle_60s, middle_60s, all]
+    names:    [rpm60,      rpm70,      rpm75,      rpm80,      rpm85,      rpm90,      rpm95,      rpm100,     rpm105,     rpm110,     cooldown]
+  # v2: 13/13명이 7구간. 길이 119/113/120/717/176/214/120
+  #     s3=717초가 논문의 "11:15 at 85 rpm" 이다(가장 확실한 기준점).
   v2:
-    # baseline / 2:15 warm-up / 70,75,80 / 85 (11:15) / 90-95 (4:30) / 3분 cool-down / rest
-    expected_segments: 9
-    labels:   [REST,        null,    AEROBIC,   AEROBIC,   AEROBIC,   AEROBIC,   AEROBIC,   null,     REST]
-    portions: [second_half, all,     middle_60s,middle_60s,middle_60s,middle_60s,middle_60s,all,      second_half]
-    names:    [baseline,    warmup,  rpm70,     rpm75,     rpm80,     rpm85,     rpm90_95,  cooldown, rest_end]
+    expected_segments: 7
+    labels:   [AEROBIC,    AEROBIC,    AEROBIC,    AEROBIC,    AEROBIC,    null,     null]
+    portions: [middle_60s, middle_60s, middle_60s, middle_60s, middle_60s, all,      all]
+    names:    [rpm70,      rpm75,      rpm80,      rpm85_long, rpm90_95,   cooldown, rest_on_bike]
 
 ANAEROBIC:
+  # v1: 16/19명이 6구간. 길이 32/251/32/245/31/248
+  #     논문의 "30초 최대 스프린트 + 4분 쿨다운 x3" 과 정확히 일치.
+  #     => 태그는 3분 baseline 뒤, 첫 스프린트에서 시작한다.
   v1:
-    # 3분 baseline / (30s sprint + 4분 cool-down) x3 / 2분 rest
-    expected_segments: 8
-    labels:   [REST,        SPRINT, null,     SPRINT, null,     SPRINT, null,     REST]
-    portions: [second_half, all,    all,      all,    all,      all,    all,      second_half]
-    names:    [baseline,    sprint1,cooldown1,sprint2,cooldown2,sprint3,cooldown3,rest_end]
+    expected_segments: 6
+    labels:   [SPRINT,  null,      SPRINT,  null,      SPRINT,  null]
+    portions: [all,     all,       all,     all,       all,     all]
+    names:    [sprint1, cooldown1, sprint2, cooldown2, sprint3, cooldown3]
+  # v2: 13/13명이 10구간. 길이 200/36/203/35/197/31/192/33/196/146
+  #     논문의 "45초 스프린트 x4". s0(200초)는 baseline 이지만 페달을 밟는
+  #     상태일 수 있어 제외한다.
   v2:
-    # baseline / (45s sprint + cool-down) x4
-    expected_segments: 9
-    labels:   [REST,        SPRINT, null,     SPRINT, null,     SPRINT, null,     SPRINT, null]
-    portions: [second_half, all,    all,      all,    all,      all,    all,      all,    all]
-    names:    [baseline,    sprint1,cooldown1,sprint2,cooldown2,sprint3,cooldown3,sprint4,cooldown4]
+    expected_segments: 10
+    labels:   [null,     SPRINT,  null,      SPRINT,  null,      SPRINT,  null,      SPRINT,  null,      null]
+    portions: [all,      all,     all,       all,     all,       all,     all,       all,     all,       all]
+    names:    [baseline, sprint1, cooldown1, sprint2, cooldown2, sprint3, cooldown3, sprint4, cooldown4, rest_end]

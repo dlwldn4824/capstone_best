@@ -56,7 +56,7 @@ def main():
         dur = len(bvp) / bvp.fs / 60.0 if bvp is not None and len(bvp) else 0.0
 
         rows.append({
-            "subject": subj, "session": stype,
+            "subject": subj, "folder": r.get("folder", subj), "session": stype,
             "version": protocol.subject_version(subj, proto),
             "dur_min": round(dur, 1),
             "n_tags": len(tags),

@@ -43,12 +43,18 @@ FACT_DEFS = {
     "HRV_LOW":       ("rmssd", -1, None),
     "EDA_HIGH":      ("mean_tonic_eda", +1, None),
     "SCR_HIGH":      ("peaks_density", +1, None),
+    # 임계 0.020 g 는 실데이터에서 정했다 (합성 데이터 기준 0.05 는 2.5배 높아
+    # 운동 윈도의 40% 밖에 못 잡았다). 실측 판정률:
+    #     0.010 g -> EXERCISE 0.99 / REST 0.28 / STRESS 0.30   (거짓양성 과다)
+    #     0.020 g -> EXERCISE 0.89 / REST 0.07 / STRESS 0.09   <- 채택
+    #     0.030 g -> EXERCISE 0.71 / REST 0.02 / STRESS 0.04   (운동 놓침)
+    # high 와 low 를 같은 값으로 두어 "움직인다/안 움직인다"의 단일 경계로 쓴다.
     "ACTIVITY_HIGH": ("acc_dyn_mean", +1,
-                      {"strategy": "absolute", "high": 0.05, "low": 0.02}),
+                      {"strategy": "absolute", "high": 0.020, "low": 0.020}),
 }
 
 # Day 10 민감도 분석에서 훑을 절대 임계 후보 (g)
-ACTIVITY_ABS_SWEEP = (0.02, 0.035, 0.05, 0.08, 0.12)
+ACTIVITY_ABS_SWEEP = (0.010, 0.015, 0.020, 0.030, 0.050)
 
 FACT_NAMES = list(FACT_DEFS)
 

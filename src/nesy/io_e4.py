@@ -19,6 +19,35 @@ import pandas as pd
 SIGNALS = ("BVP", "EDA", "ACC", "HR", "TEMP")
 
 
+def parse_time(v):
+    """E4 시각 필드 -> epoch seconds.
+
+    실데이터는 '2013-02-20 17:55:19' 같은 날짜 문자열을 쓰고, E4 원본 export 나
+    우리 합성 데이터는 epoch 실수를 쓴다. 둘 다 받는다.
+    (PhysioNet 문서에는 'UTC' 라고만 되어 있어 숫자를 기대했는데 아니었다.
+     날짜 자체는 비식별화 과정에서 옮겨졌으므로 절대 시각은 의미가 없다.
+     우리는 세션 내 상대 시각만 쓰므로 상관없다.)
+    """
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return pd.Timestamp(str(v).strip()).value / 1e9
+
+
+def base_subject(folder_name):
+    """'S11_a' -> 'S11'.
+
+    한 세션이 두 파일 세트로 쪼개진 피험자가 있다 (S11 aerobic, S16 anaerobic,
+    f14 stress). 폴더는 둘이지만 사람은 하나이므로, 피험자 단위 분할에서
+    반드시 같은 그룹으로 묶어야 한다. 안 그러면 같은 사람이 train 과 test 에
+    동시에 들어간다.
+    """
+    name = str(folder_name)
+    if len(name) > 2 and name[-2] == "_" and name[-1].isalpha():
+        return name[:-2]
+    return name
+
+
 @dataclass
 class Signal:
     """등간격 샘플링된 신호 한 개."""
@@ -51,28 +80,46 @@ def read_signal(path: str | Path) -> Signal | None:
     path = Path(path)
     if not path.exists():
         return None
-    raw = pd.read_csv(path, header=None).to_numpy(dtype=float)
-    if raw.shape[0] < 3:
+    # 머리 2행은 문자열일 수 있으므로 따로 읽는다 (BVP 는 수십만 행이라
+    # 전체를 문자열로 읽으면 느리다).
+    head = pd.read_csv(path, header=None, nrows=2, dtype=str)
+    if head.shape[0] < 2:
         return None
-    t0 = float(raw[0, 0])
-    fs = float(raw[1, 0])
-    vals = raw[2:]
+    t0 = parse_time(head.iloc[0, 0])
+    fs = float(head.iloc[1, 0])
+
+    body = pd.read_csv(path, header=None, skiprows=2)
+    if body.empty:
+        return None
+    vals = body.to_numpy(dtype=float)
     if vals.shape[1] == 1:
         vals = vals[:, 0]
     return Signal(path.stem, vals, fs, t0)
 
 
 def read_ibi(path: str | Path) -> pd.DataFrame | None:
-    """E4 가 자체 계산한 IBI. 운동 세션에서 결측이 많아 참고용으로만 쓴다."""
+    """E4 가 자체 계산한 IBI. 참고용이며 feature 계산에는 쓰지 않는다.
+
+    실데이터에서 이 파일은 포맷이 일정하지 않다. 헤더 두 번째 칸이 날짜인
+    세션도 있고 문자열 ' IBI' 인 세션도 있으며, 운동 세션에는 빈 파일도 있다
+    (ANAEROBIC/S01). 우리는 BVP 에서 직접 peak 를 잡으므로 여기서 실패해도
+    파이프라인은 영향을 받지 않는다. 조용히 None 을 돌려준다.
+    """
     path = Path(path)
-    if not path.exists():
+    if not path.exists() or path.stat().st_size == 0:
         return None
-    raw = pd.read_csv(path, header=None)
-    if raw.shape[0] < 2:
+    try:
+        head = pd.read_csv(path, header=None, nrows=1, dtype=str)
+        if head.empty:
+            return None
+        t0 = parse_time(head.iloc[0, 0])
+        body = pd.read_csv(path, header=None, skiprows=1)
+        if body.empty or body.shape[1] < 2:
+            return None
+        arr = body.to_numpy(dtype=float)
+    except (ValueError, pd.errors.EmptyDataError, pd.errors.ParserError):
         return None
-    t0 = float(raw.iloc[0, 0])
-    body = raw.iloc[1:].to_numpy(dtype=float)
-    return pd.DataFrame({"t": t0 + body[:, 0], "ibi": body[:, 1]})
+    return pd.DataFrame({"t": t0 + arr[:, 0], "ibi": arr[:, 1]})
 
 
 def read_tags(path: str | Path) -> np.ndarray:
@@ -81,12 +128,13 @@ def read_tags(path: str | Path) -> np.ndarray:
     if not path.exists():
         return np.array([], dtype=float)
     try:
-        raw = pd.read_csv(path, header=None)
+        raw = pd.read_csv(path, header=None, dtype=str)
     except pd.errors.EmptyDataError:
         return np.array([], dtype=float)
     if raw.empty:
         return np.array([], dtype=float)
-    return np.sort(raw.iloc[:, 0].to_numpy(dtype=float))
+    vals = [parse_time(v) for v in raw.iloc[:, 0] if str(v).strip()]
+    return np.sort(np.asarray(vals, dtype=float))
 
 
 def read_session(session_dir: str | Path) -> dict:
@@ -107,6 +155,9 @@ def discover_sessions(raw_root: str | Path) -> pd.DataFrame:
         if not sdir.is_dir():
             continue
         for sub in sorted(p for p in sdir.iterdir() if p.is_dir()):
-            rows.append({"session_type": stype, "subject": sub.name,
+            rows.append({"session_type": stype,
+                         "subject": base_subject(sub.name),  # 분할 파트 통합
+                         "folder": sub.name,
+                         "part": sub.name[-1] if base_subject(sub.name) != sub.name else "",
                          "path": str(sub)})
     return pd.DataFrame(rows)

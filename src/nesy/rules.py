@@ -62,6 +62,19 @@ RULES = [
                    "이 조건이 운동과 스트레스를 가르는 축이다."),
         citation="Hongn 2025 (stress/rest 13 features); Norman 2026"),
     Rule(
+        name="R3b_stress_no_hrv",
+        produces="STRESS_EVIDENCE", weight=1.0,
+        condition=lambda f: (_c(f, "HR_HIGH") & _c(f, "EDA_HIGH")
+                             & _c(f, "ACTIVITY_LOW")),
+        rationale=("R3 에서 HRV_LOW 조건만 뺀 것. 실데이터에서 손목 PPG 기반 "
+                   "RMSSD 는 스트레스에서 낮아지지 않았다 — 36명 중 18명만 "
+                   "감소했고(정확히 우연 수준) 중앙값 차이는 -0.8 ms 였다. "
+                   "교과서적 '스트레스 -> HRV 감소'가 이 측정 방식(손목 PPG, "
+                   "60초 윈도)에서는 성립하지 않는다. R3 와 나란히 두고 "
+                   "coverage 를 비교해 보고한다. R3 를 조용히 이것으로 "
+                   "바꿔치기하지 않는다."),
+        citation="본 데이터 실측 (outputs/tables/rule_coverage.csv)"),
+    Rule(
         name="R4_stress_electrodermal",
         produces="STRESS_EVIDENCE", weight=0.6,
         condition=lambda f: (_c(f, "SCR_HIGH") & _c(f, "ACTIVITY_LOW")

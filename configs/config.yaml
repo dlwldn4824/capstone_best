@@ -4,7 +4,7 @@
 #         Structured Exercise Sessions" v1.0.1 (Hongn et al., Sci Data 2025)
 # ---------------------------------------------------------------------------
 paths:
-  raw: data/raw/wearable-device-dataset/1.0.1/Wearable_Dataset
+  raw: data/raw/wearable-device-dataset-from-induced-stress-and-structured-exercise-sessions-1.0.1/Wearable_Dataset
   interim: data/interim
   outputs: outputs
   features_csv: outputs/features.csv
