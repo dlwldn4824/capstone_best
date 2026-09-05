@@ -27,8 +27,28 @@ DEVIATION_FEATURES = ["hr_mean", "rmssd", "mean_tonic_eda", "peaks_density"]
 MAD_SCALE = 1.4826   # 정규분포에서 MAD -> 표준편차
 
 
+# 개인 기준을 어느 단위로 잡을 것인가.
+#
+# !! 이 데이터에서 가장 중요한 제약 !!
+#   세 세션(STRESS/AEROBIC/ANAEROBIC)은 서로 다른 날 녹화됐다. 34명 중 27명이
+#   2-3개의 다른 날짜이고 간격은 중앙값 4일, 최대 32일이다. 밴드를 다시
+#   착용했으므로 전극 접촉·피부 상태·실온이 달라진다. 실측한 세션 간
+#   '조용한 상태' 값의 차이는
+#       HR    19.4 bpm  (스트레스 반응 7.7 의 2.5배)
+#       EDA    2.01 uS  (스트레스 반응 0.14 의 14배)
+#   즉 세션을 합쳐 개인 기준을 만들면 그 기준은 생리가 아니라 "어느 날
+#   녹화분인가" 를 재게 된다. 이탈 점수가 상태가 아니라 세션을 맞히게 된다.
+#
+#   scope="subject_session" 이 기본값인 이유다. 같은 착용 구간 안에서만
+#   비교한다. 대신 "며칠 전 대비" 는 이 데이터로 볼 수 없다.
+SCOPE_KEYS = {
+    "subject_session": ["subject_id", "session_id"],   # 기본. 같은 착용 구간
+    "subject": ["subject_id"],                         # 세션 혼합. 비교용
+}
+
+
 def baseline_windows(df, mode="low_activity", pct=0.4, min_n=5,
-                     activity_col="acc_dyn_mean"):
+                     activity_col="acc_dyn_mean", scope="subject_session"):
     """개인 baseline 을 만들 참조 윈도 선택.
 
     mode
@@ -40,8 +60,9 @@ def baseline_windows(df, mode="low_activity", pct=0.4, min_n=5,
     """
     n = len(df)
     m = np.zeros(n, dtype=bool)
+    keys = SCOPE_KEYS[scope]
 
-    for _, idx in df.groupby("subject_id").indices.items():
+    for _, idx in df.groupby(keys).indices.items():
         idx = np.asarray(idx)
         if mode == "labeled_rest":
             sel = (df["label"].to_numpy()[idx] == "REST")
@@ -62,14 +83,15 @@ def baseline_windows(df, mode="low_activity", pct=0.4, min_n=5,
     return m
 
 
-def robust_z(df, features=None, ref_mask=None, mode="low_activity"):
-    """피험자별 median/MAD 로 표준화한 robust z. (n, k) DataFrame."""
+def robust_z(df, features=None, ref_mask=None, mode="low_activity",
+             scope="subject_session"):
+    """(피험자, 세션)별 median/MAD 로 표준화한 robust z. (n, k) DataFrame."""
     features = [f for f in (features or DEVIATION_FEATURES) if f in df.columns]
     if ref_mask is None:
-        ref_mask = baseline_windows(df, mode)
+        ref_mask = baseline_windows(df, mode, scope=scope)
 
     out = pd.DataFrame(index=range(len(df)), columns=features, dtype=float)
-    for _, idx in df.groupby("subject_id").indices.items():
+    for _, idx in df.groupby(SCOPE_KEYS[scope]).indices.items():
         idx = np.asarray(idx)
         ref = idx[ref_mask[idx]]
         for f in features:
@@ -87,14 +109,15 @@ def robust_z(df, features=None, ref_mask=None, mode="low_activity"):
     return out
 
 
-def score(df, features=None, mode="low_activity", agg="mean"):
+def score(df, features=None, mode="low_activity", agg="mean",
+          scope="subject_session", ref_mask=None):
     """개인 baseline 이탈 점수 (클수록 평소와 다름).
 
     agg
       mean  채널별 |z| 의 평균. 여러 채널이 함께 움직일 때 커진다. **기본값**
       max   가장 크게 벗어난 채널 하나. 단일 채널 이상에 민감하다.
     """
-    z = robust_z(df, features, mode=mode)
+    z = robust_z(df, features, ref_mask=ref_mask, mode=mode, scope=scope)
     a = z.abs()
     s = a.mean(axis=1) if agg == "mean" else a.max(axis=1)
     return pd.DataFrame({
