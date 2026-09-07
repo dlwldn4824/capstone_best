@@ -1,3 +1,6 @@
+> **Xcode 가 없다면** [`../web/index.html`](../web/index.html) 을 더블클릭하십시오.
+> 같은 판정 코드로 도는 사본이며 Windows 에서도 열립니다.
+
 # ExcuseGauge — watchOS 데모
 
 아침에 손목에서 30초 안에 끝나는 화면. 발표 시연용이다.

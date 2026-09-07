@@ -218,7 +218,15 @@ Nurse는 전부 **근무 중**이고, 사건이 관측일의 39.8%로 전혀 드
 > **진단하지 않습니다.** "감염이 의심됩니다"는 의료기기 영역입니다.
 > 우리는 **설명하지 못한 변화가 있다는 사실**만 알립니다.
 
-데모 앱: [`watch/ExcuseGauge/`](watch/ExcuseGauge/) (watchOS, Xcode 필요)
+**데모**
+
+| | |
+| --- | --- |
+| [`watch/web/index.html`](watch/web/index.html) | **더블클릭하면 열립니다.** Windows 포함 어디서나 |
+| [`watch/ExcuseGauge/`](watch/ExcuseGauge/) | 원본 SwiftUI 앱 (watchOS, Xcode 필요) |
+
+둘은 같은 판정 코드로 돕니다. 웹 사본에는 발표용으로 **판정 과정 패널**이 붙어 있어
+칩을 누르면 계산이 어떻게 바뀌는지 옆에서 같이 보입니다.
 
 ---
 

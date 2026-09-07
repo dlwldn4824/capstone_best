@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>핑계 게이지</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#E8EBEF; --surface:#FFFFFF; --surface2:#F2F4F7;
+  --ink:#131820; --muted:#59636F; --faint:#8B95A1; --line:#D5DAE1;
+  --accent:#1C7A6A; --alert-ink:#B0492F;
+  --watch-body:#22262B; --watch-edge:#565C65; --watch-shadow:rgba(16,20,28,.28);
+  --sans:"IBM Plex Sans KR","Malgun Gothic",-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono","Consolas",ui-monospace,monospace;
+  --zoom:1.6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C0F14; --surface:#151A21; --surface2:#1C222B;
+    --ink:#E2E7ED; --muted:#8B95A2; --faint:#646E7A; --line:#242B34;
+    --accent:#4FBFA8; --alert-ink:#E08268;
+    --watch-body:#15181C; --watch-edge:#3A4149; --watch-shadow:rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C0F14; --surface:#151A21; --surface2:#1C222B;
+  --ink:#E2E7ED; --muted:#8B95A2; --faint:#646E7A; --line:#242B34;
+  --accent:#4FBFA8; --alert-ink:#E08268;
+  --watch-body:#15181C; --watch-edge:#3A4149; --watch-shadow:rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:15px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1140px; margin:0 auto; padding:40px 24px 64px}
+
+header{display:flex; flex-direction:column; gap:10px; margin-bottom:34px}
+.eyebrow{
+  font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--accent); font-weight:500;
+}
+h1{
+  margin:0; font-size:clamp(28px,4.4vw,42px); font-weight:700;
+  letter-spacing:-.025em; line-height:1.15; text-wrap:balance;
+}
+.lede{margin:0; max-width:60ch; color:var(--muted); font-size:16px}
+
+.cols{display:grid; grid-template-columns:minmax(0,auto) minmax(0,1fr); gap:44px; align-items:start}
+@media (max-width:900px){.cols{grid-template-columns:1fr; gap:34px; justify-items:center}}
+
+.stage{position:sticky; top:32px; display:flex; flex-direction:column; gap:16px; align-items:center;
+  max-width:100%}
+@media (max-width:900px){.stage{position:static}}
+/* 좁은 화면에서 시계가 잘려 가로 스크롤이 생기지 않게 기본 배율을 낮춘다 */
+@media (max-width:760px){:root{--zoom:1.25}}
+@media (max-width:520px){:root{--zoom:1.05}}
+
+.watch-scale{width:calc(258px * var(--zoom)); height:calc(292px * var(--zoom)); position:relative}
+.watch{
+  position:absolute; top:0; left:0; transform:scale(var(--zoom)); transform-origin:top left;
+  width:258px; height:292px;
+}
+.case{
+  position:absolute; top:0; left:0; width:248px; height:292px; border-radius:60px;
+  background:linear-gradient(150deg,var(--watch-edge),var(--watch-body) 34%,var(--watch-body) 72%,var(--watch-edge));
+  box-shadow:0 18px 44px var(--watch-shadow), 0 2px 0 rgba(255,255,255,.07) inset;
+}
+.crown,.sidebtn{position:absolute; left:245px; background:linear-gradient(90deg,var(--watch-edge),var(--watch-body))}
+.crown{top:88px; width:9px; height:34px; border-radius:3px; cursor:ns-resize; touch-action:none}
+.crown::after{content:""; position:absolute; top:2px; left:1px; right:1px; bottom:2px; border-radius:2px;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.18) 0 1px,transparent 1px 3px)}
+.sidebtn{top:136px; width:6px; height:26px; border-radius:2px; opacity:.75}
+.screen{
+  position:absolute; top:22px; left:20px; width:208px; height:248px;
+  border-radius:38px; background:#000; overflow:hidden;
+  box-shadow:0 0 0 3px #05070a;
+}
+.scroll{height:100%; overflow-y:auto; scrollbar-width:none; padding:8px 10px 14px}
+.scroll::-webkit-scrollbar{display:none}
+.navtitle{
+  position:sticky; top:0; z-index:3; margin:-8px -10px 6px; padding:6px 10px 5px;
+  background:linear-gradient(#000 76%,rgba(0,0,0,0));
+  font-size:13px; font-weight:600; color:#fff;
+}
+.screen, .screen *{color:#fff}
+.datebtn{
+  display:flex; align-items:center; gap:4px; background:none; border:0; padding:0 0 2px;
+  font:inherit; font-size:12px; color:rgba(255,255,255,.62); cursor:pointer; width:100%;
+}
+.datebtn:hover{color:rgba(255,255,255,.92)}
+.cycle{font-size:10px; opacity:.55}
+.label12{font-size:12px; color:rgba(255,255,255,.62); margin:12px 0 7px}
+.gauge{display:flex; height:22px; border-radius:5px; overflow:hidden; background:#2b2b2b}
+.gauge .seg{flex:0 0 auto; transition:width .35s cubic-bezier(.4,0,.2,1)}
+.gauge .rest{flex:1 1 auto}
+.legend{display:flex; flex-direction:column; gap:4px; margin-top:7px}
+.leg{display:flex; align-items:center; gap:4px; font-size:11px; color:rgba(255,255,255,.62)}
+.sw{width:7px; height:7px; border-radius:1.5px; flex:none}
+.card{background:rgba(255,255,255,.06); border-radius:9px; padding:10px; margin-top:12px}
+.card.verdict{border-radius:10px; padding:11px}
+.card.alerting{box-shadow:0 0 0 1px #E08268 inset}
+.k10{font-size:10px; font-weight:500; color:rgba(255,255,255,.42); margin-bottom:3px}
+.k13{font-size:13px; color:rgba(255,255,255,.62)}
+.ask{font-size:13px; font-weight:600; margin:14px 0 7px}
+.chip{
+  display:flex; align-items:center; gap:6px; width:100%; text-align:left;
+  padding:9px 11px; margin-bottom:6px; border-radius:9px; cursor:pointer;
+  background:rgba(255,255,255,.06); border:1.5px solid transparent;
+  font:inherit; font-size:14px; color:#fff;
+}
+.chip[aria-pressed="true"]{background:rgba(255,255,255,.14); font-weight:600}
+.chip .dot{width:8px; height:8px; border-radius:50%; opacity:.35; flex:none}
+.chip[aria-pressed="true"] .dot{opacity:1}
+.clearbtn{background:none; border:0; padding:2px 0 0; font:inherit; font-size:12px;
+  color:rgba(255,255,255,.42); cursor:pointer}
+.clearbtn:hover{color:rgba(255,255,255,.72)}
+.headline{font-size:15px; font-weight:700; margin:0 0 5px}
+.headline.alerting{color:#E08268}
+.detail{font-size:13px; color:rgba(255,255,255,.62); margin:0}
+.foot{font-size:10px; color:rgba(255,255,255,.42); margin:7px 0 0}
+.week{display:flex; align-items:flex-end; gap:3px; margin-top:6px}
+.wcol{flex:1; display:flex; flex-direction:column; gap:3px; align-items:center}
+.wbar{width:100%; height:34px; border-radius:2px; background:rgba(255,255,255,.10);
+  display:flex; align-items:flex-end; overflow:hidden}
+.wfill{width:100%; border-radius:2px; background:#6B6B6B; transition:height .35s}
+.wfill.hot{background:#E08268}
+.wlab{font-size:8px; color:rgba(255,255,255,.42)}
+.wlab.today{color:#fff}
+
+.zoom{display:flex; gap:2px; padding:3px; background:var(--surface2);
+  border:1px solid var(--line); border-radius:9px}
+.zoom button{
+  font:inherit; font-family:var(--mono); font-size:12px; padding:5px 12px;
+  border:0; border-radius:6px; background:none; color:var(--muted); cursor:pointer;
+}
+.zoom button[aria-pressed="true"]{background:var(--surface); color:var(--ink); font-weight:600;
+  box-shadow:0 1px 2px rgba(0,0,0,.10)}
+.hint{margin:0; font-size:12px; color:var(--faint); text-align:center; max-width:34ch}
+
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:22px 24px; margin-bottom:20px}
+.panel h2{margin:0 0 3px; font-size:17px; font-weight:600; letter-spacing:-.01em}
+.panel .sub{margin:0 0 18px; font-size:13px; color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table.trace{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:13px;
+  font-variant-numeric:tabular-nums}
+table.trace th{
+  text-align:right; font-weight:500; font-size:10px; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--faint); padding:0 0 8px 12px; border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+table.trace th:first-child{text-align:left; padding-left:0}
+table.trace td{padding:9px 0 9px 12px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap}
+table.trace td:first-child{text-align:left; padding-left:0}
+.cellname{display:flex; align-items:center; gap:7px; font-family:var(--sans)}
+.dim{color:var(--faint)}
+.win{font-weight:600}
+.eq{color:var(--muted); font-family:var(--sans); font-size:12px}
+.rowsum td{border-top:2px solid var(--line); border-bottom:0; padding-top:11px; font-weight:600}
+.gate{display:flex; flex-direction:column; gap:9px; margin-top:18px; font-family:var(--mono); font-size:13px}
+.gaterow{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
+.gname{color:var(--muted); font-family:var(--sans); min-width:5.5em}
+.tag{font-size:10px; font-weight:600; letter-spacing:.07em; padding:2px 7px; border-radius:4px;
+  font-family:var(--mono)}
+.tag.yes{background:color-mix(in srgb,var(--accent) 16%,transparent); color:var(--accent)}
+.tag.no{background:var(--surface2); color:var(--faint)}
+.gatetext{color:var(--muted); font-family:var(--sans); font-size:13px}
+.note{margin:0; font-size:13.5px; color:var(--muted)}
+.note b{color:var(--ink); font-weight:600}
+.callout{border-left:3px solid var(--accent); padding:2px 0 2px 14px; margin:16px 0 0}
+.callout.warn{border-left-color:var(--alert-ink)}
+.stack{display:flex; flex-direction:column; gap:10px}
+footer{margin-top:34px; padding-top:22px; border-top:1px solid var(--line);
+  font-size:13px; color:var(--muted)}
+code{font-family:var(--mono); font-size:.92em; background:var(--surface2);
+  padding:1px 5px; border-radius:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">watchOS 데모 · 어디서나 열리는 사본</div>
+  <h1>핑계 게이지</h1>
+  <p class="lede">
+    어젯밤 몸이 평소와 달랐던 정도에서 <b>설명되는 몫</b>을 덜어내고, 남은 것만 세는 화면.
+    아래 시계는 실제 SwiftUI 앱과 같은 판정 코드로 돕니다.
+    칩을 눌러보면 오른쪽에 판정 과정이 그대로 따라옵니다.
+  </p>
+</header>
+
+<div class="cols">
+  <div class="stage">
+    <div class="watch-scale">
+      <div class="watch">
+        <div class="case"></div>
+        <div class="crown" id="crown" title="아래위로 끌면 화면이 스크롤됩니다"></div>
+        <div class="sidebtn"></div>
+        <div class="screen">
+          <div class="scroll" id="scroll">
+            <div class="navtitle">어젯밤</div>
+
+            <button class="datebtn" id="datebtn" type="button">
+              <span id="date">10월 14일 화</span>
+              <span class="cycle">&#8635;</span>
+            </button>
+
+            <div class="label12">평소와 다른 정도</div>
+            <div class="gauge" id="gauge"></div>
+            <div class="legend" id="legend"></div>
+
+            <div class="card">
+              <div class="k10">센서가 본 것</div>
+              <div class="k13" id="sensornote"></div>
+            </div>
+
+            <div class="ask">어제 이런 일 있었나요?</div>
+            <div id="chips"></div>
+            <button class="clearbtn" id="clear" type="button">해당 없음</button>
+
+            <div class="card verdict" id="verdictcard">
+              <p class="headline" id="headline"></p>
+              <p class="detail" id="detail"></p>
+              <p class="foot" id="footnote"></p>
+            </div>
+
+            <div class="k10" style="margin-top:14px">설명 안 된 밤</div>
+            <div class="week" id="week"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zoom" role="group" aria-label="화면 확대">
+      <button type="button" data-z="1.2">100%</button>
+      <button type="button" data-z="1.6" aria-pressed="true">150%</button>
+      <button type="button" data-z="2.1">200%</button>
+    </div>
+    <p class="hint">날짜를 누르면 시나리오가 바뀌고, 크라운을 끌면 화면이 넘어갑니다.</p>
+  </div>
+
+  <div>
+    <section class="panel">
+      <h2>판정 과정</h2>
+      <p class="sub">
+        시계가 지금 이 표를 보고 그리고 있습니다. <code>Engine.evaluate()</code> 를 한 줄씩 펼친 것입니다.
+      </p>
+      <div class="tablewrap">
+        <table class="trace">
+          <thead>
+            <tr><th>원인</th><th>센서</th><th>내가 확인</th><th>채택</th><th>실제 반영</th></tr>
+          </thead>
+          <tbody id="tracebody"></tbody>
+        </table>
+      </div>
+
+      <div class="gate" id="gate"></div>
+
+      <div class="callout">
+        <p class="note">
+          <b>왜 더하지 않고 큰 쪽을 고르나.</b> 센서가 이미 운동을 46만큼 설명했는데
+          사용자가 "운동했어요"를 눌렀다고 92가 되면 안 됩니다.
+          같은 원인을 두 번 세는 것이기 때문입니다.
+        </p>
+      </div>
+      <div class="callout">
+        <p class="note">
+          <b>왜 남은 부분이 빨강이 아니라 회색인가.</b> 설명 안 된 것은 나쁜 것이 아니라
+          <b>모르는 것</b>입니다. 사흘이 쌓였을 때만 색이 바뀝니다.
+        </p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>이 데모가 말하는 것과 말하지 않는 것</h2>
+      <div class="stack">
+        <p class="note">
+          <b>말합니다.</b> 판정 구조가 어떻게 도는지, 사용자 한 번의 입력이 어떻게 경보를
+          지우는지. 시계 안의 계산은 실제 앱 코드와 같습니다.
+        </p>
+        <p class="note">
+          <b>말하지 않습니다.</b> 세 시나리오의 수치는 화면 설명용 예시입니다.
+          실제 검증 결과는 저장소 문서에 따로 있고, 여기 숫자와 다릅니다.
+        </p>
+      </div>
+      <div class="callout warn">
+        <p class="note">
+          <b>사흘 누적 부분은 아직 검증되지 않았습니다.</b> 구현과 단위 테스트는 있지만
+          공개 데이터로는 우연 수준을 넘지 못했습니다. 야간 연속 착용 데이터가 있어야
+          답이 나옵니다. 화면이 도는 것과 효과가 있다는 것은 다른 이야기입니다.
+        </p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>진단하지 않습니다</h2>
+      <p class="note">
+        "감염이 의심됩니다"는 의료기기 영역입니다. 이 화면은
+        <b>설명하지 못한 변화가 며칠 이어졌다는 사실</b>만 전달하고 판단은 사람에게 남깁니다.
+        문구도 전부 그 선을 지키도록 썼습니다.
+      </p>
+    </section>
+  </div>
+</div>
+
+<footer>
+  원본은 <code>watch/ExcuseGauge/</code> 의 SwiftUI 앱입니다.
+  이 사본은 Xcode 없이 열어보려고 같은 로직을 옮긴 것이며, 글꼴과 스크롤 감각만 근사치입니다.
+</footer>
+
+</div>
+
+<script>
+var CAUSES = ["exercise", "stress", "alcohol", "sleep"];
+var META = {
+  exercise: { label: "운동했어요",  short: "운동", tint: "#45B8A3" },
+  stress:   { label: "긴장했어요",  short: "긴장", tint: "#A387DE" },
+  alcohol:  { label: "술 마셨어요", short: "술",   tint: "#DBA354" },
+  sleep:    { label: "늦게 잤어요", short: "늦잠", tint: "#6B9ED4" }
+};
+var GREY = "#6B6B6B", ALERT = "#E08268";
+
+var NIGHTS = [
+  { title: "운동한 날", date: "10월 14일 화", deviation: 82,
+    sensorNote: "가속도가 평소의 4.1배였어요",
+    auto: { exercise: 46 },
+    maxShare: { exercise: 68, stress: 6, alcohol: 14, sleep: 12 },
+    history: [12, 18, 9, 15, 22, 14] },
+  { title: "발표 있던 날", date: "10월 21일 화", deviation: 74,
+    sensorNote: "피부전도가 잠든 뒤에도 높았어요",
+    auto: { stress: 38 },
+    maxShare: { exercise: 8, stress: 62, alcohol: 12, sleep: 20 },
+    history: [16, 11, 20, 13, 17, 12] },
+  { title: "짚이는 게 없는 날", date: "11월 3일 월", deviation: 88,
+    sensorNote: "센서에서는 짚이는 게 없었어요",
+    auto: {},
+    maxShare: { exercise: 5, stress: 8, alcohol: 6, sleep: 7 },
+    history: [14, 12, 18, 71, 78, 83] }
+];
+
+function streaking(night) {
+  return night.history.slice(-2).every(function (v) { return v >= 60; });
+}
+
+function evaluate(night, picked) {
+  var shares = [], trace = [], used = 0;
+  CAUSES.forEach(function (c) {
+    var sensor = night.auto[c] || 0;
+    var confirmed = picked.has(c) ? (night.maxShare[c] || 0) : 0;
+    var raw = Math.max(sensor, confirmed);
+    var row = { cause: c, sensor: sensor, confirmed: confirmed, raw: raw,
+                capped: 0, clipped: false, used: false };
+    if (raw > 0) {
+      var capped = Math.min(raw, night.deviation - used);
+      if (capped > 0) {
+        row.capped = capped;
+        row.clipped = capped < raw;
+        row.used = true;
+        used += capped;
+        shares.push({ cause: c, amount: capped });
+      }
+    }
+    trace.push(row);
+  });
+  var rest = Math.max(0, Math.round((night.deviation - used) / night.deviation * 100));
+  var streak = streaking(night);
+  return { shares: shares, trace: trace, used: used, restPercent: rest,
+           streaking: streak, alerting: streak && rest >= 60 };
+}
+
+function headline(v) {
+  if (v.restPercent <= 30) return "그럴 만해요";
+  if (v.alerting) return "사흘째 설명되지 않았어요";
+  return v.restPercent + "%가 남았어요";
+}
+function detailText(v) {
+  if (v.restPercent <= 30) return "변화의 " + (100 - v.restPercent) + "%가 설명됐어요. 오늘은 넘어갈게요.";
+  if (v.alerting) return "컨디션을 한 번 확인해 보시는 게 좋겠어요.";
+  return "아직 말을 걸 정도는 아니에요. 며칠 더 볼게요.";
+}
+function footnoteText(v) {
+  if (v.alerting) return "어떤 진단도 하지 않아요. 설명하지 못했다는 사실만 알려드려요.";
+  if (v.restPercent <= 30) return "설명된 밤은 쌓이지 않아요.";
+  return "사흘 연속 쌓일 때만 알려드려요.";
+}
+
+var idx = 0, picked = new Set();
+function $(id) { return document.getElementById(id); }
+function el(tag, cls, txt) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt !== undefined) n.textContent = txt;
+  return n;
+}
+function pct(amount, deviation) { return Math.round(amount / deviation * 100); }
+
+function render() {
+  var night = NIGHTS[idx];
+  var v = evaluate(night, picked);
+  var restColor = v.alerting ? ALERT : GREY;
+
+  $("date").textContent = night.date;
+  $("sensornote").textContent = night.sensorNote;
+
+  var g = $("gauge");
+  g.textContent = "";
+  v.shares.forEach(function (s) {
+    var seg = el("div", "seg");
+    seg.style.background = META[s.cause].tint;
+    seg.style.width = (s.amount / night.deviation * 100) + "%";
+    g.appendChild(seg);
+  });
+  var restBar = el("div", "rest");
+  restBar.style.background = restColor;
+  g.appendChild(restBar);
+
+  var lg = $("legend");
+  lg.textContent = "";
+  v.shares.forEach(function (s) {
+    var row = el("div", "leg");
+    var sw = el("span", "sw");
+    sw.style.background = META[s.cause].tint;
+    row.appendChild(sw);
+    row.appendChild(el("span", null, META[s.cause].short + " " + pct(s.amount, night.deviation) + "%"));
+    lg.appendChild(row);
+  });
+  var rrow = el("div", "leg");
+  var rsw = el("span", "sw");
+  rsw.style.background = restColor;
+  rrow.appendChild(rsw);
+  rrow.appendChild(el("span", null, "설명 안 됨 " + v.restPercent + "%"));
+  lg.appendChild(rrow);
+
+  var h = $("headline");
+  h.textContent = headline(v);
+  h.className = "headline" + (v.alerting ? " alerting" : "");
+  $("detail").textContent = detailText(v);
+  $("footnote").textContent = footnoteText(v);
+  $("verdictcard").className = "card verdict" + (v.alerting ? " alerting" : "");
+
+  var w = $("week");
+  w.textContent = "";
+  var series = night.history.slice(0, 6).concat([v.restPercent]);
+  series.forEach(function (val, i) {
+    var col = el("div", "wcol");
+    var bar = el("div", "wbar");
+    var fill = el("div", "wfill" + (val >= 60 ? " hot" : ""));
+    fill.style.height = Math.max(2, 34 * val / 100) + "px";
+    bar.appendChild(fill);
+    col.appendChild(bar);
+    var isToday = i === series.length - 1;
+    col.appendChild(el("div", "wlab" + (isToday ? " today" : ""), isToday ? "오늘" : "·"));
+    w.appendChild(col);
+  });
+
+  renderTrace(night, v);
+}
+
+function renderTrace(night, v) {
+  var tb = $("tracebody");
+  tb.textContent = "";
+  v.trace.forEach(function (r) {
+    var tr = el("tr");
+
+    var td0 = el("td");
+    var name = el("div", "cellname");
+    var dot = el("span", "sw");
+    dot.style.background = META[r.cause].tint;
+    dot.style.borderRadius = "50%";
+    if (!r.used) dot.style.opacity = ".3";
+    name.appendChild(dot);
+    name.appendChild(el("span", r.used ? null : "dim", META[r.cause].short));
+    td0.appendChild(name);
+    tr.appendChild(td0);
+
+    tr.appendChild(el("td", r.sensor ? null : "dim", String(r.sensor)));
+    tr.appendChild(el("td", r.confirmed ? "win" : "dim", String(r.confirmed)));
+    tr.appendChild(el("td", r.raw ? null : "dim", String(r.raw)));
+
+    var last = el("td");
+    if (!r.used) { last.className = "dim"; last.textContent = "—"; }
+    else if (r.clipped) { last.textContent = r.capped + " (상한)"; }
+    else { last.textContent = String(r.capped); }
+    tr.appendChild(last);
+
+    tb.appendChild(tr);
+  });
+
+  var sum = el("tr", "rowsum");
+  sum.appendChild(el("td", null, "합계"));
+  var spacer = el("td", "eq", "설명된 몫 / 전체 이탈");
+  spacer.colSpan = 3;
+  sum.appendChild(spacer);
+  sum.appendChild(el("td", null, v.used + " / " + night.deviation));
+  tb.appendChild(sum);
+
+  var gate = $("gate");
+  gate.textContent = "";
+  var restPass = v.restPercent >= 60;
+  gate.appendChild(gateRow("남은 비율", v.restPercent + "%", restPass,
+    restPass ? "60% 이상" : "60% 미만"));
+  gate.appendChild(gateRow("직전 이틀", night.history.slice(-2).join(", "), v.streaking,
+    v.streaking ? "둘 다 60 이상 - 연속" : "연속 아님"));
+  gate.appendChild(gateRow("경보", v.alerting ? "울림" : "안 울림", v.alerting,
+    v.alerting ? "두 조건 모두 통과" : "두 조건이 다 맞아야 울린다"));
+}
+
+function gateRow(name, value, ok, why) {
+  var row = el("div", "gaterow");
+  row.appendChild(el("span", "gname", name));
+  row.appendChild(el("span", "win", value));
+  row.appendChild(el("span", "tag " + (ok ? "yes" : "no"), ok ? "통과" : "미통과"));
+  row.appendChild(el("span", "gatetext", why));
+  return row;
+}
+
+CAUSES.forEach(function (c) {
+  var b = el("button", "chip");
+  b.type = "button";
+  b.setAttribute("aria-pressed", "false");
+  var dot = el("span", "dot");
+  dot.style.background = META[c].tint;
+  b.appendChild(dot);
+  b.appendChild(el("span", null, META[c].label));
+  b.addEventListener("click", function () {
+    if (picked.has(c)) { picked.delete(c); } else { picked.add(c); }
+    b.setAttribute("aria-pressed", picked.has(c) ? "true" : "false");
+    render();
+  });
+  $("chips").appendChild(b);
+});
+
+function resetChips() {
+  picked.clear();
+  var list = $("chips").querySelectorAll(".chip");
+  for (var i = 0; i < list.length; i++) list[i].setAttribute("aria-pressed", "false");
+}
+
+$("clear").addEventListener("click", function () { resetChips(); render(); });
+$("datebtn").addEventListener("click", function () {
+  idx = (idx + 1) % NIGHTS.length;
+  resetChips();
+  $("scroll").scrollTop = 0;
+  render();
+});
+
+(function () {
+  var crown = $("crown"), sc = $("scroll"), dragging = false, lastY = 0;
+  crown.addEventListener("pointerdown", function (e) {
+    dragging = true; lastY = e.clientY;
+    crown.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  crown.addEventListener("pointermove", function (e) {
+    if (!dragging) return;
+    sc.scrollTop += (e.clientY - lastY) * 2.2;
+    lastY = e.clientY;
+  });
+  crown.addEventListener("pointerup", function () { dragging = false; });
+  crown.addEventListener("pointercancel", function () { dragging = false; });
+})();
+
+var zbtns = document.querySelectorAll(".zoom button");
+for (var i = 0; i < zbtns.length; i++) {
+  zbtns[i].addEventListener("click", function (e) {
+    for (var j = 0; j < zbtns.length; j++) zbtns[j].setAttribute("aria-pressed", "false");
+    e.currentTarget.setAttribute("aria-pressed", "true");
+    document.documentElement.style.setProperty("--zoom", e.currentTarget.dataset.z);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
