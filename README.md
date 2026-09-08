@@ -509,8 +509,7 @@ python scripts/07_nesy.py
 
 | 다음 단계라면 | |
 | --- | --- |
-| [`docs/PPT_REVIEW.md`](docs/PPT_REVIEW.md) | **발표 자료 점검** — 무엇을 고치고 무엇을 더할까 |
-| [`docs/PPT_CONTENT.md`](docs/PPT_CONTENT.md) | **발표 원고** — 슬라이드에 그대로 올릴 글 (+ `docs/발표보강안.pptx`) |
+| [`docs/PPT_REVIEW.md`](docs/PPT_REVIEW.md) | **발표 자료** — 무엇을 고칠지와 슬라이드 원고 (+ `docs/발표보강안.pptx` 19장) |
 | [`docs/RESEARCH_REVIEW.md`](docs/RESEARCH_REVIEW.md) | 심사에서 나올 질문과 대응 |
 | [`docs/LITERATURE_VERIFICATION.md`](docs/LITERATURE_VERIFICATION.md) | 인용 검증 (**Li 2026은 보류**) |
 | [`docs/EXPERIMENT_PROTOCOL.md`](docs/EXPERIMENT_PROTOCOL.md) | 자체 측정 절차 |
