@@ -283,7 +283,7 @@ def build_day_table(day, night, min_night_min=180, z_thresh=2.0, ceiling=None,
 CAUSES = ("exercise", "sleep_debt")
 
 
-def fit_cause_ceiling(table, train_mask=None, q=0.95, min_n=20):
+def fit_cause_ceiling(table, train_mask=None, q=0.95, min_n=20, causes=CAUSES):
     """원인별 '이 설명으로 감당되는 밤 심박 z' 의 상한을 train 에서만 정한다.
 
     deviation.fit_cause_ceiling 과 같은 생각이다. 운동한 다음 날에도 아플 수
@@ -295,35 +295,59 @@ def fit_cause_ceiling(table, train_mask=None, q=0.95, min_n=20):
     if train_mask is not None:
         ok &= np.asarray(train_mask, dtype=bool)
     out = {}
-    for cause in CAUSES:
+    for cause in causes:
         sel = ok & table[cause].to_numpy(dtype=bool)
         out[cause] = float(np.quantile(z[sel], q)) if sel.sum() >= min_n else None
     return out
 
 
-def apply_explanation(table, z_thresh=2.0, ceiling=None):
-    """이탈 판정과 설명을 (다시) 붙인다. 상한을 바꿔 재판정할 때도 쓴다."""
+def apply_explanation(table, z_thresh=2.0, ceiling=None, causes=CAUSES):
+    """이탈 판정과 설명을 (다시) 붙인다. 상한을 바꿔 재판정할 때도 쓴다.
+
+    causes  설명으로 인정할 원인 (표에 같은 이름의 bool 열이 있어야 한다).
+            앞에 있는 원인이 explained_by 에 먼저 적힌다.
+            수면 부족은 감염의 **결과**일 수도 있어서 (아파서 잠을 설친다)
+            빼고 비교할 수 있게 열어둔다. PMData 는 alcohol·stress 를 더한다.
+    """
     d = table.copy()
     z = d["night_z"].to_numpy(dtype=float)
     deviated = d["valid"].to_numpy(dtype=bool) & (z >= z_thresh)   # NaN 은 False
     ceiling = ceiling or {}
-    by = {}
-    for cause in CAUSES:
-        has = d[cause].to_numpy(dtype=bool)
+    explained = np.zeros(len(d), dtype=bool)
+    explained_by = np.full(len(d), "", dtype=object)
+    for cause in causes:
+        has = d[cause].fillna(False).to_numpy(dtype=bool)
         cap = ceiling.get(cause)
         if cap is not None and np.isfinite(cap):
             has = has & (z <= cap)
-        by[cause] = has
-    explained = by["exercise"] | by["sleep_debt"]
+        explained_by[deviated & has & ~explained] = cause
+        explained |= has
 
     d["deviated"] = deviated
-    d["explained_by"] = np.where(~deviated, "",
-                         np.where(by["exercise"], "exercise",
-                         np.where(by["sleep_debt"], "sleep_debt", "")))
+    d["explained_by"] = np.where(deviated, explained_by, "")
     d["carried_frac"] = (deviated & ~explained).astype(float)
     d["carried_raw"] = deviated.astype(float)
     d["held"] = deviated & explained
     return d
+
+
+def crossfit_explanation(table, z_thresh=2.0, causes=CAUSES, n_folds=5, seed=0):
+    """사람 단위 k-fold: 설명 상한은 train 사람에서 정하고 test 사람에게 적용한다.
+
+    각 fold 의 test 사람을 모두 이어붙여 돌려준다 — 사람 수가 적은 데이터에서
+    train/test 한 번 나누기보다 평가할 사람이 많이 남는다.
+    """
+    subj = np.array(sorted(table["subject_id"].unique()))
+    rng = np.random.default_rng(seed)
+    rng.shuffle(subj)
+    parts = []
+    for f in range(n_folds):
+        te = set(subj[f::n_folds])
+        trm = ~table["subject_id"].isin(te).to_numpy()
+        cap = fit_cause_ceiling(table, train_mask=trm, causes=causes)
+        parts.append(apply_explanation(table[~trm], z_thresh=z_thresh,
+                                       ceiling=cap, causes=causes))
+    return pd.concat(parts).sort_values(["subject_id", "day"]).reset_index(drop=True)
 
 
 def random_filter(day_df, n_drop_by_subject, seed=0, col="carried_raw"):
