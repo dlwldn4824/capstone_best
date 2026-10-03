@@ -145,3 +145,18 @@ def test_chance_baseline_detects_real_alignment():
     ev = {("A", pd.Timestamp(days[i])) for i in range(60) if i % 20 == 2}
     c = P.chance_baseline(d, ev, n_perm=500, match_before=1, match_after=1)
     assert c["p_detection"] < 0.05               # 우연으로는 안 나온다
+
+
+def test_hold_day_neither_breaks_nor_extends_the_run():
+    """설명된 이탈일(hold)은 연속을 끊지도 잇지도 않는다."""
+    d = mkday(["2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04"],
+              [0.9, 0.0, 0.9, 0.9])
+    d["held"] = [False, True, False, False]
+    # hold 없으면 2일에 끊겨 3·4일 = 2일 연속뿐
+    assert P.alerts(d, 0.5, k=3)["alert"].sum() == 0
+    # hold 면 1·3·4일이 이어져 4일에 3일 연속
+    out = P.alerts(d, 0.5, k=3, hold_col="held")
+    assert out["alert"].tolist() == [False, False, False, True]
+    assert out["run_len"].tolist() == [1, 0, 2, 3]
+    # hold 날도 관측일 분모에는 남는다
+    assert P.evaluate(out)["observed_days"] == 4
