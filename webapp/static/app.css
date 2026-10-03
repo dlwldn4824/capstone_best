@@ -1,0 +1,57 @@
+:root{
+  --ground:#F2F4F3; --surface:#FFFFFF; --surface2:#E9EEEC; --line:#DDE3E0;
+  --ink:#17201C; --ink2:#3C4742; --muted:#56615C;
+  --calm:#0F6E64; --calm-soft:#E2EFEB; --calm-ink:#1F443C;
+  --left:#B8691A; --left-soft:#FAEFE1; --left-ink:#5E3407;
+  --alert:#A3341F; --alert-soft:#FBE7E2; --alert-ink:#6E1F11;
+  --exp:#5B48A0; --exp-soft:#EEEAF8;
+  --btn:#17201C; --btn-ink:#FFFFFF;
+  --sans:"IBM Plex Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Consolas",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1312; --surface:#171E1C; --surface2:#202927; --line:#2A3431;
+    --ink:#E6ECE9; --ink2:#C2CCC8; --muted:#94A19C;
+    --calm:#4DB8A6; --calm-soft:#16302B; --calm-ink:#BFE6DE;
+    --left:#E09A4F; --left-soft:#33240F; --left-ink:#F5D6B0;
+    --alert:#E77A63; --alert-soft:#3A1A13; --alert-ink:#F8CDC3;
+    --exp:#A897E6; --exp-soft:#251F3B;
+    --btn:#E6ECE9; --btn-ink:#0E1312;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1312; --surface:#171E1C; --surface2:#202927; --line:#2A3431;
+  --ink:#E6ECE9; --ink2:#C2CCC8; --muted:#94A19C;
+  --calm:#4DB8A6; --calm-soft:#16302B; --calm-ink:#BFE6DE;
+  --left:#E09A4F; --left-soft:#33240F; --left-ink:#F5D6B0;
+  --alert:#E77A63; --alert-soft:#3A1A13; --alert-ink:#F8CDC3;
+  --exp:#A897E6; --exp-soft:#251F3B;
+  --btn:#E6ECE9; --btn-ink:#0E1312;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ground); color:var(--ink); font-family:var(--sans); font-size:15px; line-height:1.55;
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent}
+button,input{font:inherit; color:inherit}
+button{cursor:pointer}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- 팝업 알람 (폰·워치 공통) ---------- */
+.alarm{position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; padding:20px;
+  background:rgba(8,12,11,.55); opacity:0; transition:opacity .18s}
+.alarm.on{opacity:1}
+.alarm-card{width:100%; max-width:380px; border-radius:24px; padding:24px 20px 18px; display:flex; flex-direction:column; gap:10px;
+  background:var(--surface); color:var(--ink); box-shadow:0 20px 50px rgba(0,0,0,.35); transform:translateY(12px); transition:transform .18s}
+.alarm.on .alarm-card{transform:none}
+.alarm-icon{width:44px; height:44px; border-radius:14px; display:grid; place-items:center; background:var(--left-soft); color:var(--left-ink)}
+.alarm-icon svg{width:24px; height:24px}
+.alarm-alert .alarm-icon{background:var(--alert-soft); color:var(--alert-ink)}
+.alarm-title{margin:0; font-size:21px; font-weight:700; letter-spacing:-.01em; line-height:1.3}
+.alarm-body{margin:0; font-size:15px; line-height:1.6; color:var(--ink2)}
+.alarm-actions{display:flex; gap:8px; margin-top:6px}
+.alarm-actions button{flex:1 1 0; min-height:50px; border-radius:14px; border:1.5px solid var(--line); background:transparent;
+  font-size:16px; font-weight:600}
+.alarm-actions .alarm-go{background:var(--btn); color:var(--btn-ink); border-color:var(--btn)}
+
