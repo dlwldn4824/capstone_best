@@ -36,6 +36,7 @@ LOCK = threading.Lock()
 CON = None
 SUBSCRIBERS: list[queue.Queue] = []
 LIVE = {"bpm": None, "rr": None, "at": None, "device": None}
+_LIVE_SIG = None
 PRESENCE = {"phone": 0, "watch": 0}                 # 지금 붙어 있는 화면 수
 
 ROUTES = {"/": "phone.html", "/watch": "watch.html", "/sw.js": "sw.js"}
@@ -70,6 +71,17 @@ def push_state():
 
 def push_presence():
     broadcast("presence", dict(PRESENCE))
+
+
+def live_changed(st):
+    """실시간 심박이 판정을 바꿀 때만 상태를 다시 민다."""
+    global _LIVE_SIG
+    change = st.get("change") or {}
+    sig = (st.get("status"), (st.get("baseline") or {}).get("mode"), change.get("kind"))
+    if sig == _LIVE_SIG:
+        return False
+    _LIVE_SIG = sig
+    return True
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -151,6 +163,8 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError):
             return self._json({"error": "JSON 이 아니다"}, 400)
         day = b.get("day") or E.today()
+        imported = None
+        live_state = None
         try:
             with LOCK:
                 if path == "/api/night":
@@ -158,9 +172,11 @@ class Handler(BaseHTTPRequestHandler):
                                 b.get("very_active_min"), b.get("asleep_min"),
                                 b.get("source", "manual"))
                 elif path == "/api/context":
-                    E.put_context(CON, day, **{k: b[k] for k in
-                                               ("alcohol", "sleep", "exercise", "tense", "nothing")
-                                               if k in b})
+                    kw = {k: b[k] for k in
+                          ("alcohol", "sleep", "exercise", "tense", "nothing") if k in b}
+                    if "note" in b:
+                        kw["note"] = b.get("note") or ""
+                    E.put_context(CON, day, **kw)
                 elif path == "/api/face":
                     E.put_face(CON, day, b.get("face_hr"), b.get("quality"),
                                b.get("L"), b.get("a"), b.get("b"))
@@ -168,6 +184,8 @@ class Handler(BaseHTTPRequestHandler):
                     E.seed_demo(CON)
                 elif path == "/api/demo/night":
                     E.demo_night(CON, b.get("kind", "calm"))
+                elif path == "/api/import":
+                    imported = E.import_nights(CON, b.get("csv") or "")
                 elif path == "/api/reset":
                     E.reset(CON)
                 elif path == "/api/notify/ack":
@@ -178,12 +196,19 @@ class Handler(BaseHTTPRequestHandler):
                 elif path == "/api/live":
                     LIVE.update(bpm=b.get("bpm"), rr=b.get("rr"), at=b.get("at"),
                                 device=b.get("device"))
+                    if b.get("bpm") is not None:
+                        E.add_sample(CON, E.today(), b.get("bpm"), b.get("at"))
+                    live_state = E.compute(CON)
                 else:
                     return self._json({"error": "없는 경로"}, 404)
         except KeyError as e:
             return self._json({"error": "빠진 값: {}".format(e)}, 400)
+        except ValueError as e:
+            return self._json({"error": str(e)}, 400)
         if path == "/api/live":
             broadcast("live", LIVE)
+            if live_state is not None and live_changed(live_state):
+                push_state()
             return self._json({"ok": True})
         if path == "/api/notify/ack":
             broadcast("dismiss", {"id": int(b["id"])})
@@ -192,7 +217,10 @@ class Handler(BaseHTTPRequestHandler):
             broadcast("notify", n)
             return self._json({"ok": True})
         push_state()
-        return self._json(state())
+        s = state()
+        if imported:
+            s["imported"] = imported
+        return self._json(s)
 
 
 def lan_ip():

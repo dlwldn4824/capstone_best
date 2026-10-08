@@ -111,7 +111,7 @@ const Alarm = (() => {
       '<h2 class="alarm-title"></h2><p class="alarm-body"></p>' +
       '<div class="alarm-actions">' +
       (act ? '<button type="button" class="alarm-go"></button>' : "") +
-      '<button type="button" class="alarm-ok">확인</button></div></div>';
+      '<button type="button" class="alarm-ok">닫기</button></div></div>';
     el.querySelector(".alarm-title").textContent = n.title;
     el.querySelector(".alarm-body").textContent = n.body;
     if (act) el.querySelector(".alarm-go").textContent = act.label;
@@ -150,12 +150,189 @@ const Alarm = (() => {
     permission: () => ("Notification" in window ? Notification.permission : "unsupported") };
 })();
 
+function _bag(key) {
+  try { return JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) { return {}; }
+}
+function _putBag(key, all) { localStorage.setItem(key, JSON.stringify(all)); }
+
+function tracesOf(day) {
+  const v = _bag("vity-traces")[day];
+  return Array.isArray(v) ? v : [];
+}
+function setTraces(day, list) {
+  const all = _bag("vity-traces");
+  all[day] = list;
+  _putBag("vity-traces", all);
+}
+function declinedOf(day) { return new Set(_bag("vity-declined")[day] || []); }
+function declineTrace(day, id) {
+  const all = _bag("vity-declined");
+  const s = new Set(all[day] || []);
+  s.add(id);
+  all[day] = [...s];
+  _putBag("vity-declined", all);
+}
+function clearDeclined(day) {
+  const all = _bag("vity-declined");
+  delete all[day];
+  _putBag("vity-declined", all);
+}
+function noteOf(day) { return _bag("vity-notes")[day] || ""; }
+function setDayNote(day, text) {
+  const all = _bag("vity-notes");
+  if (text) all[day] = text; else delete all[day];
+  _putBag("vity-notes", all);
+}
+function openTrace(day) {
+  const no = declinedOf(day);
+  return tracesOf(day).find((t) => !no.has(t.id)) || null;
+}
+
+const DEMO_TRACES = {
+  drink: [{ id: "dinner", ctx: "alcohol", where: "캘린더", detail: "19:00–21:00 회식", ask: "음주하셨나요?" }],
+  border: [{ id: "screen", ctx: "sleep", where: "폰 사용", detail: "새벽 1시 이후에도 화면이 켜져 있었어요", ask: "평소보다 늦게 잤나요?" }],
+  unexplained: [],
+  calm: [],
+  face_only: [],
+};
+const EXTRA_OPTS = [
+  { key: "cold", label: "감기 기운" },
+  { key: "med", label: "약 복용" },
+  { key: "alcohol", label: "음주" },
+  { key: "caffeine", label: "카페인" },
+  { key: "tense", label: "스트레스" },
+  { key: "other", label: "기타" },
+];
+// 원인 확인. 카페인·감기 기운·약 복용은 메모라서 밤을 끝까지 설명하지 않는다.
+const CAUSE_CHIPS = [
+  { label: "음주", ctx: "alcohol" },
+  { label: "카페인", note: "카페인" },
+  { label: "운동", ctx: "exercise" },
+  { label: "감기 기운", note: "감기 기운" },
+  { label: "약 복용", note: "약 복용" },
+  { label: "스트레스", ctx: "tense" },
+  { label: "수면 부족", ctx: "sleep" },
+];
+
+function modeOf(s) {
+  return (s && s.baseline && s.baseline.mode) || "early";
+}
+
+function serverNote(s) {
+  if (!s) return "";
+  return String(s.note || ((s.night || {}).note) || "").trim();
+}
+
+function shownNote(s) {
+  if (!s) return "";
+  const server = serverNote(s);
+  if (server) return server;
+  const n = s.night || {};
+  if ((n.causes && n.causes.length) || n.explained_by) return "";
+  return noteOf(s.today) || "";
+}
+
+function adoptServerNote(s) {
+  if (!s || !s.today) return;
+  const server = serverNote(s);
+  if ((noteOf(s.today) || "") !== server) setDayNote(s.today, server);
+}
+
+function causeRecordLabel(key) {
+  const chip = CAUSE_CHIPS.find((c) => c.ctx === key || (key === "sleep_debt" && (c.ctx === "sleep" || c.ctx === "sleep_debt")));
+  if (chip && chip.label) return String(chip.label).split("/")[0].replace(/\s*\(.*\)\s*/g, "").trim();
+  return { alcohol: "음주", exercise: "운동", tense: "스트레스", sleep_debt: "수면 부족" }[key] || "";
+}
+
+function recordText(note, causes, explainedBy, nothing) {
+  const text = (note || "").trim();
+  if (text) return text;
+  const keys = [];
+  if (explainedBy) keys.push(explainedBy);
+  (causes || []).forEach((c) => { if (keys.indexOf(c) < 0) keys.push(c); });
+  const labels = keys.map(causeRecordLabel).filter(Boolean);
+  if (labels.length) return labels.join(" · ");
+  if (nothing) {
+    const chip = CAUSE_CHIPS.find((c) => c.nothing);
+    return chip ? chip.label : "";
+  }
+  return "";
+}
+
+function todayRecord(s) {
+  if (!s) return "";
+  const n = s.night || {};
+  const noted = serverNote(s) || ((n.causes && n.causes.length) || n.explained_by ? "" : (noteOf(s.today) || ""));
+  return recordText(noted, n.causes, n.explained_by, n.nothing);
+}
+
+function dayRecord(d) {
+  if (!d) return "";
+  const server = String(d.note || "").trim();
+  const noted = server || ((d.causes && d.causes.length) || d.explained_by ? "" : (noteOf(d.day) || ""));
+  return recordText(noted, d.causes, d.explained_by, d.nothing);
+}
+
+const NOTE_FACE = { "카페인": "coffee", "감기 기운": "cold", "약 복용": "med" };
+const CAUSE_FACE = { alcohol: "drink", exercise: "move", sleep_debt: "sleep", tense: "tense" };
+
+function chosenFace(s) {
+  if (!s || s.status === "ALERT") return "";
+  const noteFace = NOTE_FACE[s.choice] || NOTE_FACE[shownNote(s)];
+  if (noteFace) return noteFace;
+  if (CAUSE_FACE[s.choice]) return CAUSE_FACE[s.choice];
+  const n = s.night || {};
+  if (CAUSE_FACE[n.explained_by]) return CAUSE_FACE[n.explained_by];
+  const causes = n.causes || [];
+  for (const key of ["alcohol", "exercise", "sleep_debt", "tense"]) {
+    if (causes.indexOf(key) >= 0) return CAUSE_FACE[key];
+  }
+  return "";
+}
+
+function characterName(s) {
+  const chosen = chosenFace(s);
+  if (chosen) return chosen;
+  if (!s) return "idle";
+  if (s.status === "ALERT") return "alert";
+  if (s.status === "WATCH") return "left";
+  if (s.status === "ASK") return "ask";
+  if (s.status === "EXPLAINED") return "calm";
+  if (s.status === "CALM") return "calm";
+  if (s.status === "NO_NIGHT") return "sleep";
+  return "idle";
+}
+
+function causeBody(key) {
+  if (key === "sleep_debt") key = "sleep";
+  if (key === "alcohol" || key === "sleep" || key === "exercise" || key === "tense") {
+    return { [key]: true, note: "" };
+  }
+  return null;
+}
+
+function askTitle(s) {
+  const mode = modeOf(s);
+  if (mode === "early") return "어떤 일이 있었나요?";
+  if (mode === "adapting") return "최근과 다른 일이 있었나요?";
+  return "평소와 다른 일이 있었나요?";
+}
+
+function causeChipsHtml() {
+  return CAUSE_CHIPS.map((c) => {
+    const attr = c.note ? ' data-note="' + c.note + '"'
+      : ' data-ctx="' + c.ctx + '"';
+    return "<button type=\"button\"" + attr + ">" + c.label + "</button>";
+  }).join("");
+}
+
 const CAUSE_KO = { alcohol: "술", exercise: "운동", sleep_debt: "짧은 잠", tense: "긴장" };
+const OVERLAP_KO = { alcohol: "음주", exercise: "운동", sleep_debt: "짧은 잠", tense: "긴장" };
 const CONTEXT_ITEMS = [
-  { key: "alcohol", label: "술을 마셨어요", short: "술", hint: "다음 날 밤 심박이 오르는 가장 흔한 이유예요" },
-  { key: "sleep", label: "늦게 잤어요", short: "잠", hint: "잠이 짧으면 밤 심박이 조금 올라요" },
-  { key: "exercise", label: "운동을 많이 했어요", short: "운동", hint: "고강도 활동 30분 이상이면 워치가 먼저 알아봐요" },
-  { key: "tense", label: "긴장되는 일이 있었어요", short: "긴장", hint: "발표·시험·다툼 같은 일" },
+  { key: "alcohol", label: "음주하셨나요?", short: "술", hint: "회식·술 기록과 심박이 겹치는지 확인해요" },
+  { key: "sleep", label: "평소보다 늦게 잤나요?", short: "잠", hint: "늦은 취침·짧은 잠과 겹치는지 확인해요" },
+  { key: "exercise", label: "평소보다 많이 움직였나요?", short: "운동", hint: "고강도 운동과 겹치는지 확인해요" },
+  { key: "tense", label: "긴장되는 일이 있었나요?", short: "긴장", hint: "발표·시험 같은 일과 겹치는지 확인해요" },
 ];
 
 // 받침에 맞는 조사: josa("술", "으로", "로") → "술로", josa("긴장", "이", "가") → "긴장이"
@@ -168,40 +345,93 @@ function josa(word, withFinal, withoutFinal) {
   return word + (fin ? withFinal : withoutFinal);
 }
 
+function say(tone, title, short, body, track) {
+  return { tone: tone, title: title, short: short, body: body, track: !!track };
+}
+
+function recordingVerdict() {
+  return say("muted", "오늘부터 기록하고 있어요", "기록 중",
+    "오늘 심박을 기준으로 봐요. 최근 안정 상태보다 높게 유지되면 이유를 물어볼게요.");
+}
+
 // 판정 → 화면 문구. 폰과 워치가 같은 말을 쓴다.
+// 카페인·감기 기운·약 복용은 얼굴만 바꾸고, 남음 문구는 그대로 둔다.
 function verdict(s) {
   const n = s.night || {};
   const st = s.status;
+  const mode = modeOf(s);
   const run = (s.streak || {}).run || 0;
   const k = (s.streak || {}).k || 3;
   switch (st) {
     case "NO_DATA":
-      return { tone: "muted", title: "아직 기록이 없어요", short: "기록 없음",
-        body: "밴드를 차고 하룻밤 자면 시작돼요. 시연용 기록으로 먼저 둘러볼 수도 있어요." };
+    case "RECORDING":
+      return recordingVerdict();
     case "NO_NIGHT":
-      return { tone: "muted", title: "어젯밤 기록이 아직 없어요", short: "기록 대기",
-        body: "밴드 기록을 보내거나 직접 넣어주세요." };
+      if (mode === "personal") {
+        return say("muted", "어젯밤이 아직 안 들어왔어요", "대기",
+          "기록이 오면, 달라진 날에만 확인을 받아요.");
+      }
+      if (mode === "adapting") {
+        return say("muted", "오늘 밤은 아직이에요", "대기",
+          "들어오면 최근 같은 기록과 비교해요.");
+      }
+      return recordingVerdict();
     case "BASELINE":
-      return { tone: "muted", title: "평소의 나를 배우는 중", short: "배우는 중",
-        body: "비교할 기준이 생길 때까지 며칠만 더 기록해 주세요." };
+      if (mode === "personal") {
+        return say("muted", "평소를 만드는 중", "기준",
+          "내 평소가 잡히기 전에는 달라졌다고 말하지 않아요.");
+      }
+      return recordingVerdict();
     case "CALM":
-      return { tone: "calm", title: "평소와 같아요", short: "평소",
-        body: "어젯밤 몸은 평소 범위 안에 있었어요." };
+      if (mode === "early") {
+        return say("calm", "오늘 기록은 안정적이에요", "안정",
+          "최근 안정 상태와 비슷해요. 달라지면 이유를 물어볼게요.");
+      }
+      if (mode === "adapting") {
+        return say("calm", "최근 같은 기록과 비슷해요", "비슷",
+          "물어볼 일이 없어요. 몸이 달라진 날에만 다시 볼게요.");
+      }
+      return say("calm", "오늘은 평소와 같아요", "평소",
+        "물어볼 일이 없어요. 몸이 달라진 날에만 다시 볼게요.");
     case "ASK":
-      return { tone: "left", title: "평소와 조금 달랐어요", short: "물어볼게요",
-        body: "어제 있었던 일을 알려주시면 함께 따져볼게요." };
-    case "EXPLAINED":
-      return { tone: "calm", title: "그럴 만해요", short: "그럴 만해요",
-        body: (n.explained_ko ? "어젯밤 달라진 건 " + josa(n.explained_ko, "으로", "로") + " 설명돼요. " : "") +
-          "오늘은 알림 없이 기록만 해둘게요." };
+      if (mode === "early") {
+        return say("left", "심박 변화가 감지됐어요", "변화",
+          "최근 안정 상태보다 심박이 높게 유지되고 있어요.");
+      }
+      if (mode === "adapting") {
+        return say("left", "최근 같은 기록보다 심박이 높아요", "확인",
+          "겹칠 수 있는 이유만 확인할게요.");
+      }
+      return say("left", "심박이 평소보다 높아요", "확인",
+        "이미 잡힌 기록 중에서, 겹칠 수 있는 것만 물어볼게요.");
+    case "EXPLAINED": {
+      const why = OVERLAP_KO[n.explained_by] || n.explained_ko;
+      return say("calm", "생활 기록과 겹칩니다", "설명됨",
+        (why ? josa(why, "과", "와") + " 시점이 겹칩니다. 그 이유가 보통 만드는 크기 안이에요. " : "") +
+          "원인을 단정하지 않고, 오늘은 알림을 내지 않아요.");
+    }
     case "WATCH":
-      return { tone: "left", title: "남았어요", short: run + "일째",
-        body: "짚이는 이유 없이 평소와 다른 밤이 " + run + "일째예요. " + k + "일 이어지면 알려드릴게요." };
+      if (mode === "early") {
+        return say("left", "이유를 적어 두었어요", "기록됨",
+          "오늘은 알림으로 올리지 않아요.");
+      }
+      if (mode === "adapting") {
+        return say("left", "최근 같은 기록보다 심박이 높아요", "남음",
+          "확인된 생활 원인으로 아직 설명이 안 돼요. 알림으로 올리진 않아요.");
+      }
+      return say("left", "아직 설명되지 않았어요", "남음",
+        "확인된 생활 원인으로 설명되지 않는 변화가 " + run + "일째예요. " + k + "일이 되면 타임라인으로 남겨요.",
+        true);
     case "ALERT":
-      return { tone: "alert", title: k + "일째 설명되지 않았어요", short: k + "일째",
-        body: "이유 없이 평소와 다른 상태가 " + k + "일 이어졌어요. 진단은 아니에요. 몸 상태를 한번 살펴봐 주세요." };
+      if (mode !== "personal") {
+        return say("left", "최근 같은 기록보다 심박이 높아요", "남음",
+          "확인된 생활 원인으로 아직 설명이 안 돼요. 알림으로 올리진 않아요.");
+      }
+      return say("alert", k + "일째 이유가 남지 않아요", k + "일째",
+        "최근 " + k + "일간 평소와 다른 변화가 생활 기록으로 설명되지 않습니다. 병명을 정하지 않아요.",
+        true);
     default:
-      return { tone: "muted", title: "", short: "", body: "" };
+      return say("muted", "", "", "");
   }
 }
 
@@ -214,4 +444,72 @@ function sign(x, nd) {
   if (x === null || x === undefined) return "–";
   const v = Number(x).toFixed(nd === undefined ? 1 : nd);
   return (x > 0 ? "+" : "") + v;
+}
+
+function speechReady() {
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+
+// 브라우저 음성 인식만 쓴다. 말한 내용은 서버로 보내지 않는다.
+function listenKo(handlers) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const h = handlers || {};
+  let rec = null;
+  let listening = false;
+  const api = {
+    get listening() { return listening; },
+    stop() {
+      listening = false;
+      const cur = rec;
+      rec = null;
+      if (cur) {
+        cur.onresult = null;
+        cur.onerror = null;
+        cur.onend = null;
+        try { cur.stop(); } catch (e) { /* 이미 끝난 인식 */ }
+      }
+      if (h.onstate) h.onstate(false);
+    },
+    start(base) {
+      if (listening) api.stop();
+      const prefix = String(base || "").trim();
+      const cur = new SR();
+      rec = cur;
+      cur.lang = "ko-KR";
+      cur.interimResults = true;
+      cur.continuous = false;
+      cur.onresult = (ev) => {
+        if (rec !== cur) return;
+        let said = "";
+        for (let i = 0; i < ev.results.length; i++) said += ev.results[i][0].transcript;
+        said = said.trim();
+        const next = prefix && said ? prefix + " " + said : (said || prefix);
+        if (h.ontext) h.ontext(next);
+      };
+      cur.onerror = (ev) => {
+        if (rec !== cur) return;
+        listening = false;
+        if (h.onstate) h.onstate(false);
+        if (h.onerror) h.onerror((ev && ev.error) || "");
+      };
+      cur.onend = () => {
+        if (rec !== cur) return;
+        listening = false;
+        rec = null;
+        if (h.onstate) h.onstate(false);
+      };
+      try {
+        cur.start();
+        listening = true;
+        if (h.onstate) h.onstate(true);
+      } catch (e) {
+        listening = false;
+        rec = null;
+        if (h.onstate) h.onstate(false);
+        if (h.onerror) h.onerror("start");
+      }
+    },
+  };
+  return api;
 }

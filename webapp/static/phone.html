@@ -1,13 +1,10 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F2F4F3">
-<title>핑계 게이지</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<meta name="theme-color" content="#F5F8FC">
+<title>Vity</title>
 <link rel="stylesheet" href="/app.css">
 <style>
 .app{max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;
@@ -25,20 +22,24 @@
 .card p{margin:0}
 .sub{font-size:13px; color:var(--muted)}
 .hero{border-radius:24px; padding:22px 20px; gap:10px}
-.hero h2{font-size:28px; font-weight:700; letter-spacing:-.02em; line-height:1.25}
-.hero p{font-size:15px; line-height:1.6}
+.hero h2{font-size:26px; font-weight:700; letter-spacing:-.03em; line-height:1.3}
+.hero p{font-size:15px; line-height:1.6; word-break:keep-all}
+.hero.has-mascot{flex-direction:row; align-items:center; gap:12px}
+.hero .copy{display:flex; flex-direction:column; gap:10px; min-width:0}
+.hero .mascot{width:108px; height:108px; object-fit:contain; flex:none}
 .tone-calm{background:var(--calm-soft); color:var(--calm-ink)}
 .tone-left{background:var(--left-soft); color:var(--left-ink)}
-.tone-alert{background:var(--alert-soft); color:var(--alert-ink); box-shadow:inset 0 0 0 2px var(--alert)}
+.tone-alert{background:var(--surface); color:var(--ink)}
 .tone-muted{background:var(--surface); color:var(--ink)}
 .dots{display:grid; grid-template-columns:repeat(var(--k,3), minmax(0,1fr)); gap:8px}
-.dots span{height:10px; border-radius:99px; border:2px dashed currentColor; opacity:.55}
-.dots span.f{border:none; background:currentColor; opacity:1}
+.dots span{height:8px; border-radius:99px; border:none; background:var(--surface2); opacity:1}
+.dots span.f{background:var(--calm)}
+.hero.tone-alert .dots span.f{background:var(--alert)}
 .big{font-size:36px; font-weight:700; letter-spacing:-.02em; line-height:1}
 .big small{font-size:15px; font-weight:500; color:var(--muted); margin-left:6px; letter-spacing:0}
 .range{position:relative; height:34px}
 .range .track{position:absolute; left:0; right:0; top:14px; height:6px; border-radius:99px; background:var(--surface2)}
-.range .band{position:absolute; top:10px; height:14px; border-radius:99px; background:var(--calm-soft); border:1px solid var(--calm)}
+.range .band{position:absolute; top:12px; height:10px; border-radius:99px; background:#D6E6FF; border:none}
 .range .mark{position:absolute; top:5px; width:24px; height:24px; margin-left:-12px; border-radius:99px; border:3px solid var(--surface)}
 .scale{display:flex; justify-content:space-between; font-size:12px; color:var(--muted)}
 .badge{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500; padding:4px 10px; border-radius:99px; background:var(--surface2); color:var(--ink2); width:max-content}
@@ -68,11 +69,11 @@
 .cell{height:50px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
   border:2px solid transparent; background:var(--surface2); font-size:14px; font-weight:600; padding:0}
 .cell small{font-size:10px; font-weight:500; line-height:1.1}
-.cell.calm{background:transparent; border-color:var(--calm-soft)}
+.cell.calm{background:transparent; border-color:transparent; color:var(--muted)}
 .cell.explained{background:var(--calm); color:#FFFFFF}
 .cell.left,.cell.ask{background:var(--left); color:#FFFFFF}
 .cell.alert{background:var(--alert); color:#FFFFFF}
-.cell.none{background:transparent; color:var(--muted); border:2px dashed var(--line)}
+.cell.none{background:transparent; color:var(--muted); border:none}
 .cell.learning{background:var(--surface2); color:var(--muted)}
 .cell.sel{outline:3px solid var(--ink); outline-offset:1px}
 .legend{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--ink2)}
@@ -81,8 +82,10 @@
   display:flex; justify-content:center; padding-bottom:env(safe-area-inset-bottom)}
 .tabs div{display:grid; grid-template-columns:repeat(3,1fr); width:100%; max-width:480px}
 .tabs button{min-height:64px; border:none; background:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:12px; color:var(--muted)}
-.tabs button[aria-selected="true"]{color:var(--ink); font-weight:600}
-input[type=number]{width:100%; min-height:48px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); padding:0 14px; font-size:16px}
+.tabs button[aria-selected="true"]{color:var(--calm); font-weight:600}
+input[type=number],textarea.csv{width:100%; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); padding:12px 14px; font-size:16px}
+input[type=number]{min-height:48px; padding:0 14px}
+textarea.csv{min-height:132px; resize:vertical; line-height:1.45}
 label.f{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--ink2); flex:1 1 0}
 .live{display:flex; align-items:baseline; gap:8px}
 .live .big{font-family:var(--mono)}
@@ -119,20 +122,58 @@ details.card summary::-webkit-details-marker{display:none}
 .cam video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1)}
 .cam svg{position:absolute; inset:0; width:100%; height:100%}
 .prog{height:6px; border-radius:99px; background:#2A3431; overflow:hidden}
-.prog i{display:block; height:100%; width:0; background:#4DB8A6; transition:width .2s linear}
+.prog i{display:block; height:100%; width:0; background:#1A6DFF; transition:width .2s linear}
 .checks{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; font-size:15px}
 .checks li{display:flex; gap:10px; align-items:center}
-.checks .ok{color:#4DB8A6} .checks .warn{color:#E09A4F}
+.checks .ok{color:#1A6DFF} .checks .warn{color:#C5362B}
 .sheet .note{font-size:13px; color:#A9B6B1; text-align:center; margin:0}
 .sheet .btn{background:#EEF2F0; color:#0E1312}
+.hero,.hero.tone-calm,.hero.tone-left,.hero.tone-alert,.hero.tone-muted{background:var(--surface); color:var(--ink); box-shadow:none; border:none}
+.hero.tone-calm .kicker{color:var(--calm)}
+.hero.tone-left .kicker{color:var(--left)}
+.hero.tone-alert .kicker{color:var(--alert)}
+.kicker{margin:0; font-size:13px; font-weight:600; letter-spacing:0; color:var(--muted)}
+.trust{display:flex; flex-direction:column; gap:6px; margin-top:2px}
+.trust-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:13px; font-weight:600}
+.trust-top b{font-weight:650; font-variant-numeric:tabular-nums}
+.trust-bar{height:6px; border-radius:99px; background:var(--surface2); overflow:hidden}
+.trust-bar i{display:block; height:100%; width:0; background:var(--calm); border-radius:99px}
+.trust .sub{font-size:12px}
+.metrics{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
+.metric{background:var(--surface2); border-radius:14px; padding:12px 12px 10px}
+.metric b{display:block; font-size:22px; font-weight:650; letter-spacing:-.03em; line-height:1.15}
+.metric span{display:block; margin-top:4px; font-size:12px; color:var(--muted)}
+.q{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 0; border-top:1px solid var(--line)}
+.q b{display:block; font-size:15px; font-weight:600}
+.q .hint{display:block; margin-top:2px; font-size:12px; color:var(--muted)}
+.q.hit b{color:var(--left-ink)}
+.yn{display:flex; gap:6px; flex:none}
+.yn button{min-height:40px; padding:0 12px; border-radius:999px; border:1.5px solid var(--line); background:transparent; font-size:14px; font-weight:600}
+.yn button[aria-pressed="true"]{background:var(--ink); color:var(--surface); border-color:var(--ink)}
+.note{display:flex; flex-direction:column; gap:8px}
+.note input{width:100%; min-height:48px; border-radius:14px; border:1.5px solid var(--line); background:var(--ground); padding:0 14px; font-size:16px}
+#micBtn[aria-pressed="true"]{background:var(--calm); color:#fff; border-color:var(--calm)}
+.tl{list-style:none; margin:0; padding:0}
+.tl li{display:grid; grid-template-columns:72px 1fr; gap:8px 12px; padding:13px 0; border-top:1px solid var(--line)}
+.tl li:first-child{border-top:none; padding-top:2px}
+.tl .when{font-size:13px; font-weight:650; letter-spacing:-.02em}
+.tl .when span{display:inline; margin-left:4px; font-size:11px; font-weight:500; color:var(--muted)}
+.tl button.when{border:none; background:none; padding:0; text-align:left}
+.tl strong{font-size:14px; font-weight:600}
+.tl p{margin:2px 0 0; font-size:13px; color:var(--ink2)}
+.mark-dot{width:7px; height:7px; border-radius:99px; display:inline-block; margin-right:6px; vertical-align:1px; background:var(--muted)}
+.mark-dot.calm{background:var(--calm)}
+.mark-dot.explained{background:var(--calm)}
+.mark-dot.left,.mark-dot.ask{background:var(--left)}
+.mark-dot.alert{background:var(--alert)}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top">
     <div>
-      <p id="date">&nbsp;</p>
-      <h1>핑계 게이지</h1>
+      <p class="kicker">Vity</p>
+      <h1 id="date">&nbsp;</h1>
     </div>
     <div class="sync" id="sync"><i></i><span>연결 중</span></div>
   </header>
@@ -142,26 +183,25 @@ details.card summary::-webkit-details-marker{display:none}
 
   <!-- 기록 -->
   <section class="view" id="v-history" aria-label="기록">
+    <div class="card" id="timelineCard"></div>
     <div class="card">
-      <h2>지난 4주</h2>
+      <h2>달력</h2>
       <div class="grid7" id="grid"></div>
       <div class="legend">
-        <span><i style="border:2px solid var(--calm-soft)"></i>평소</span>
-        <span><i style="background:var(--calm)"></i>달랐지만 설명됨</span>
+        <span><i style="border:2px solid var(--calm)"></i>평소</span>
+        <span><i style="background:var(--calm)"></i>설명됨</span>
         <span><i style="background:var(--left)"></i>설명 안 됨</span>
-        <span><i style="background:var(--alert)"></i>알림</span>
-        <span><i style="background:var(--surface2)"></i>배우는 중</span>
+        <span><i style="background:var(--alert)"></i>이어짐</span>
       </div>
     </div>
     <div class="card" id="dayDetail"></div>
-    <div class="card" id="summary"></div>
   </section>
 
   <!-- 기기 -->
   <section class="view" id="v-devices" aria-label="기기">
     <div class="card">
       <h2>알림</h2>
-      <p class="sub">이유를 물어볼 때와 사흘째 알림은 폰과 워치에 동시에 팝업으로 떠요. 한쪽에서 확인하면 양쪽 다 닫혀요.</p>
+      <p class="sub">몸이 달라진 날의 확인과, 설명이 이어진 날의 알림만 폰과 워치에 같이 떠요.</p>
       <div class="kv"><span>알림창(상단) 알림</span><span id="permState" class="sub">확인 중</span></div>
       <div class="row">
         <button class="btn small" id="notifBtn" type="button">알림창 알림 켜기</button>
@@ -198,6 +238,18 @@ details.card summary::-webkit-details-marker{display:none}
     </div>
 
     <div class="card">
+      <h2>수면 기록 가져오기</h2>
+      <p class="sub">헬스 앱에서 받은 표를 넣으면 그 밤 심박으로 평소와 비교해요. 첫 줄은 날짜, 심박, 수면입니다. 수면은 7.4처럼 시간으로 적어도 되고, 440처럼 분으로 적어도 돼요.</p>
+      <textarea class="csv" id="importCsv" spellcheck="false" placeholder="날짜,심박,수면시간"></textarea>
+      <div class="row">
+        <label class="btn small ghost" for="importFile">파일 선택</label>
+        <button class="btn small ghost" id="sampleCsvBtn" type="button">예시 채우기</button>
+      </div>
+      <input id="importFile" type="file" accept=".csv,.txt,text/csv,text/plain" hidden>
+      <button class="btn small" id="importBtn" type="button">이 표로 판정하기</button>
+    </div>
+
+    <div class="card">
       <h2>어젯밤 직접 넣기</h2>
       <p class="sub">다른 앱(삼성 헬스·핏빗)에서 본 수면 중 평균 심박을 옮겨 적어도 돼요.</p>
       <div class="row">
@@ -207,14 +259,14 @@ details.card summary::-webkit-details-marker{display:none}
       <button class="btn small" id="manBtn" type="button">어젯밤으로 저장</button>
     </div>
 
-    <div class="card">
+    <div class="card" id="presentCard" hidden>
       <h2>시연</h2>
       <p class="sub">발표용. 지난 5주 기록을 채우고, 오늘 밤을 골라 넣어요.</p>
       <button class="btn small ghost" id="seedBtn" type="button">지난 기록 채우기</button>
       <div class="row">
         <button class="btn small ghost" data-demo="calm" type="button">평소 밤</button>
         <button class="btn small ghost" data-demo="drink" type="button">술 마신 밤</button>
-        <button class="btn small ghost" data-demo="unexplained" type="button">이유 없는 밤</button>
+        <button class="btn small ghost" data-demo="unexplained" type="button">설명 안 됨</button>
       </div>
       <div class="row">
         <button class="btn small ghost" data-demo="border" type="button">애매한 밤 + 얼굴 높음</button>
@@ -256,11 +308,11 @@ details.card summary::-webkit-details-marker{display:none}
       <video id="video" playsinline muted></video>
       <svg viewBox="0 0 300 400" preserveAspectRatio="none" aria-hidden="true">
         <ellipse cx="150" cy="185" rx="92" ry="128" fill="none" stroke="#2A3431" stroke-width="6"></ellipse>
-        <ellipse id="scanRing" cx="150" cy="185" rx="92" ry="128" fill="none" stroke="#4DB8A6" stroke-width="6" stroke-linecap="round"
+        <ellipse id="scanRing" cx="150" cy="185" rx="92" ry="128" fill="none" stroke="#1A6DFF" stroke-width="6" stroke-linecap="round"
           pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 150 185)"></ellipse>
-        <rect x="126" y="80" width="48" height="32" rx="6" fill="none" stroke="#BFE6DE" stroke-dasharray="4 4" stroke-width="1.5"></rect>
-        <rect x="93" y="184" width="33" height="40" rx="6" fill="none" stroke="#BFE6DE" stroke-dasharray="4 4" stroke-width="1.5"></rect>
-        <rect x="174" y="184" width="33" height="40" rx="6" fill="none" stroke="#BFE6DE" stroke-dasharray="4 4" stroke-width="1.5"></rect>
+        <rect x="126" y="80" width="48" height="32" rx="6" fill="none" stroke="#B9D2FF" stroke-dasharray="4 4" stroke-width="1.5"></rect>
+        <rect x="93" y="184" width="33" height="40" rx="6" fill="none" stroke="#B9D2FF" stroke-dasharray="4 4" stroke-width="1.5"></rect>
+        <rect x="174" y="184" width="33" height="40" rx="6" fill="none" stroke="#B9D2FF" stroke-dasharray="4 4" stroke-width="1.5"></rect>
       </svg>
     </div>
     <ul class="checks" id="sheetChecks"></ul>
@@ -281,6 +333,10 @@ details.card summary::-webkit-details-marker{display:none}
 "use strict";
 let S = null;                // 서버 상태
 let selDay = null;           // 기록 탭에서 고른 날
+let editingContext = false;
+let noteText = "";
+let showOther = false;
+let mic = null;
 const $ = (id) => document.getElementById(id);
 const CHECK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
 
@@ -301,91 +357,189 @@ document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("cli
 }));
 
 // ---------- 오늘 ----------
+function readNote(text) {
+  const hits = [];
+  if (/술|맥주|소주|와인|음주|회식|칵테일|치맥|하이볼/.test(text)) hits.push("alcohol");
+  if (/밤샘|새벽|늦잠|늦게 자|잠이 짧|못 잤|수면|밤새|취침/.test(text)) hits.push("sleep");
+  if (/운동|헬스|러닝|조깅|달렸|웨이트|수영/.test(text)) hits.push("exercise");
+  if (/발표|시험|긴장|스트레스|면접|다툼/.test(text)) hits.push("tense");
+  return hits;
+}
+
+const STATE_NAME = {
+  calm: "평소", explained: "설명됨", left: "설명 안 됨",
+  ask: "확인 중", alert: "이어짐", none: "기록 없음", learning: "기준 만드는 중",
+  recording: "오늘 기록",
+};
+
+function dayTitle(d) {
+  if (d.state === "explained") {
+    const why = OVERLAP_KO[d.explained_by];
+    return why ? "설명됨 · " + why : "설명됨";
+  }
+  if (d.state === "alert") return "설명 안 됨" + (d.run ? " · " + d.run + "일째" : "");
+  if (d.state === "left") return "설명 안 됨";
+  return STATE_NAME[d.state] || "";
+}
+
+function hm(min) {
+  const m = Math.round(min);
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return (h ? h + "시간 " : "") + r + "분";
+}
+
+function usualBand(days) {
+  const xs = days.filter((d) => d.state === "calm" && d.night_hr != null).map((d) => d.night_hr).sort((a, b) => a - b);
+  if (xs.length < 3) return "";
+  return "평소 야간 심박 " + Math.round(xs[0]) + "–" + Math.round(xs[xs.length - 1]);
+}
+
+function timelineItems(days) {
+  if (!days.length) return '<p class="sub">아직 이어 붙일 날이 없어요.</p>';
+  return '<ol class="tl">' + days.map((d) => {
+    const dt = new Date(d.day + "T00:00:00");
+    const bits = [];
+    if (d.night_hr != null) bits.push("밤 심박 " + d.night_hr);
+    if (d.delta != null && d.state !== "calm" && d.state !== "learning" && d.state !== "recording") {
+      bits.push((S && modeOf(S) === "personal" ? "평소보다 " : "최근보다 ") + sign(d.delta));
+    }
+    if (d.night_min) bits.push("수면 " + (Math.round(d.night_min / 6) / 10) + "시간");
+    if (d.face_hr != null && (d.state === "left" || d.state === "alert")) bits.push("얼굴 " + d.face_hr);
+    const rec = dayRecord(d);
+    if (rec && (d.state !== "explained" || String(d.note || "").trim())) bits.push(rec);
+    return '<li><button type="button" class="when" data-day="' + d.day + '">' +
+      (dt.getMonth() + 1) + "/" + dt.getDate() + "<span>" + "일월화수목금토"[dt.getDay()] + "</span></button><div><strong><i class=\"mark-dot " +
+      d.state + "\"></i>" + esc(dayTitle(d)) + "</strong><p>" + esc(bits.join(" · ") || "기록 없음") + "</p></div></li>";
+  }).join("") + "</ol>";
+}
+
+function trustHtml(s) {
+  const b = s.baseline || {};
+  const pct = Math.max(0, Math.min(100, Number(b.personalization) || 0));
+  return '<div class="trust"><div class="trust-top"><span>Vity가 나를 알아가는 중</span><b>' + pct +
+    '%</b></div><div class="trust-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
+    pct + '"><i style="width:' + pct + '%"></i></div><p class="sub">' + esc(b.label || "") + "</p></div>";
+}
+
+function startCard() {
+  return '<div class="card"><h2>오늘 기록</h2>' +
+    '<p class="sub">센서가 연결되면 오늘 심박으로 바로 봐요. 지난 밤 기록이 있으면 넣어도 돼요.</p>' +
+    '<div class="row"><button class="btn small" type="button" data-goto="devices">기록 넣기</button></div></div>';
+}
+
 function renderToday() {
   const s = S, v = verdict(s), n = s.night || {};
   const parts = [];
-  // 판정
   let extra = "";
-  if (s.status === "WATCH" || s.status === "ALERT") {
+  if (v.track) {
     const k = s.streak.k, run = Math.min(s.streak.run, k);
-    extra = '<div class="dots" style="--k:' + k + '">' +
+    extra = '<p class="kicker">설명되지 않은 날</p><div class="dots" style="--k:' + k + '">' +
       Array.from({ length: k }, (_, i) => '<span class="' + (i < run ? "f" : "") + '"></span>').join("") + "</div>";
   }
-  if (s.status === "EXPLAINED" && n.explained_by && s.caps) {
-    extra = '<p style="font-size:13px">' + esc(josa(n.explained_ko, "이", "가")) + " 보통 만드는 크기 안이에요. 그보다 컸다면 덮지 않고 남겨둬요.</p>";
-  }
-  parts.push('<article class="card hero tone-' + v.tone + '"><h2>' + esc(v.title) + "</h2><p>" + esc(v.body) + "</p>" + extra + "</article>");
+  const face = s.status === "ALERT" ? "alert" : chosenFace(s);
+  const mascot = face ? "/characters/" + face + ".png" : "";
+  parts.push('<article class="card hero tone-' + v.tone + (mascot ? " has-mascot" : "") + '">' +
+    (mascot ? '<img class="mascot" src="' + mascot + '" alt="">' : "") +
+    '<div class="copy"><p class="kicker">' + esc(v.short) + "</p><h2>" +
+    esc(v.title) + "</h2><p>" + esc(v.body) + "</p>" +
+    (todayRecord(s) ? "<p><b>오늘 기록</b> " + esc(todayRecord(s)) + "</p>" : "") +
+    extra + trustHtml(s) + "</div></article>");
 
-  if (s.status === "ALERT" || s.status === "WATCH") parts.push(guideHtml(s));
-
-  // 데이터 없음
-  if (s.status === "NO_DATA" || s.status === "NO_NIGHT") {
-    parts.push('<div class="card"><h2>어젯밤 기록 넣기</h2>' +
-      '<p class="sub">밴드로 잤다면 기기 탭에서 보내고, 다른 앱 기록은 직접 넣을 수 있어요. 밴드가 없으면 아래 얼굴 체크만으로도 판정해요.</p>' +
-      '<div class="row"><button class="btn small" type="button" data-goto="devices">기기 탭으로</button></div>' +
-      (s.status === "NO_DATA"
-        ? '<button class="btn small ghost" type="button" id="seedInline">시연용 지난 기록 채우기</button>'
-        : '<div class="row"><button class="btn small ghost" data-demo="calm" type="button">평소 밤</button>' +
-          '<button class="btn small ghost" data-demo="drink" type="button">술 마신 밤</button>' +
-          '<button class="btn small ghost" data-demo="unexplained" type="button">이유 없는 밤</button></div><p class="sub">↑ 시연용</p>') +
-      "</div>");
+  if (s.status === "NO_DATA" || s.status === "RECORDING") parts.push(startCard());
+  else if (s.status === "NO_NIGHT") {
+    parts.push('<div class="card"><h2>어젯밤 기록</h2>' +
+      '<p class="sub">오늘 밤이 들어오면 이어서 봐요. 지난 기록이 있으면 넣어도 돼요.</p>' +
+      '<div class="row"><button class="btn small" type="button" data-goto="devices">기록 넣기</button></div></div>');
   }
 
-  // 어젯밤 (밤 심박, 없으면 얼굴 심박으로 판정)
+  if (v.track) {
+    const recent = (s.history || []).slice(-7).filter((d) => d.state === "explained" || d.state === "left" || d.state === "alert" || d.state === "ask");
+    const band = modeOf(s) === "personal" ? "평소와 견준 기록" : "최근 기록과 견준 날";
+    parts.push('<div class="card"><h2>최근 7일</h2><p class="sub">' +
+      esc(usualBand(s.history || []) || band) + "</p>" + timelineItems(recent) + "</div>");
+  }
+  if (s.status === "ASK" || editingContext) parts.push(confirmCard(n));
+  else if (s.status === "EXPLAINED") parts.push(overlapCard(n));
+
   const byFace = n.source === "face";
-  if (n.night_hr != null || byFace) {
-    let bar = "";
-    const zShow = byFace ? n.face_z : n.night_z;
-    const refShow = byFace ? n.face_ref : n.ref;
-    if (zShow != null) {
-      const pos = (z) => Math.max(2, Math.min(98, ((z + 3) / 10) * 100));
-      const col = s.status === "ALERT" ? "var(--alert)" : s.status === "EXPLAINED" || n.z < 2 ? "var(--calm)" : "var(--left)";
-      bar = '<div class="range" aria-hidden="true"><div class="track"></div>' +
-        '<div class="band" style="left:' + pos(-2) + "%; width:" + (pos(2) - pos(-2)) + '%"></div>' +
-        '<div class="mark" style="left:' + pos(zShow) + "%; background:" + col + '"></div></div>' +
-        '<div class="scale"><span>낮음</span><span>평소 ' + refShow + (byFace ? "" : " ± " + n.spread) + "</span><span>높음</span></div>";
-    }
-    const delta = byFace ? n.face_delta : n.delta;
-    parts.push('<div class="card"><div style="display:flex; justify-content:space-between; align-items:baseline">' +
-      "<h2>" + (byFace ? "아침 얼굴 심박" : "어젯밤 심박") + "</h2>" +
-      (delta != null ? '<span class="sub num">평소보다 ' + sign(delta) + " bpm</span>" : "") + "</div>" +
-      (byFace
-        ? '<p class="big num">' + n.face_hr + "<small>bpm · 얼굴 체크</small></p>" +
-          '<p class="sub">어젯밤 밴드 기록이 없어 얼굴 심박으로 판정했어요. 얼굴은 덜 정확해서 더 크게 벗어나야 이탈로 봐요.</p>'
-        : '<p class="big num">' + n.night_hr + "<small>bpm · 잠든 동안 " + Math.round(n.night_min) + "분</small></p>") + bar +
-      faceCrossHtml(n) +
-      riskHtml(n, s.model) +
-      (s.baseline.mode === "short" ? '<span class="badge">짧은 기준선 — 기록 ' + s.baseline.valid_days + "일 (" + s.baseline.standard_after + "일부터 정식)</span>" : "") +
-      "</div>");
-  }
+  if (n.night_hr != null || byFace) parts.push(physioCard(s, n));
+  else parts.push(faceCard(s));
 
-  // 맥락
-  if ((n.night_hr != null || byFace) && n.z != null) {
-    const has = new Set(n.causes || []);
-    const on = (k) => (k === "sleep" ? has.has("sleep_debt") : has.has(k));
-    const ask = s.status === "ASK";
-    parts.push('<div class="card"><h2>' + (ask ? "어제 이런 일 있었나요?" : "어제 있었던 일") + "</h2>" +
-      '<p class="sub">센서가 못 보는 이유를 채워줘요. 언제든 고칠 수 있어요.</p><div class="chips">' +
-      CONTEXT_ITEMS.map((c) => '<button class="chip" type="button" data-ctx="' + c.key + '" aria-pressed="' + on(c.key) +
-        '"><div><b>' + esc(c.label) + "</b><span>" + esc(c.hint) + '</span></div><div class="box">' + CHECK_SVG + "</div></button>").join("") +
-      "</div>" +
-      '<button class="btn small ghost" type="button" data-ctx="nothing" aria-pressed="' + !!n.nothing + '">' +
-      (n.nothing ? "짚이는 게 없다고 답했어요" : "짚이는 게 없어요") + "</button></div>");
-  }
-
-  // 얼굴
-  const f = s.face;
-  parts.push('<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; gap:12px">' +
-    "<div><h2>얼굴 체크</h2><p class=\"sub\">10초 안팎 · 얼굴 심박과 안색</p></div>" +
-    '<button class="btn small" type="button" id="faceBtn">' + (f ? "다시 재기" : "시작") + "</button></div>" +
-    (f ? '<div class="kv"><span>얼굴 심박</span><span class="num">' + (f.face_hr ?? "–") + " bpm" +
-      (f.quality != null ? ' <span class="sub">· 신호 ' + (f.quality >= -2 ? "좋음" : "흔들림 많음") + "</span>" : "") + "</span></div>" +
-      '<div class="kv"><span>안색 (붉은 기)</span><span>' +
-      (f.a_z == null ? '<span class="sub">비교할 지난 측정 ' + f.n_ref + "/5회</span>" : sign(f.a_z, 1) + " σ") +
-      ' <span class="badge exp">실험 중 · 검증 안 됨</span></span></div>' : "") +
-    "</div>");
+  if (v.track) parts.push(guideHtml(s));
 
   $("v-today").innerHTML = parts.join("");
+}
+
+function physioCard(s, n) {
+  const byFace = n.source === "face";
+  const hr = byFace ? n.face_hr : n.night_hr;
+  const ref = byFace ? n.face_ref : n.ref;
+  const delta = byFace ? n.face_delta : n.delta;
+  const refName = { early: "최근 안정", adapting: "최근 기록", personal: "평소" }[modeOf(s)] || "평소";
+  const bandName = modeOf(s) === "personal" ? "평소 범위" : "최근 범위";
+  let bar = "";
+  if (!byFace && n.night_z != null && s.status !== "CALM" && s.status !== "BASELINE" && s.status !== "RECORDING") {
+    const pos = (z) => Math.max(2, Math.min(98, ((z + 3) / 10) * 100));
+    const col = s.status === "ALERT" ? "var(--alert)" : s.status === "EXPLAINED" ? "var(--calm)" : "var(--left)";
+    bar = '<div class="range" aria-hidden="true"><div class="track"></div>' +
+      '<div class="band" style="left:' + pos(-2) + "%;width:" + (pos(2) - pos(-2)) + '%"></div>' +
+      '<div class="mark" style="left:' + pos(n.night_z) + "%;background:" + col + '"></div></div>' +
+      '<div class="scale"><span>낮음</span><span>' + bandName + "</span><span>높음</span></div>";
+  }
+  const f = s.face;
+  return '<div class="card"><h2>' + (byFace ? "오늘 아침" : "어젯밤") + "</h2>" +
+    '<div class="metrics"><div class="metric"><b class="num">' + hr + "</b><span>" + (byFace ? "얼굴 심박" : "밤 심박") + "</span></div>" +
+    '<div class="metric"><b class="num">' + (ref ?? "–") + "</b><span>" + refName + "</span></div>" +
+    '<div class="metric"><b class="num">' + (delta != null ? sign(delta) : "–") + "</b><span>차이</span></div></div>" +
+    (byFace
+      ? '<p class="sub">밤 기록이 없어 얼굴로 봤어요. 덜 정확해서, 더 크게 벗어나야 달라졌다고 해요.</p>'
+      : (n.night_min != null ? '<p class="sub">수면 ' + hm(n.night_min) + "</p>" : "")) +
+    bar + faceCrossHtml(n) +
+    '<button class="btn small ghost" type="button" id="faceBtn">' + (f ? "얼굴 다시 재기" : "얼굴로 한 번 더") + "</button>" +
+    "</div>";
+}
+
+function faceCard(s) {
+  const f = s.face;
+  return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px">' +
+    '<div><h2>얼굴 체크</h2><p class="sub">밤 기록이 없는 날, 10초 안팎으로 봐요</p></div>' +
+    '<button class="btn small" id="faceBtn" type="button">' + (f ? "다시" : "시작") + "</button></div></div>";
+}
+
+function overlapCard(n) {
+  const why = OVERLAP_KO[n.explained_by] || n.explained_ko || "생활 기록";
+  return '<div class="card"><p class="kicker">겹치는 기록</p><h2>' + esc(josa(why, "과", "와")) + " 시점이 겹칩니다</h2>" +
+    '<p class="sub">이 기록이 원인을 만든 것은 아니에요. 변화가 그 이유가 보통 만드는 크기 안이면 설명을 덮고, 더 크면 남겨 둡니다.</p>' +
+    (editingContext ? "" : '<button class="btn small ghost" id="editCtx" type="button">다시 확인</button>') +
+    "</div>";
+}
+
+function confirmCard() {
+  const day = S.today;
+  const trace = openTrace(day);
+  if (trace) {
+    return '<div class="card"><p class="kicker">' + esc(trace.where) + "</p><h2>" + esc(trace.detail) + "</h2>" +
+      "<p>" + esc(trace.ask) + "</p>" +
+      '<p class="sub">찾은 흔적이지, 그 일을 했다고 보지 않아요.</p>' +
+      '<div class="yn" style="justify-content:flex-end">' +
+      '<button type="button" data-trace="' + trace.id + '" data-ctx="' + trace.ctx + '" data-val="0">아니요</button>' +
+      '<button type="button" data-trace="' + trace.id + '" data-ctx="' + trace.ctx + '" data-val="1">네</button></div></div>';
+  }
+  const micOn = mic && mic.listening;
+  const micBtn = speechReady()
+    ? '<button class="btn small ghost" id="micBtn" type="button" aria-pressed="' + (micOn ? "true" : "false") + '">' +
+      (micOn ? "듣는 중" : "말하기") + "</button>"
+    : "";
+  const other = showOther
+    ? '<div class="note"><input id="note" type="text" placeholder="예: 어제 감기약 먹음" value="' + esc(noteText) + '" autocomplete="off">' +
+      '<div class="row">' + micBtn +
+      '<button class="btn small" id="noteBtn" type="button">이 문장만 남기기</button></div></div>'
+    : "";
+  return '<div class="card"><h2>' + esc(askTitle(S)) + "</h2>" +
+    '<p class="sub">운동·음주·짧은 잠·긴장은 그 크기까지 봐서 가려요. 카페인과 감기는 메모로 남아요.</p>' +
+    '<div class="sym">' + causeChipsHtml() +
+    '<button type="button" data-extra="other">기타</button></div>' + other + "</div>";
 }
 
 // ---------- 얼굴 심박 교차 확인 ----------
@@ -396,26 +550,14 @@ function faceCrossHtml(n) {
   }
   const msg = {
     both: ["두 신호 모두 평소보다 높아요", "left"],
-    night_only: ["얼굴은 평소 범위예요 — 밤 심박으로 판정", "calm"],
-    face_only: ["얼굴만 높아요 — 얼굴 혼자로는 판정하지 않아요", "calm"],
-    border: ["밤 심박은 애매했지만 얼굴도 높아 '달랐다' 로 봤어요", "left"],
+    night_only: ["얼굴은 평소 범위예요", "calm"],
+    face_only: ["얼굴만 높아요. 얼굴 혼자로는 달라졌다고 하지 않아요", "calm"],
+    border: ["밤 심박은 애매했지만 얼굴도 높아 달라졌다고 봤어요", "left"],
     calm: ["두 신호 모두 평소 범위예요", "calm"],
   }[n.agree];
   return '<div class="kv"><span>아침 얼굴 심박</span><span class="num">' + n.face_hr + " bpm" +
     (n.face_delta != null ? ' <span class="sub">(' + sign(n.face_delta) + ")</span>" : "") + "</span></div>" +
     (msg ? '<p class="lv ' + msg[1] + '" style="font-size:13px; font-weight:600; padding:6px 12px; border-radius:10px; width:auto">' + msg[0] + "</p>" : "");
-}
-
-// ---------- 모델 위험도 (두 번째 의견) ----------
-function riskHtml(n, model) {
-  if (!model || n.risk_p == null) return "";
-  const RL = { low: ["낮음", "calm"], watch: ["조금 높음", "left"], elevated: ["높음", "left"], high: ["매우 높음", "alert"] };
-  const [label, tone] = RL[n.risk_level] || ["–", "calm"];
-  return '<div class="kv" style="border-top:1px solid var(--line); border-bottom:none; padding-top:6px">' +
-    '<span>모델 위험도 <span class="sub">(' + esc(model.version) + ")</span></span>" +
-    '<span><span class="lv ' + tone + '" style="font-size:13px; font-weight:600; padding:4px 10px; border-radius:99px">' + label + "</span></span></div>" +
-    '<p class="sub">판정은 규칙이 하고, 모델은 같은 밤을 따로 본 두 번째 의견이에요. 공개 데이터 ' +
-    model.metrics.events + "건으로 학습했어요.</p>";
 }
 
 // ---------- 진료 안내 ----------
@@ -446,7 +588,7 @@ function guideHtml(s) {
     (urgentPicked ? '<div class="urgent"><b>' + esc(GUIDE.urgent.title) + "</b><p>" + esc(GUIDE.urgent.body) + "</p></div>" : "") +
     (sel.length && !urgentPicked ? '<p class="lv ' + levelTone + '" style="font-size:15px; padding:8px 14px; border-radius:12px">' +
       esc(levelLabel) + "</p>" : "") +
-    '<h2 style="margin-top:4px">' + (sel.length ? "이런 경우일 수 있어요" : "증상이 없다면") + "</h2>" +
+    '<h2 style="margin-top:4px">' + (sel.length ? "증상과 겹쳐 볼 수 있는 경우" : "증상을 고르면 여기에 붙어요") + "</h2>" +
     list.map((c) => '<div class="cond"><span class="lv ' + GUIDE.levels[c.level].tone + '">' + esc(GUIDE.levels[c.level].label) + "</span>" +
       "<h3>" + esc(c.name) + "</h3>" +
       '<div class="why-tags">' + c.hitG.map((k) => "<span>기기: " + esc(SIG_KO[k]) + "</span>").join("") +
@@ -457,38 +599,44 @@ function guideHtml(s) {
     '<p class="sub">' + esc(GUIDE.disclaimer) + "</p>" +
     '<p class="help">도움이 필요할 때 ' + GUIDE.contacts.map((c) => '<a href="' + c.href + '">' + c.label + "</a> " + esc(c.sub)).join(" · ") + "</p>";
 
-  if (s.status === "ALERT") return '<div class="card" id="guide"><h2>진료가 필요할까요?</h2>' + body + "</div>";
-  return '<details class="card" id="guide"><summary>몸이 안 좋다면 — 증상으로 진료 안내 보기</summary>' + body + "</details>";
+  return '<details class="card" id="guide"><summary>증상이 있으면 타임라인에 남겨 두세요</summary>' +
+    '<p class="sub">병명을 고르지 않아요. 설명이 안 된 변화가 이어질 때, 느낀 것을 기록에 붙이는 자리예요.</p>' + body + "</details>";
 }
 
 // ---------- 기록 ----------
 function renderHistory() {
   const h = (S.history || []).slice(-28);
-  const lab = { calm: "", explained: "", left: "?", ask: "?", alert: "!", none: "", learning: "" };
+  const lab = { calm: "", explained: "", left: "", ask: "", alert: "", none: "", learning: "", recording: "" };
   $("grid").innerHTML = h.map((d) => {
     const day = Number(d.day.slice(8));
-    const tag = d.state === "explained" ? (CAUSE_KO[d.explained_by] || "") : lab[d.state];
+    const rec = dayRecord(d);
+    const tag = d.state === "explained" ? (OVERLAP_KO[d.explained_by] || "")
+      : (rec && rec.length <= 12 ? rec : lab[d.state]);
     return '<button type="button" class="cell ' + d.state + (selDay === d.day ? " sel" : "") + '" data-day="' + d.day +
       '" aria-label="' + fmtDay(d.day) + '"><span class="num">' + day + "</span><small>" + esc(tag) + "</small></button>";
   }).join("");
 
-  const d = h.find((x) => x.day === selDay) || h[h.length - 1];
-  if (d) {
-    const name = { calm: "평소", explained: "설명됨 · " + (CAUSE_KO[d.explained_by] || ""), left: "설명 안 됨",
-      ask: "물어보는 중", alert: "알림", none: "기록 없음", learning: "평소를 배우는 중" }[d.state];
-    $("dayDetail").innerHTML = "<h2>" + fmtDay(d.day) + "</h2>" +
-      '<div class="kv"><span>판정</span><span>' + esc(name) + "</span></div>" +
-      '<div class="kv"><span>밤 심박</span><span class="num">' + (d.night_hr ?? "–") + (d.delta != null ? " (" + sign(d.delta) + ")" : "") + "</span></div>" +
-      '<div class="kv"><span>평소와의 거리</span><span class="num">' + (d.z != null ? sign(d.z, 2) + " σ" : "–") + "</span></div>";
-  }
   const c = (st) => h.filter((x) => x.state === st).length;
-  const diff = c("explained") + c("left") + c("alert") + c("ask");
-  $("summary").innerHTML = "<h2>요약</h2>" +
-    '<div class="kv"><span>평소와 다른 날</span><span>' + diff + "일</span></div>" +
-    '<div class="kv"><span>이유가 있던 날</span><span>' + c("explained") + "일</span></div>" +
-    '<div class="kv"><span>설명 안 된 날</span><span>' + (c("left") + c("alert")) + "일</span></div>" +
-    '<div class="kv"><span>알림</span><span>' + c("alert") + "번</span></div>" +
-    '<p class="sub">이유를 적어둘수록 헛알림이 줄어요. 공개 데이터에서 맥락을 기록하면 평소와 다른 날의 55–60%가 설명됐어요.</p>';
+  const recent = h.filter((d) => d.state === "explained" || d.state === "left" || d.state === "alert" || d.state === "ask").slice(-8);
+  const card = $("timelineCard");
+  if (card) {
+    card.innerHTML = '<p class="kicker">진료에 가져갈 기록</p><h2>설명된 날과 남은 날</h2>' +
+      '<p class="sub">' + esc(usualBand(h) || "평소 범위가 아직 짧아요") + "</p>" +
+      '<div class="kv"><span>설명된 변화</span><span>' + c("explained") + "일</span></div>" +
+      '<div class="kv"><span>설명되지 않은 변화</span><span>' + (c("left") + c("alert")) + "일</span></div>" +
+      timelineItems(recent);
+  }
+
+  const d = h.find((x) => x.day === selDay) || recent[recent.length - 1];
+  if (d && $("dayDetail")) {
+    $("dayDetail").innerHTML = "<h2>" + fmtDay(d.day) + "</h2>" +
+      '<div class="kv"><span>이 날</span><span>' + esc(dayTitle(d)) + "</span></div>" +
+      (dayRecord(d) ? '<div class="kv"><span>기록</span><span>' + esc(dayRecord(d)) + "</span></div>" : "") +
+      '<div class="kv"><span>밤 심박</span><span class="num">' + (d.night_hr ?? "–") +
+      (d.delta != null ? " · 평소보다 " + sign(d.delta) : "") + "</span></div>" +
+      (d.face_hr != null ? '<div class="kv"><span>얼굴 심박</span><span class="num">' + d.face_hr + "</span></div>" : "") +
+      '<p class="sub">점수가 아니라, 그 변화가 생활 기록으로 덮였는지입니다.</p>';
+  }
 }
 
 function render() {
@@ -499,6 +647,34 @@ function render() {
 }
 
 // ---------- 이벤트 위임 ----------
+function noteMic() {
+  if (!speechReady()) return null;
+  if (mic) return mic;
+  mic = listenKo({
+    ontext(text) {
+      noteText = text;
+      const input = $("note");
+      if (input) input.value = text;
+    },
+    onstate(on) {
+      const b = $("micBtn");
+      if (!b) return;
+      b.textContent = on ? "듣는 중" : "말하기";
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    },
+    onerror(code) {
+      if (code === "not-allowed" || code === "service-not-allowed") toast("마이크를 쓸 수 없어요");
+    },
+  });
+  return mic;
+}
+
+document.addEventListener("input", (e) => {
+  if (e.target.id !== "note") return;
+  noteText = e.target.value;
+  if (mic && mic.listening) mic.stop();
+});
+
 document.addEventListener("click", async (e) => {
   const t = e.target.closest("button, a");
   if (!t) return;
@@ -513,20 +689,144 @@ document.addEventListener("click", async (e) => {
       return;
     }
     if (t.dataset.goto) document.querySelector('.tabs [data-tab="' + t.dataset.goto + '"]').click();
-    else if (t.dataset.ctx) {
+    else if (t.dataset.trace && t.dataset.val === "0") {
+      declineTrace(S.today, t.dataset.trace);
+      render();
+    } else if (t.id === "micBtn") {
+      const m = noteMic();
+      if (!m) return;
+      if (m.listening) m.stop();
+      else m.start((($("note") && $("note").value) || noteText || ""));
+    } else if (t.dataset.note) {
+      setDayNote(S.today, t.dataset.note);
+      S = await API.post("/api/context", { note: t.dataset.note, nothing: true });
+      editingContext = false;
+      showOther = false;
+      render();
+      toast("메모로 남겼어요. 이 이유만으로 변화를 설명하진 않아요.");
+    } else if (t.dataset.extra === "other") {
+      showOther = true;
+      render();
+    } else if (t.dataset.extra === "alcohol" || t.dataset.extra === "tense") {
+      if (mic) mic.stop();
+      setDayNote(S.today, "");
+      S = await API.post("/api/context", causeBody(t.dataset.extra));
+      editingContext = false;
+      showOther = false;
+      render();
+    } else if (t.dataset.extra) {
+      if (mic) mic.stop();
+      const label = (EXTRA_OPTS.find((x) => x.key === t.dataset.extra) || {}).label || "";
+      setDayNote(S.today, label);
+      S = await API.post("/api/context", { nothing: true, note: label });
+      editingContext = false;
+      showOther = false;
+      render();
+      toast("기록에 붙였어요. 이 변화는 생활 원인으로 덮지 않아요.");
+    } else if (t.id === "noteBtn") {
+      if (mic) mic.stop();
+      noteText = ($("note") && $("note").value) || noteText;
+      const hits = readNote(noteText);
+      setDayNote(S.today, noteText);
+      const body = { note: noteText };
+      if (hits.length) hits.forEach((k) => { body[k] = true; });
+      else body.nothing = true;
+      S = await API.post("/api/context", body);
+      editingContext = false;
+      showOther = false;
+      render();
+    } else if (t.id === "editCtx") {
+      editingContext = true;
+      render();
+    } else if (t.dataset.ctx) {
       const key = t.dataset.ctx;
-      const now = t.getAttribute("aria-pressed") === "true";
-      S = await API.post("/api/context", { [key]: !now });
+      const on = t.dataset.val != null ? t.dataset.val === "1" : true;
+      setDayNote(S.today, "");
+      S = await API.post("/api/context", on ? causeBody(key) : { nothing: true, note: "" });
+      editingContext = false;
       render();
     } else if (t.dataset.demo) {
+      if (mic) mic.stop();
+      if (S && S.today) {
+        setTraces(S.today, DEMO_TRACES[t.dataset.demo] || []);
+        clearDeclined(S.today);
+        setDayNote(S.today, "");
+      }
+      showOther = false;
       S = await API.post("/api/demo/night", { kind: t.dataset.demo });
       document.querySelector('.tabs [data-tab="today"]').click();
       render();
-    } else if (t.dataset.day) { selDay = t.dataset.day; renderHistory(); }
+    } else if (t.dataset.day) {
+      selDay = t.dataset.day;
+      const tab = document.querySelector('.tabs [data-tab="history"]');
+      if (tab && tab.getAttribute("aria-selected") !== "true") tab.click();
+      renderHistory();
+    }
     else if (t.id === "seedInline" || t.id === "seedBtn") { S = await API.post("/api/demo/seed"); render(); toast("지난 5주 기록을 채웠어요"); }
     else if (t.id === "resetBtn") { if (confirm("모든 기록을 지울까요?")) { S = await API.post("/api/reset"); render(); } }
     else if (t.id === "faceBtn") openSheet();
   } catch (err) { toast(err.message); }
+});
+
+// ---------- 수면 표 가져오기 ----------
+function sampleCsv() {
+  const end = new Date(((S && S.today) || new Date().toISOString().slice(0, 10)) + "T00:00:00");
+  const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" +
+    String(d.getDate()).padStart(2, "0");
+  const lines = ["날짜,심박,수면시간"];
+  const haveBase = S && S.baseline && S.baseline.valid_days >= 4;
+  if (!haveBase) {
+    for (let i = 8; i >= 1; i--) {
+      const d = new Date(end);
+      d.setDate(d.getDate() - i);
+      lines.push(iso(d) + "," + (57.4 + (i % 3) * 0.4).toFixed(1) + ",7.3");
+    }
+  }
+  lines.push(iso(end) + ",64.0,7.4");
+  return lines.join("\n");
+}
+$("sampleCsvBtn").addEventListener("click", () => {
+  $("importCsv").value = sampleCsv();
+});
+$("importFile").addEventListener("change", async () => {
+  const f = $("importFile").files && $("importFile").files[0];
+  if (!f) return;
+  $("importCsv").value = await f.text();
+  $("importFile").value = "";
+});
+$("importBtn").addEventListener("click", async () => {
+  const csv = $("importCsv").value.trim();
+  if (!csv) return toast("표를 먼저 넣어 주세요");
+  try {
+    S = await API.post("/api/import", { csv: csv });
+    const n = (S.imported && S.imported.n) || 0;
+    render();
+    toast(n + "일 기록을 넣고 다시 판정했어요");
+    document.querySelector('.tabs [data-tab="today"]').click();
+  } catch (err) { toast(err.message); }
+});
+
+// 발표 화면에서는 시연 버튼을 숨긴다. Shift+D 또는 주소 뒤 ?present=1 로만 연다.
+function presentOn() { return localStorage.getItem("vity-present") === "1"; }
+function applyPresent() {
+  const card = $("presentCard");
+  if (card) card.hidden = !presentOn();
+}
+(function () {
+  const q = new URLSearchParams(location.search).get("present");
+  if (q === "1") localStorage.setItem("vity-present", "1");
+  if (q === "0") localStorage.removeItem("vity-present");
+  applyPresent();
+})();
+document.addEventListener("keydown", (e) => {
+  const tag = (e.target && e.target.tagName) || "";
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if (!e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key !== "D" && e.key !== "d") return;
+  if (presentOn()) localStorage.removeItem("vity-present");
+  else localStorage.setItem("vity-present", "1");
+  applyPresent();
+  toast(presentOn() ? "시연 도구를 열었어요" : "시연 도구를 숨겼어요");
 });
 
 // ---------- 직접 입력 ----------
@@ -759,7 +1059,7 @@ function goGuide() {
   setTimeout(() => { const g = $("guide"); if (g) g.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
 }
 Alarm.setActions({
-  ASK: { label: "이유 알려주기", run: goContext },
+  ASK: { label: "확인하기", run: goContext },
   ALERT: { label: "증상 확인하기", run: goGuide },
 });
 function showPerm() {
@@ -785,9 +1085,9 @@ function onPresence(p) {
 }
 
 // ---------- 시작 ----------
-API.get("/api/state").then((s) => { if (!S) { S = s; render(); } }).catch(() => {});
+API.get("/api/state").then((s) => { if (!S) { adoptServerNote(s); S = s; render(); } }).catch(() => {});
 subscribe("phone", {
-  state: (s) => { S = s; render(); },
+  state: (s) => { adoptServerNote(s); S = s; render(); },
   notify: (n) => Alarm.show(n),
   dismiss: (d) => Alarm.remove(d.id),
   presence: onPresence,
