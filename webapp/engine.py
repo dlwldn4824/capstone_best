@@ -33,6 +33,17 @@ STANDARD = dict(window=28, lag=7, min_n=14)
 SHORT = dict(window=7, lag=0, min_n=4)
 STANDARD_MIN_DAYS = 21
 
+# 얼굴 심박 — 밤 심박의 교차 확인 신호 (docs/FACE_RPPG.md)
+# 공개 데이터 100명: 품질을 통과한 측정은 87% 가 ±5 bpm 안, 그래도 밤 심박보다 덜 정확하다.
+# 그래서 얼굴 혼자서는 더 큰 이탈을 요구하고, 밤 심박이 애매할 때 같은 쪽을 가리키면 보탠다.
+FACE_MIN_SNR = 0.0            # 앱의 멈춤 기준과 같다 — 이보다 낮은 측정은 기준선에도 판정에도 안 쓴다
+FACE_Z_ALONE = 2.5            # 밤 기록이 없을 때 얼굴만으로 이탈이라 보는 기준
+FACE_Z_CONFIRM = 2.0          # 밤 심박이 애매할 때 얼굴이 보태는 기준
+NIGHT_Z_BORDER = 1.5          # '애매한' 밤 심박의 아래쪽
+FACE_STANDARD = dict(window=28, lag=7, min_n=7)
+FACE_SHORT = dict(window=7, lag=0, min_n=4)
+FACE_STANDARD_MIN = 14
+
 CAUSES = ("alcohol", "exercise", "sleep_debt", "tense")
 CAUSE_KO = {"alcohol": "술", "exercise": "운동", "sleep_debt": "짧은 잠", "tense": "긴장"}
 # 원인별 설명 상한 (밤 심박 z). 연구에서는 train 에서 정한다 (fit_cause_ceiling).
@@ -92,6 +103,9 @@ def risk(d):
     lin = x @ np.asarray(MODEL["coef"]) + MODEL["intercept"]
     p = 1 / (1 + np.exp(-lin))
     p[~np.isfinite(d["night_z"].to_numpy(dtype=float))] = np.nan
+    # 모델은 밤 심박으로만 학습했다 — 얼굴만으로 판정한 날에는 쓰지 않는다
+    if "source" in d:
+        p[(d["source"] != "night").to_numpy()] = np.nan
     lv = MODEL["levels"]
     d["risk_p"] = p
     d["risk_level"] = np.select([p >= lv["alert"], p >= lv["check"], p >= lv["watch"]],
@@ -193,9 +207,9 @@ def _frame(con, until):
     nights = pd.read_sql("SELECT * FROM nights", con)
     ctx = pd.read_sql("SELECT * FROM contexts", con)
     faces = pd.read_sql("SELECT * FROM faces", con)
-    if nights.empty:
+    if nights.empty and faces.empty:
         return None, ctx, faces
-    first = pd.Timestamp(min(nights["day"]))
+    first = pd.Timestamp(min(list(nights["day"]) + list(faces["day"])))
     days = pd.date_range(first, pd.Timestamp(until), freq="D")
     d = pd.DataFrame({"day": days})
     d["subject_id"] = "me"
@@ -203,21 +217,63 @@ def _frame(con, until):
         if not t.empty:
             t["day"] = pd.to_datetime(t["day"])
     d = d.merge(nights, on="day", how="left").merge(ctx, on="day", how="left")
+    if not faces.empty:
+        d = d.merge(faces[["day", "face_hr", "quality"]], on="day", how="left")
+    else:
+        d["face_hr"], d["quality"] = np.nan, np.nan
     d["night_min"] = d["night_min"].fillna(0)
-    d["valid"] = d["night_min"] >= MIN_NIGHT_MIN
+    d["valid"] = (d["night_min"] >= MIN_NIGHT_MIN) & d["night_hr"].notna()
+    d["face_valid"] = d["face_hr"].notna() & (d["quality"].astype(float) >= FACE_MIN_SNR)
     return d, ctx, faces
 
 
-def _ref_median(d, params):
+def _ref_median(d, params, col="night_hr", valid_col="valid"):
     """그날의 기준선 중앙값 (화면에 '평소 58 bpm' 으로 보여줄 값)."""
-    x = d["night_hr"].to_numpy(dtype=float)
-    ok = d["valid"].to_numpy(dtype=bool) & np.isfinite(x)
+    x = d[col].to_numpy(dtype=float)
+    ok = d[valid_col].to_numpy(dtype=bool) & np.isfinite(x)
     refs = H._past_ref(d["day"], x, ok, params["window"], params["lag"], params["min_n"])
     med = [float(np.median(r)) if r is not None else np.nan for r in refs]
     mad = [float(1.4826 * np.median(np.abs(r - np.median(r)))) if r is not None else np.nan
            for r in refs]
     n_ref = [int(len(r)) if r is not None else 0 for r in refs]
     return med, mad, n_ref
+
+
+def fuse(d):
+    """밤 심박 z 와 얼굴 심박 z 를 하나의 판정용 z 로 합친다.
+
+    night_z_raw / face_z 는 그대로 두고, 판정은 night_z(=합친 값) 와 valid 로 한다.
+      밤 z ≥ 2                       → 밤 z 그대로 (얼굴은 일치 여부만 표시)
+      1.5 ≤ 밤 z < 2  그리고 얼굴 z ≥ 2 → 2 로 올린다 (약한 두 신호가 같은 쪽)
+      밤 기록 없음, 얼굴 z 있음          → 얼굴 z × 2/2.5 (얼굴만으로는 2.5 를 넘어야 이탈)
+      밤 z < 2, 얼굴만 높음             → 이탈 아님 (얼굴 단독으로 뒤집지 않는다)
+    """
+    nz = d["night_z"].to_numpy(dtype=float)
+    fz = d["face_z"].to_numpy(dtype=float)
+    nv = d["valid"].to_numpy(dtype=bool) & np.isfinite(nz)
+    fv = d["face_valid"].to_numpy(dtype=bool) & np.isfinite(fz)
+
+    eff = np.where(nv, nz, np.nan)
+    border = nv & (nz >= NIGHT_Z_BORDER) & (nz < Z_THRESH) & fv & (fz >= FACE_Z_CONFIRM)
+    eff[border] = Z_THRESH
+    alone = ~nv & fv
+    eff[alone] = fz[alone] * Z_THRESH / FACE_Z_ALONE
+
+    agree = np.full(len(d), "", dtype=object)
+    both = nv & fv
+    agree[both & (nz >= Z_THRESH) & (fz >= FACE_Z_CONFIRM)] = "both"
+    agree[both & (nz >= Z_THRESH) & (fz < FACE_Z_CONFIRM)] = "night_only"
+    agree[both & (nz < NIGHT_Z_BORDER) & (fz >= FACE_Z_CONFIRM)] = "face_only"
+    agree[border] = "border"
+    agree[both & (nz < Z_THRESH) & (fz < FACE_Z_CONFIRM) & ~border] = "calm"
+    agree[alone] = "face_alone"
+
+    d["night_z_raw"] = nz
+    d["night_z"] = eff
+    d["valid"] = nv | alone
+    d["source"] = np.where(nv, "night", np.where(alone, "face", ""))
+    d["agree"] = agree
+    return d
 
 
 def compute(con, now=None):
@@ -233,6 +289,13 @@ def compute(con, now=None):
     d["night_z"] = H.rolling_z(d, "night_hr", **params)
     d["ref_med"], d["ref_mad"], d["ref_n"] = _ref_median(d, params)
 
+    # 얼굴 심박: 밤 심박과 같은 방식의 개인 기준선 (품질 통과한 측정만)
+    n_face = int(d["face_valid"].sum())
+    fparams = FACE_STANDARD if n_face >= FACE_STANDARD_MIN else FACE_SHORT
+    d["face_z"] = H.rolling_z(d, "face_hr", valid_col="face_valid", **fparams)
+    d["face_ref"], d["face_mad"], _ = _ref_median(d, fparams, "face_hr", "face_valid")
+    d = fuse(d)
+
     f = lambda c: d[c].fillna(0).astype(int).astype(bool) if c in d else False  # noqa: E731
     va = d["very_active_min"].astype(float) if "very_active_min" in d else np.nan
     sl = d["asleep_min"].astype(float) if "asleep_min" in d else np.nan
@@ -240,7 +303,6 @@ def compute(con, now=None):
     d["tense"] = f("tense")
     d["exercise"] = f("exercise") | (pd.Series(va).fillna(0) >= 30).to_numpy()
     d["sleep_debt"] = f("sleep") | ((pd.Series(sl) < 360) & pd.Series(sl).notna()).to_numpy()
-    d["valid"] = d["valid"] & np.isfinite(d["night_z"])
     d = H.apply_explanation(d, z_thresh=Z_THRESH, ceiling=CAPS, causes=CAUSES)
     d = risk(d)
 
@@ -285,7 +347,7 @@ def _row(r):
     if not r.valid:
         # 밤 기록은 있는데 기준선이 아직 없으면 '배우는 중'
         has_night = r.night_hr == r.night_hr and r.night_min >= MIN_NIGHT_MIN
-        state = "learning" if has_night else "none"
+        state = "learning" if (has_night or bool(r.face_valid)) else "none"
     elif not r.deviated:
         state = "calm"
     elif r.pending:
@@ -300,7 +362,12 @@ def _row(r):
         "day": r.day.date().isoformat(), "state": state,
         "night_hr": _num(r.night_hr), "night_min": _num(r.night_min, 0),
         "ref": _num(r.ref_med), "spread": _num(r.ref_mad), "z": _num(r.night_z, 2),
+        "night_z": _num(r.night_z_raw, 2),
         "delta": _num(r.night_hr - r.ref_med) if np.isfinite(r.ref_med) else None,
+        "face_hr": _num(r.face_hr) if bool(r.face_valid) else None,
+        "face_z": _num(r.face_z, 2), "face_ref": _num(r.face_ref), "face_spread": _num(r.face_mad),
+        "face_delta": (_num(r.face_hr - r.face_ref) if bool(r.face_valid) and np.isfinite(r.face_ref) else None),
+        "source": r.source, "agree": r.agree,
         "explained_by": by, "explained_ko": CAUSE_KO.get(by, ""),
         "causes": causes, "run": int(r.run_len), "alert": bool(r.alert),
         "answered": bool(r.answered),
@@ -310,7 +377,7 @@ def _row(r):
 
 
 def _status(t, n_valid, params):
-    if t["night_hr"] is None:
+    if t["night_hr"] is None and t["source"] != "face":
         return "NO_NIGHT"
     if t["z"] is None:
         return "BASELINE"
@@ -352,6 +419,7 @@ def seed_demo(con, days=35, seed=10, now=None):
     """시연용 지난 기록. 마지막 이틀은 이유 없이 높아 오늘 밤이 사흘째가 될 수 있다."""
     reset(con)
     rng = np.random.default_rng(seed)
+    frng = np.random.default_rng(seed + 100)       # 얼굴은 따로 — 밤 기록의 난수 순서를 바꾸지 않는다
     end = pd.Timestamp(today(now))
     for i in range(days, 0, -1):
         d = (end - pd.Timedelta(days=i)).date().isoformat()
@@ -369,22 +437,36 @@ def seed_demo(con, days=35, seed=10, now=None):
         else:
             ctx = {}
         put_night(con, d, round(hr, 1), int(rng.normal(410, 25)), source="demo")
+        # 아침 얼굴 심박: 깨어 있어 밤보다 높고, 측정 잡음이 크다 (공개 데이터 품질 통과 측정 수준)
+        if frng.random() < 0.85:
+            put_face(con, d, round(hr + 7 + frng.normal(0, 1.2), 1), 2.0, 62.0, 14.0, 16.0)
         if ctx:
             put_context(con, d, **ctx)
 
 
 DEMO_NIGHTS = {
-    "calm": dict(delta=0.3, label="평소 같은 밤"),
-    "drink": dict(delta=3.5, label="술 마신 밤 (+3.5)"),
-    "unexplained": dict(delta=6.0, label="이유 없이 높은 밤 (+6)"),
+    "calm": dict(delta=0.3, face=0.5, label="평소 같은 밤"),
+    "drink": dict(delta=3.5, face=3.0, label="술 마신 밤 (+3.5)"),
+    "unexplained": dict(delta=6.0, face=5.0, label="이유 없이 높은 밤 (+6)"),
+    "border": dict(delta=1.6, face=4.0, label="애매한 밤 + 얼굴도 높음"),
+    "face_only": dict(delta=None, face=5.5, label="밴드 없이 얼굴만 (+5.5)"),
 }
 
 
 def demo_night(con, kind, now=None):
+    """오늘 밤 기록과 아침 얼굴 체크를 시연용으로 넣는다. 오늘 것은 먼저 지운다."""
+    day = today(now)
+    con.execute("DELETE FROM nights WHERE day=?", (day,))
+    con.execute("DELETE FROM faces WHERE day=?", (day,))
+    con.commit()
     st = compute(con, now)
-    ref = (st.get("night") or {}).get("ref") or 58.0
-    delta = DEMO_NIGHTS[kind]["delta"]
-    put_night(con, today(now), round(ref + delta, 1), 405, source="demo")
+    hist = st.get("history") or []
+    ref = next((h["ref"] for h in reversed(hist) if h.get("ref") is not None), None) or 58.0
+    fref = next((h["face_ref"] for h in reversed(hist) if h.get("face_ref") is not None), None) or ref + 7
+    k = DEMO_NIGHTS[kind]
+    if k["delta"] is not None:
+        put_night(con, day, round(ref + k["delta"], 1), 405, source="demo")
+    put_face(con, day, round(fref + k["face"] * 1.2, 1), 2.0, 62.0, 14.0, 16.0)
 
 
 def dumps(obj):

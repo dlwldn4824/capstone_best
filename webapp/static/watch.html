@@ -139,8 +139,11 @@ function render() {
   $("word").textContent = word;
   $("word").style.color = TONE[v.tone];
   let line = "";
-  if (n.night_hr != null) {
+  if (n.source === "face") {
+    line = "얼굴 심박 " + Math.round(n.face_hr) + (n.face_ref != null ? " · 평소 " + Math.round(n.face_ref) : "");
+  } else if (n.night_hr != null) {
     line = "밤 심박 " + Math.round(n.night_hr) + (n.ref != null ? " · 평소 " + Math.round(n.ref) : "");
+    if (n.agree === "both" || n.agree === "border") line += " · 얼굴도 높음";
     if (S.status === "EXPLAINED" && n.explained_ko) line = n.explained_ko + " 때문 · " + line;
   } else line = v.title;
   $("line").textContent = line;
@@ -156,7 +159,7 @@ function render() {
   const why = $("why");
   why.classList.toggle("ask", ask);
   why.textContent = ask ? "왜 그랬을까요?" : "이유";
-  why.hidden = n.night_hr == null || n.z == null;
+  why.hidden = (n.night_hr == null && n.source !== "face") || n.z == null;
 
   // 고르기 화면 상태
   const has = new Set(n.causes || []);

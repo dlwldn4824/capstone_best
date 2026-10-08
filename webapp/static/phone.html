@@ -216,6 +216,10 @@ details.card summary::-webkit-details-marker{display:none}
         <button class="btn small ghost" data-demo="drink" type="button">술 마신 밤</button>
         <button class="btn small ghost" data-demo="unexplained" type="button">이유 없는 밤</button>
       </div>
+      <div class="row">
+        <button class="btn small ghost" data-demo="border" type="button">애매한 밤 + 얼굴 높음</button>
+        <button class="btn small ghost" data-demo="face_only" type="button">밴드 없이 얼굴만</button>
+      </div>
       <button class="btn small ghost" id="resetBtn" type="button" style="color:var(--alert)">모든 기록 지우기</button>
     </div>
   </section>
@@ -317,7 +321,7 @@ function renderToday() {
   // 데이터 없음
   if (s.status === "NO_DATA" || s.status === "NO_NIGHT") {
     parts.push('<div class="card"><h2>어젯밤 기록 넣기</h2>' +
-      '<p class="sub">밴드로 잤다면 기기 탭에서 보내고, 다른 앱 기록은 직접 넣을 수 있어요.</p>' +
+      '<p class="sub">밴드로 잤다면 기기 탭에서 보내고, 다른 앱 기록은 직접 넣을 수 있어요. 밴드가 없으면 아래 얼굴 체크만으로도 판정해요.</p>' +
       '<div class="row"><button class="btn small" type="button" data-goto="devices">기기 탭으로</button></div>' +
       (s.status === "NO_DATA"
         ? '<button class="btn small ghost" type="button" id="seedInline">시연용 지난 기록 채우기</button>'
@@ -327,28 +331,36 @@ function renderToday() {
       "</div>");
   }
 
-  // 어젯밤
-  if (n.night_hr != null) {
+  // 어젯밤 (밤 심박, 없으면 얼굴 심박으로 판정)
+  const byFace = n.source === "face";
+  if (n.night_hr != null || byFace) {
     let bar = "";
-    if (n.z != null) {
+    const zShow = byFace ? n.face_z : n.night_z;
+    const refShow = byFace ? n.face_ref : n.ref;
+    if (zShow != null) {
       const pos = (z) => Math.max(2, Math.min(98, ((z + 3) / 10) * 100));
       const col = s.status === "ALERT" ? "var(--alert)" : s.status === "EXPLAINED" || n.z < 2 ? "var(--calm)" : "var(--left)";
       bar = '<div class="range" aria-hidden="true"><div class="track"></div>' +
         '<div class="band" style="left:' + pos(-2) + "%; width:" + (pos(2) - pos(-2)) + '%"></div>' +
-        '<div class="mark" style="left:' + pos(n.z) + "%; background:" + col + '"></div></div>' +
-        '<div class="scale"><span>낮음</span><span>평소 ' + n.ref + " ± " + n.spread + "</span><span>높음</span></div>";
+        '<div class="mark" style="left:' + pos(zShow) + "%; background:" + col + '"></div></div>' +
+        '<div class="scale"><span>낮음</span><span>평소 ' + refShow + (byFace ? "" : " ± " + n.spread) + "</span><span>높음</span></div>";
     }
+    const delta = byFace ? n.face_delta : n.delta;
     parts.push('<div class="card"><div style="display:flex; justify-content:space-between; align-items:baseline">' +
-      "<h2>어젯밤 심박</h2>" +
-      (n.delta != null ? '<span class="sub num">평소보다 ' + sign(n.delta) + " bpm</span>" : "") + "</div>" +
-      '<p class="big num">' + n.night_hr + "<small>bpm · 잠든 동안 " + Math.round(n.night_min) + "분</small></p>" + bar +
+      "<h2>" + (byFace ? "아침 얼굴 심박" : "어젯밤 심박") + "</h2>" +
+      (delta != null ? '<span class="sub num">평소보다 ' + sign(delta) + " bpm</span>" : "") + "</div>" +
+      (byFace
+        ? '<p class="big num">' + n.face_hr + "<small>bpm · 얼굴 체크</small></p>" +
+          '<p class="sub">어젯밤 밴드 기록이 없어 얼굴 심박으로 판정했어요. 얼굴은 덜 정확해서 더 크게 벗어나야 이탈로 봐요.</p>'
+        : '<p class="big num">' + n.night_hr + "<small>bpm · 잠든 동안 " + Math.round(n.night_min) + "분</small></p>") + bar +
+      faceCrossHtml(n) +
       riskHtml(n, s.model) +
       (s.baseline.mode === "short" ? '<span class="badge">짧은 기준선 — 기록 ' + s.baseline.valid_days + "일 (" + s.baseline.standard_after + "일부터 정식)</span>" : "") +
       "</div>");
   }
 
   // 맥락
-  if (n.night_hr != null && n.z != null) {
+  if ((n.night_hr != null || byFace) && n.z != null) {
     const has = new Set(n.causes || []);
     const on = (k) => (k === "sleep" ? has.has("sleep_debt") : has.has(k));
     const ask = s.status === "ASK";
@@ -374,6 +386,24 @@ function renderToday() {
     "</div>");
 
   $("v-today").innerHTML = parts.join("");
+}
+
+// ---------- 얼굴 심박 교차 확인 ----------
+function faceCrossHtml(n) {
+  if (n.source === "face" || n.face_hr == null) {
+    return n.source === "face" ? "" :
+      '<div class="kv"><span>아침 얼굴 심박</span><span class="sub">오늘 아직 안 쟀어요 — 재면 밤 심박과 맞춰 봐요</span></div>';
+  }
+  const msg = {
+    both: ["두 신호 모두 평소보다 높아요", "left"],
+    night_only: ["얼굴은 평소 범위예요 — 밤 심박으로 판정", "calm"],
+    face_only: ["얼굴만 높아요 — 얼굴 혼자로는 판정하지 않아요", "calm"],
+    border: ["밤 심박은 애매했지만 얼굴도 높아 '달랐다' 로 봤어요", "left"],
+    calm: ["두 신호 모두 평소 범위예요", "calm"],
+  }[n.agree];
+  return '<div class="kv"><span>아침 얼굴 심박</span><span class="num">' + n.face_hr + " bpm" +
+    (n.face_delta != null ? ' <span class="sub">(' + sign(n.face_delta) + ")</span>" : "") + "</span></div>" +
+    (msg ? '<p class="lv ' + msg[1] + '" style="font-size:13px; font-weight:600; padding:6px 12px; border-radius:10px; width:auto">' + msg[0] + "</p>" : "");
 }
 
 // ---------- 모델 위험도 (두 번째 의견) ----------
@@ -670,30 +700,41 @@ async function loop() {
       const stable = last.length === STABLE_N &&
         Math.max(...last.map((e) => e.bpm)) - Math.min(...last.map((e) => e.bpm)) <= STABLE_BPM &&
         last.every((e) => e.snr >= 0);
-      if (stable || el >= SCAN_MAX) return finish();
+      if (stable || el >= SCAN_MAX) return finish(stable);
     } else if (el < SCAN_MIN && (!loop._c || now - loop._c > 250)) { loop._c = now; setChecks(q, !!cam.face, null); }
   }
   cam.raf = requestAnimationFrame(loop);
 }
 
 function start() {
-  if (cam.running) return;
+  if (cam.running || !cam.stream) return;       // 카메라가 꺼져 있으면(다시 재기 직전) 무시
   cam.frames = []; cam.ests = []; cam.t0 = performance.now(); cam.running = true; loop._e = 0;
   $("sheetBtn").textContent = "스캔 중…";
   $("sheetBtn").disabled = true;
   if (navigator.vibrate) navigator.vibrate(30);
 }
 
-async function finish() {
+// 20초 안에 안정되지 않으면 값을 저장하지 않는다.
+// 공개 데이터(MCD-rPPG) 검증: 안정돼서 멈춘 측정은 오차가 1 bpm 안팎, 안정 안 된 측정은 20 bpm 안팎.
+async function finish(stable) {
   cam.running = false;
   const est = RPPG.estimate(cam.frames);
   const lab = RPPG.color(cam.frames);
   const secs = Math.round((performance.now() - cam.t0) / 100) / 10;
+  stopCam();
+  if (!est || !stable) {
+    ring(0);
+    $("sheetTime").textContent = "다시 재주세요";
+    $("sheetChecks").innerHTML = li(false, "신호가 흔들려 값을 믿기 어려워요. 밝은 곳에서, 말하지 말고 다시 재주세요.");
+    $("sheetBtn").textContent = "다시 재기";
+    $("sheetBtn").disabled = false;
+    $("sheetBtn").onclick = () => { $("sheetBtn").onclick = null; openSheet(); };
+    if (navigator.vibrate) navigator.vibrate(200);
+    return;
+  }
   ring(1);
   $("sheetTime").textContent = "완료 · " + secs + "초";
-  stopCam();
   if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
-  if (!est) { toast("신호가 부족했어요. 다시 재주세요."); setTimeout(() => $("sheet").classList.remove("on"), 600); return; }
   S = await API.post("/api/face", { face_hr: Math.round(est.bpm * 10) / 10, quality: Math.round(est.snr * 100) / 100,
     L: Math.round(lab.L * 10) / 10, a: Math.round(lab.a * 10) / 10, b: Math.round(lab.b * 10) / 10 });
   setTimeout(() => { $("sheet").classList.remove("on"); render(); toast("얼굴 심박 " + Math.round(est.bpm) + " bpm · " + secs + "초"); }, 500);

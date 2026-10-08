@@ -115,3 +115,75 @@ def test_pending_until_acked(con):
 def test_calm_or_explained_days_do_not_notify(con):
     E.demo_night(con, "calm")
     assert E.maybe_notify(con, E.compute(con)) is None
+
+
+# --- 얼굴 심박을 판정에 넣기 ----------------------------------------------------
+def _baseline(tmp_path, days=30, face=True, face_q=2.0):
+    """밤 60 · 얼굴 67 근처를 다섯 값으로 돌려 기준선을 만들고, 오늘의 기준선 값을 돌려준다."""
+    import pandas as pd
+    c = E.connect(tmp_path / "f.db")
+    end = pd.Timestamp(E.today())
+    cyc = [-1.0, -0.5, 0.0, 0.5, 1.0]
+    for i in range(days, 0, -1):
+        d = (end - pd.Timedelta(days=i)).date().isoformat()
+        E.put_night(c, d, 60.0 + cyc[i % 5], 400)
+        if face:
+            E.put_face(c, d, 67.0 + 2 * cyc[i % 5], face_q, 60, 14, 16)
+    n = E.compute(c)["night"]
+    return c, n
+
+
+def _night(c, n, z):
+    E.put_night(c, E.today(), n["ref"] + z * n["spread"], 400)
+
+
+def _face(c, n, z, q=2.0):
+    E.put_face(c, E.today(), n["face_ref"] + z * n["face_spread"], q, 60, 14, 16)
+
+
+def test_face_confirms_a_borderline_night(tmp_path):
+    c, n = _baseline(tmp_path)
+    _night(c, n, 1.75)                                      # 밤 z 1.75 (애매)
+    _face(c, n, 2.5)                                        # 얼굴 z 2.5
+    s = E.compute(c)
+    assert s["night"]["agree"] == "border" and s["night"]["z"] == pytest.approx(2.0)
+    assert s["status"] == "ASK"
+
+
+def test_borderline_night_alone_is_calm(tmp_path):
+    c, n = _baseline(tmp_path)
+    _night(c, n, 1.75)
+    assert E.compute(c)["status"] == "CALM"
+
+
+def test_face_alone_cannot_flip_a_calm_night(tmp_path):
+    c, n = _baseline(tmp_path)
+    _night(c, n, 0.0)
+    _face(c, n, 5.0)
+    s = E.compute(c)
+    assert s["night"]["agree"] == "face_only" and s["status"] == "CALM"
+
+
+def test_face_judges_when_no_night_but_needs_more(tmp_path):
+    c, n = _baseline(tmp_path)
+    _face(c, n, 2.2)                                        # 얼굴만 z 2.2 < 2.5
+    s = E.compute(c)
+    assert s["night"]["source"] == "face" and s["status"] == "CALM"
+    _face(c, n, 3.0)                                        # 얼굴만 z 3.0 ≥ 2.5
+    s = E.compute(c)
+    assert s["night"]["agree"] == "face_alone" and s["status"] == "ASK"
+
+
+def test_low_quality_face_is_ignored(tmp_path):
+    c, n = _baseline(tmp_path)
+    _face(c, n, 5.0, q=-1.0)                                # 품질 미달
+    s = E.compute(c)
+    assert s["status"] == "NO_NIGHT" and s["night"]["face_hr"] is None
+
+
+def test_night_stays_primary_when_face_disagrees(tmp_path):
+    c, n = _baseline(tmp_path)
+    _night(c, n, 3.0)
+    _face(c, n, 0.0)
+    s = E.compute(c)
+    assert s["night"]["agree"] == "night_only" and s["status"] == "ASK"
