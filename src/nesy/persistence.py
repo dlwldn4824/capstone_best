@@ -85,13 +85,17 @@ def fit_day_thresh(day_df, positive, train_mask=None, q=0.90):
 
 
 def alerts(day_df, thresh, k=3, max_gap_days=2, refractory_days=7,
-           subject_col="subject_id", day_col="day"):
+           subject_col="subject_id", day_col="day", hold_col=None):
     """K일 연속 미해결이면 경보. 사람별로 독립 실행한다.
 
     반환: day_df 사본 + unresolved / run_len / alert 열.
 
     max_gap_days   이 날짜 이상 벌어지면 연속이 끊긴다 (미착용 구간)
     refractory_days 경보 뒤 이 기간 동안은 다시 울리지 않는다
+    hold_col       이 열이 True 인 날은 연속을 끊지도 잇지도 않는다.
+                   '이탈했지만 설명된 날' 용이다. 그날을 '해결됨' 으로 세면
+                   감염 중 하루 운동했다고 누적이 0 으로 돌아간다.
+                   valid=False 와 달리 인·월 분모에는 남는다.
     """
     d = day_df.copy().sort_values([subject_col, day_col]).reset_index(drop=True)
     d["unresolved"] = d["valid"] & (d["carried_frac"] >= thresh)
@@ -111,6 +115,9 @@ def alerts(day_df, thresh, k=3, max_gap_days=2, refractory_days=7,
                 run = 0
             if not d.at[i, "valid"]:
                 # 착용이 짧은 날은 끊지도 잇지도 않는다. 판단을 보류한다.
+                prev_day = day
+                continue
+            if hold_col is not None and d.at[i, hold_col]:
                 prev_day = day
                 continue
             run = run + 1 if d.at[i, "unresolved"] else 0

@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F8FC">
+<title>Vity</title>
+<link rel="stylesheet" href="/app.css">
+<style>
+.app{max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;
+  padding:max(16px, env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom))}
+.top{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 4px 16px}
+.top h1{margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em}
+.top p{margin:0; font-size:13px; color:var(--muted)}
+.sync{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); white-space:nowrap}
+.sync i{width:8px; height:8px; border-radius:99px; background:var(--muted)}
+.sync.on i{background:var(--calm)}
+.view{display:none; flex-direction:column; gap:12px}
+.view.on{display:flex}
+.card{background:var(--surface); border-radius:20px; padding:18px; display:flex; flex-direction:column; gap:12px}
+.card h2{margin:0; font-size:17px; font-weight:600}
+.card p{margin:0}
+.sub{font-size:13px; color:var(--muted)}
+.hero{border-radius:24px; padding:22px 20px; gap:10px}
+.hero h2{font-size:26px; font-weight:700; letter-spacing:-.03em; line-height:1.3}
+.hero p{font-size:15px; line-height:1.6; word-break:keep-all}
+.hero.has-mascot{flex-direction:row; align-items:center; gap:12px}
+.hero .copy{display:flex; flex-direction:column; gap:10px; min-width:0}
+.hero .mascot{width:108px; height:108px; object-fit:contain; flex:none}
+.tone-calm{background:var(--calm-soft); color:var(--calm-ink)}
+.tone-left{background:var(--left-soft); color:var(--left-ink)}
+.tone-alert{background:var(--surface); color:var(--ink)}
+.tone-muted{background:var(--surface); color:var(--ink)}
+.dots{display:grid; grid-template-columns:repeat(var(--k,3), minmax(0,1fr)); gap:8px}
+.dots span{height:8px; border-radius:99px; border:none; background:var(--surface2); opacity:1}
+.dots span.f{background:var(--calm)}
+.hero.tone-alert .dots span.f{background:var(--alert)}
+.big{font-size:36px; font-weight:700; letter-spacing:-.02em; line-height:1}
+.big small{font-size:15px; font-weight:500; color:var(--muted); margin-left:6px; letter-spacing:0}
+.range{position:relative; height:34px}
+.range .track{position:absolute; left:0; right:0; top:14px; height:6px; border-radius:99px; background:var(--surface2)}
+.range .band{position:absolute; top:12px; height:10px; border-radius:99px; background:#D6E6FF; border:none}
+.range .mark{position:absolute; top:5px; width:24px; height:24px; margin-left:-12px; border-radius:99px; border:3px solid var(--surface)}
+.scale{display:flex; justify-content:space-between; font-size:12px; color:var(--muted)}
+.badge{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500; padding:4px 10px; border-radius:99px; background:var(--surface2); color:var(--ink2); width:max-content}
+.badge.exp{background:var(--exp-soft); color:var(--exp)}
+.chips{display:flex; flex-direction:column; gap:8px}
+.chip{display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:64px; padding:12px 14px;
+  border-radius:16px; border:2px solid var(--line); background:var(--surface); text-align:left; width:100%}
+.chip b{display:block; font-size:16px; font-weight:600}
+.chip span{display:block; font-size:12.5px; color:var(--muted)}
+.chip .box{flex:none; width:26px; height:26px; border-radius:8px; border:2px solid var(--line); display:grid; place-items:center}
+.chip[aria-pressed="true"]{border-color:var(--calm); background:var(--calm-soft)}
+.chip[aria-pressed="true"] .box{background:var(--calm); border-color:var(--calm)}
+.chip[aria-pressed="true"] .box svg{display:block}
+.chip .box svg{display:none}
+.btn{display:flex; align-items:center; justify-content:center; gap:8px; min-height:52px; padding:0 18px; border-radius:16px;
+  border:none; background:var(--btn); color:var(--btn-ink); font-size:16px; font-weight:600; text-decoration:none}
+.btn.ghost{background:transparent; color:var(--ink); border:1.5px solid var(--line)}
+.btn.small{min-height:44px; font-size:15px; border-radius:14px}
+.row{display:flex; gap:8px; flex-wrap:wrap}
+.stack{display:flex; flex-direction:column; gap:10px}
+[hidden]{display:none !important}
+.row > *{flex:1 1 0}
+.kv{display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:44px; border-bottom:1px solid var(--line); font-size:15px}
+.kv:last-child{border-bottom:none}
+.kv span:first-child{color:var(--ink2)}
+.grid7{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:6px}
+.cell{height:50px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  border:2px solid transparent; background:var(--surface2); font-size:14px; font-weight:600; padding:0}
+.cell small{font-size:10px; font-weight:500; line-height:1.1}
+.cell.calm{background:transparent; border-color:transparent; color:var(--muted)}
+.cell.explained{background:var(--calm); color:#FFFFFF}
+.cell.left,.cell.ask{background:var(--left); color:#FFFFFF}
+.cell.alert{background:var(--alert); color:#FFFFFF}
+.cell.none{background:transparent; color:var(--muted); border:none}
+.cell.learning{background:var(--surface2); color:var(--muted)}
+.cell.sel{outline:3px solid var(--ink); outline-offset:1px}
+.legend{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--ink2)}
+.legend i{display:inline-block; width:12px; height:12px; border-radius:4px; margin-right:6px; vertical-align:-1px}
+.tabs{position:fixed; left:0; right:0; bottom:0; background:var(--surface); border-top:1px solid var(--line);
+  display:flex; justify-content:center; padding-bottom:env(safe-area-inset-bottom)}
+.tabs div{display:grid; grid-template-columns:repeat(3,1fr); width:100%; max-width:480px}
+.tabs button{min-height:64px; border:none; background:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:12px; color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--calm); font-weight:600}
+input[type=number],textarea.csv{width:100%; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); padding:12px 14px; font-size:16px}
+input[type=number]{min-height:48px; padding:0 14px}
+textarea.csv{min-height:132px; resize:vertical; line-height:1.45}
+label.f{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--ink2); flex:1 1 0}
+.live{display:flex; align-items:baseline; gap:8px}
+.live .big{font-family:var(--mono)}
+.heart{color:var(--alert)}
+.toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); background:var(--btn); color:var(--btn-ink);
+  padding:10px 16px; border-radius:12px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90vw}
+.toast.on{opacity:1}
+/* 진료 안내 */
+.urgent{border-radius:16px; padding:14px 16px; background:var(--left-soft); color:var(--left-ink); display:flex; flex-direction:column; gap:6px}
+.urgent b{font-size:15px}
+.urgent p{font-size:14px; line-height:1.6}
+.help{font-size:12.5px; color:var(--muted)}
+.help a{color:var(--ink2); font-weight:600; text-decoration:underline; text-underline-offset:2px; padding:10px 2px; display:inline-block}
+.sym{display:flex; flex-wrap:wrap; gap:8px}
+.sym button{min-height:44px; padding:0 14px; border-radius:99px; border:1.5px solid var(--line); background:var(--surface); font-size:14px}
+.sym button[aria-pressed="true"]{background:var(--ink); color:var(--surface); border-color:var(--ink)}
+.cond{border:1.5px solid var(--line); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:6px}
+.cond h3{margin:0; font-size:16px; font-weight:600}
+.cond p{font-size:13.5px; line-height:1.6; color:var(--ink2)}
+.cond .lv{font-size:13px; font-weight:600; padding:4px 10px; border-radius:99px; width:max-content}
+.lv.alert{background:var(--alert); color:#FFFFFF} .lv.left{background:var(--left-soft); color:var(--left-ink)} .lv.calm{background:var(--calm-soft); color:var(--calm-ink)}
+.why-tags{display:flex; flex-wrap:wrap; gap:6px}
+.why-tags span{font-size:12px; padding:3px 8px; border-radius:99px; background:var(--surface2); color:var(--ink2)}
+details.card summary{cursor:pointer; font-size:16px; font-weight:600; list-style:none; min-height:28px}
+details.card summary::-webkit-details-marker{display:none}
+/* 얼굴 체크 */
+.sheet{position:fixed; inset:0; background:#0E1312; color:#EEF2F0; display:none; flex-direction:column; z-index:10}
+.sheet.on{display:flex}
+.sheet .in{max-width:480px; width:100%; margin:0 auto; flex:1; display:flex; flex-direction:column; gap:14px;
+  padding:max(16px, env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
+.sheet .bar{display:flex; justify-content:space-between; align-items:center}
+.sheet .x{width:44px; height:44px; border-radius:99px; border:none; background:#202927; display:grid; place-items:center}
+.cam{position:relative; border-radius:24px; overflow:hidden; background:#1A2220; aspect-ratio:3/4}
+.cam video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1)}
+.cam svg{position:absolute; inset:0; width:100%; height:100%}
+.prog{height:6px; border-radius:99px; background:#2A3431; overflow:hidden}
+.prog i{display:block; height:100%; width:0; background:#1A6DFF; transition:width .2s linear}
+.checks{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; font-size:15px}
+.checks li{display:flex; gap:10px; align-items:center}
+.checks .ok{color:#1A6DFF} .checks .warn{color:#C5362B}
+.sheet .note{font-size:13px; color:#A9B6B1; text-align:center; margin:0}
+.sheet .btn{background:#EEF2F0; color:#0E1312}
+.hero,.hero.tone-calm,.hero.tone-left,.hero.tone-alert,.hero.tone-muted{background:var(--surface); color:var(--ink); box-shadow:none; border:none}
+.hero.tone-calm .kicker{color:var(--calm)}
+.hero.tone-left .kicker{color:var(--left)}
+.hero.tone-alert .kicker{color:var(--alert)}
+.kicker{margin:0; font-size:13px; font-weight:600; letter-spacing:0; color:var(--muted)}
+.trust{display:flex; flex-direction:column; gap:6px; margin-top:2px}
+.trust-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:13px; font-weight:600}
+.trust-top b{font-weight:650; font-variant-numeric:tabular-nums}
+.trust-bar{height:6px; border-radius:99px; background:var(--surface2); overflow:hidden}
+.trust-bar i{display:block; height:100%; width:0; background:var(--calm); border-radius:99px}
+.trust .sub{font-size:12px}
+.metrics{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
+.metric{background:var(--surface2); border-radius:14px; padding:12px 12px 10px}
+.metric b{display:block; font-size:22px; font-weight:650; letter-spacing:-.03em; line-height:1.15}
+.metric span{display:block; margin-top:4px; font-size:12px; color:var(--muted)}
+.q{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 0; border-top:1px solid var(--line)}
+.q b{display:block; font-size:15px; font-weight:600}
+.q .hint{display:block; margin-top:2px; font-size:12px; color:var(--muted)}
+.q.hit b{color:var(--left-ink)}
+.yn{display:flex; gap:6px; flex:none}
+.yn button{min-height:40px; padding:0 12px; border-radius:999px; border:1.5px solid var(--line); background:transparent; font-size:14px; font-weight:600}
+.yn button[aria-pressed="true"]{background:var(--ink); color:var(--surface); border-color:var(--ink)}
+.note{display:flex; flex-direction:column; gap:8px}
+.note input{width:100%; min-height:48px; border-radius:14px; border:1.5px solid var(--line); background:var(--ground); padding:0 14px; font-size:16px}
+#micBtn[aria-pressed="true"]{background:var(--calm); color:#fff; border-color:var(--calm)}
+.tl{list-style:none; margin:0; padding:0}
+.tl li{display:grid; grid-template-columns:72px 1fr; gap:8px 12px; padding:13px 0; border-top:1px solid var(--line)}
+.tl li:first-child{border-top:none; padding-top:2px}
+.tl .when{font-size:13px; font-weight:650; letter-spacing:-.02em}
+.tl .when span{display:inline; margin-left:4px; font-size:11px; font-weight:500; color:var(--muted)}
+.tl button.when{border:none; background:none; padding:0; text-align:left}
+.tl strong{font-size:14px; font-weight:600}
+.tl p{margin:2px 0 0; font-size:13px; color:var(--ink2)}
+.mark-dot{width:7px; height:7px; border-radius:99px; display:inline-block; margin-right:6px; vertical-align:1px; background:var(--muted)}
+.mark-dot.calm{background:var(--calm)}
+.mark-dot.explained{background:var(--calm)}
+.mark-dot.left,.mark-dot.ask{background:var(--left)}
+.mark-dot.alert{background:var(--alert)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <p class="kicker">Vity</p>
+      <h1 id="date">&nbsp;</h1>
+    </div>
+    <div class="sync" id="sync"><i></i><span>연결 중</span></div>
+  </header>
+
+  <!-- 오늘 -->
+  <section class="view on" id="v-today" aria-label="오늘"><div class="card"><p class="sub">어젯밤 기록을 불러오는 중…</p></div></section>
+
+  <!-- 기록 -->
+  <section class="view" id="v-history" aria-label="기록">
+    <div class="card" id="timelineCard"></div>
+    <div class="card">
+      <h2>달력</h2>
+      <div class="grid7" id="grid"></div>
+      <div class="legend">
+        <span><i style="border:2px solid var(--calm)"></i>평소</span>
+        <span><i style="background:var(--calm)"></i>설명됨</span>
+        <span><i style="background:var(--left)"></i>설명 안 됨</span>
+        <span><i style="background:var(--alert)"></i>이어짐</span>
+      </div>
+    </div>
+    <div class="card" id="dayDetail"></div>
+  </section>
+
+  <!-- 기기 -->
+  <section class="view" id="v-devices" aria-label="기기">
+    <div class="card">
+      <h2>알림</h2>
+      <p class="sub">몸이 달라진 날의 확인과, 설명이 이어진 날의 알림만 폰과 워치에 같이 떠요.</p>
+      <div class="kv"><span>알림창(상단) 알림</span><span id="permState" class="sub">확인 중</span></div>
+      <div class="row">
+        <button class="btn small" id="notifBtn" type="button">알림창 알림 켜기</button>
+        <button class="btn small ghost" id="testBtn" type="button">시험 알림 보내기</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>워치 화면</h2>
+      <p class="sub">같은 와이파이의 워치·태블릿·다른 폰 브라우저에서 이 주소를 열면 이 폰과 실시간으로 이어져요.</p>
+      <div class="kv"><span>지금 연결된 워치</span><span id="watchCount">–</span></div>
+      <div class="row">
+        <a class="btn small ghost" id="watchUrl" href="/watch" target="_blank" rel="noopener" style="flex:3 1 0; font-family:var(--mono); font-size:13px"></a>
+        <button class="btn small" id="copyWatch" type="button">복사</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>심박 센서</h2>
+      <p class="sub" id="bleHelp">Polar H10 · Verity Sense, 또는 심박 방송을 켠 워치. 안드로이드 Chrome에서 https로 열어야 연결돼요.</p>
+      <div class="live" id="liveBox" hidden>
+        <svg class="heart" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"></path></svg>
+        <span class="big num" id="liveBpm">–</span><span class="sub" id="liveDev"></span>
+      </div>
+      <div class="row">
+        <button class="btn small" id="bleBtn" type="button">센서 연결</button>
+      </div>
+      <div id="nightRec" class="stack" hidden>
+        <div class="kv"><span>밤 기록</span><span class="num" id="recInfo">대기</span></div>
+        <div class="row">
+          <button class="btn small" id="recBtn" type="button">잠들기 전 기록 시작</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>수면 기록 가져오기</h2>
+      <p class="sub">헬스 앱에서 받은 표를 넣으면 그 밤 심박으로 평소와 비교해요. 첫 줄은 날짜, 심박, 수면입니다. 수면은 7.4처럼 시간으로 적어도 되고, 440처럼 분으로 적어도 돼요.</p>
+      <textarea class="csv" id="importCsv" spellcheck="false" placeholder="날짜,심박,수면시간"></textarea>
+      <div class="row">
+        <label class="btn small ghost" for="importFile">파일 선택</label>
+        <button class="btn small ghost" id="sampleCsvBtn" type="button">예시 채우기</button>
+      </div>
+      <input id="importFile" type="file" accept=".csv,.txt,text/csv,text/plain" hidden>
+      <button class="btn small" id="importBtn" type="button">이 표로 판정하기</button>
+    </div>
+
+    <div class="card">
+      <h2>어젯밤 직접 넣기</h2>
+      <p class="sub">다른 앱(삼성 헬스·핏빗)에서 본 수면 중 평균 심박을 옮겨 적어도 돼요.</p>
+      <div class="row">
+        <label class="f">수면 중 평균 심박 (bpm)<input type="number" id="manHr" inputmode="decimal" min="30" max="140" step="0.1"></label>
+        <label class="f">잔 시간 (분)<input type="number" id="manMin" inputmode="numeric" min="0" max="900" value="420"></label>
+      </div>
+      <button class="btn small" id="manBtn" type="button">어젯밤으로 저장</button>
+    </div>
+
+    <div class="card" id="presentCard" hidden>
+      <h2>시연</h2>
+      <p class="sub">발표용. 지난 5주 기록을 채우고, 오늘 밤을 골라 넣어요.</p>
+      <button class="btn small ghost" id="seedBtn" type="button">지난 기록 채우기</button>
+      <div class="row">
+        <button class="btn small ghost" data-demo="calm" type="button">평소 밤</button>
+        <button class="btn small ghost" data-demo="drink" type="button">술 마신 밤</button>
+        <button class="btn small ghost" data-demo="unexplained" type="button">설명 안 됨</button>
+      </div>
+      <div class="row">
+        <button class="btn small ghost" data-demo="border" type="button">애매한 밤 + 얼굴 높음</button>
+        <button class="btn small ghost" data-demo="face_only" type="button">밴드 없이 얼굴만</button>
+      </div>
+      <button class="btn small ghost" id="resetBtn" type="button" style="color:var(--alert)">모든 기록 지우기</button>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs" aria-label="화면">
+  <div role="tablist">
+    <button role="tab" aria-selected="true" data-tab="today" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></svg>
+      오늘
+    </button>
+    <button role="tab" aria-selected="false" data-tab="history" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>
+      기록
+    </button>
+    <button role="tab" aria-selected="false" data-tab="devices" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="7" y="6" width="10" height="12" rx="3"></rect><path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3"></path></svg>
+      기기
+    </button>
+  </div>
+</nav>
+
+<!-- 얼굴 체크 -->
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="얼굴 체크">
+  <div class="in">
+    <div class="bar">
+      <button class="x" id="sheetClose" type="button" aria-label="닫기">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EEF2F0" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+      <span id="sheetTime">얼굴을 맞춰주세요</span>
+      <span style="width:44px"></span>
+    </div>
+    <div class="cam">
+      <video id="video" playsinline muted></video>
+      <svg viewBox="0 0 300 400" preserveAspectRatio="none" aria-hidden="true">
+        <ellipse cx="150" cy="185" rx="92" ry="128" fill="none" stroke="#2A3431" stroke-width="6"></ellipse>
+        <ellipse id="scanRing" cx="150" cy="185" rx="92" ry="128" fill="none" stroke="#1A6DFF" stroke-width="6" stroke-linecap="round"
+          pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 150 185)"></ellipse>
+        <rect x="126" y="80" width="48" height="32" rx="6" fill="none" stroke="#B9D2FF" stroke-dasharray="4 4" stroke-width="1.5"></rect>
+        <rect x="93" y="184" width="33" height="40" rx="6" fill="none" stroke="#B9D2FF" stroke-dasharray="4 4" stroke-width="1.5"></rect>
+        <rect x="174" y="184" width="33" height="40" rx="6" fill="none" stroke="#B9D2FF" stroke-dasharray="4 4" stroke-width="1.5"></rect>
+      </svg>
+    </div>
+    <ul class="checks" id="sheetChecks"></ul>
+    <div style="flex:1"></div>
+    <p class="note">영상은 이 기기에서 숫자로만 바뀌고 저장·전송되지 않아요.</p>
+    <button class="btn" id="sheetBtn" type="button">바로 시작</button>
+  </div>
+  <canvas id="canvas" width="240" height="320" hidden></canvas>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/app.js"></script>
+<script src="/rppg.js"></script>
+<script src="/ble.js"></script>
+<script src="/guide.js"></script>
+<script>
+"use strict";
+let S = null;                // 서버 상태
+let selDay = null;           // 기록 탭에서 고른 날
+let editingContext = false;
+let noteText = "";
+let showOther = false;
+let mic = null;
+const $ = (id) => document.getElementById(id);
+const CHECK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
+
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("on"), 2200);
+}
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---------- 탭 ----------
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === "v-" + b.dataset.tab));
+  window.scrollTo(0, 0);
+}));
+
+// ---------- 오늘 ----------
+function readNote(text) {
+  const hits = [];
+  if (/술|맥주|소주|와인|음주|회식|칵테일|치맥|하이볼/.test(text)) hits.push("alcohol");
+  if (/밤샘|새벽|늦잠|늦게 자|잠이 짧|못 잤|수면|밤새|취침/.test(text)) hits.push("sleep");
+  if (/운동|헬스|러닝|조깅|달렸|웨이트|수영/.test(text)) hits.push("exercise");
+  if (/발표|시험|긴장|스트레스|면접|다툼/.test(text)) hits.push("tense");
+  return hits;
+}
+
+const STATE_NAME = {
+  calm: "평소", explained: "설명됨", left: "설명 안 됨",
+  ask: "확인 중", alert: "이어짐", none: "기록 없음", learning: "기준 만드는 중",
+  recording: "오늘 기록",
+};
+
+function dayTitle(d) {
+  if (d.state === "explained") {
+    const why = OVERLAP_KO[d.explained_by];
+    return why ? "설명됨 · " + why : "설명됨";
+  }
+  if (d.state === "alert") return "설명 안 됨" + (d.run ? " · " + d.run + "일째" : "");
+  if (d.state === "left") return "설명 안 됨";
+  return STATE_NAME[d.state] || "";
+}
+
+function hm(min) {
+  const m = Math.round(min);
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return (h ? h + "시간 " : "") + r + "분";
+}
+
+function usualBand(days) {
+  const xs = days.filter((d) => d.state === "calm" && d.night_hr != null).map((d) => d.night_hr).sort((a, b) => a - b);
+  if (xs.length < 3) return "";
+  return "평소 야간 심박 " + Math.round(xs[0]) + "–" + Math.round(xs[xs.length - 1]);
+}
+
+function timelineItems(days) {
+  if (!days.length) return '<p class="sub">아직 이어 붙일 날이 없어요.</p>';
+  return '<ol class="tl">' + days.map((d) => {
+    const dt = new Date(d.day + "T00:00:00");
+    const bits = [];
+    if (d.night_hr != null) bits.push("밤 심박 " + d.night_hr);
+    if (d.delta != null && d.state !== "calm" && d.state !== "learning" && d.state !== "recording") {
+      bits.push((S && modeOf(S) === "personal" ? "평소보다 " : "최근보다 ") + sign(d.delta));
+    }
+    if (d.night_min) bits.push("수면 " + (Math.round(d.night_min / 6) / 10) + "시간");
+    if (d.face_hr != null && (d.state === "left" || d.state === "alert")) bits.push("얼굴 " + d.face_hr);
+    const rec = dayRecord(d);
+    if (rec && (d.state !== "explained" || String(d.note || "").trim())) bits.push(rec);
+    return '<li><button type="button" class="when" data-day="' + d.day + '">' +
+      (dt.getMonth() + 1) + "/" + dt.getDate() + "<span>" + "일월화수목금토"[dt.getDay()] + "</span></button><div><strong><i class=\"mark-dot " +
+      d.state + "\"></i>" + esc(dayTitle(d)) + "</strong><p>" + esc(bits.join(" · ") || "기록 없음") + "</p></div></li>";
+  }).join("") + "</ol>";
+}
+
+function trustHtml(s) {
+  const b = s.baseline || {};
+  const pct = Math.max(0, Math.min(100, Number(b.personalization) || 0));
+  return '<div class="trust"><div class="trust-top"><span>Vity가 나를 알아가는 중</span><b>' + pct +
+    '%</b></div><div class="trust-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
+    pct + '"><i style="width:' + pct + '%"></i></div><p class="sub">' + esc(b.label || "") + "</p></div>";
+}
+
+function startCard() {
+  return '<div class="card"><h2>오늘 기록</h2>' +
+    '<p class="sub">센서가 연결되면 오늘 심박으로 바로 봐요. 지난 밤 기록이 있으면 넣어도 돼요.</p>' +
+    '<div class="row"><button class="btn small" type="button" data-goto="devices">기록 넣기</button></div></div>';
+}
+
+function renderToday() {
+  const s = S, v = verdict(s), n = s.night || {};
+  const parts = [];
+  let extra = "";
+  if (v.track) {
+    const k = s.streak.k, run = Math.min(s.streak.run, k);
+    extra = '<p class="kicker">설명되지 않은 날</p><div class="dots" style="--k:' + k + '">' +
+      Array.from({ length: k }, (_, i) => '<span class="' + (i < run ? "f" : "") + '"></span>').join("") + "</div>";
+  }
+  const face = s.status === "ALERT" ? "alert" : chosenFace(s);
+  const mascot = face ? "/characters/" + face + ".png" : "";
+  parts.push('<article class="card hero tone-' + v.tone + (mascot ? " has-mascot" : "") + '">' +
+    (mascot ? '<img class="mascot" src="' + mascot + '" alt="">' : "") +
+    '<div class="copy"><p class="kicker">' + esc(v.short) + "</p><h2>" +
+    esc(v.title) + "</h2><p>" + esc(v.body) + "</p>" +
+    (todayRecord(s) ? "<p><b>오늘 기록</b> " + esc(todayRecord(s)) + "</p>" : "") +
+    extra + trustHtml(s) + "</div></article>");
+
+  if (s.status === "NO_DATA" || s.status === "RECORDING") parts.push(startCard());
+  else if (s.status === "NO_NIGHT") {
+    parts.push('<div class="card"><h2>어젯밤 기록</h2>' +
+      '<p class="sub">오늘 밤이 들어오면 이어서 봐요. 지난 기록이 있으면 넣어도 돼요.</p>' +
+      '<div class="row"><button class="btn small" type="button" data-goto="devices">기록 넣기</button></div></div>');
+  }
+
+  if (v.track) {
+    const recent = (s.history || []).slice(-7).filter((d) => d.state === "explained" || d.state === "left" || d.state === "alert" || d.state === "ask");
+    const band = modeOf(s) === "personal" ? "평소와 견준 기록" : "최근 기록과 견준 날";
+    parts.push('<div class="card"><h2>최근 7일</h2><p class="sub">' +
+      esc(usualBand(s.history || []) || band) + "</p>" + timelineItems(recent) + "</div>");
+  }
+  if (s.status === "ASK" || editingContext) parts.push(confirmCard(n));
+  else if (s.status === "EXPLAINED") parts.push(overlapCard(n));
+
+  const byFace = n.source === "face";
+  if (n.night_hr != null || byFace) parts.push(physioCard(s, n));
+  else parts.push(faceCard(s));
+
+  if (v.track) parts.push(guideHtml(s));
+
+  $("v-today").innerHTML = parts.join("");
+}
+
+function physioCard(s, n) {
+  const byFace = n.source === "face";
+  const hr = byFace ? n.face_hr : n.night_hr;
+  const ref = byFace ? n.face_ref : n.ref;
+  const delta = byFace ? n.face_delta : n.delta;
+  const refName = { early: "최근 안정", adapting: "최근 기록", personal: "평소" }[modeOf(s)] || "평소";
+  const bandName = modeOf(s) === "personal" ? "평소 범위" : "최근 범위";
+  let bar = "";
+  if (!byFace && n.night_z != null && s.status !== "CALM" && s.status !== "BASELINE" && s.status !== "RECORDING") {
+    const pos = (z) => Math.max(2, Math.min(98, ((z + 3) / 10) * 100));
+    const col = s.status === "ALERT" ? "var(--alert)" : s.status === "EXPLAINED" ? "var(--calm)" : "var(--left)";
+    bar = '<div class="range" aria-hidden="true"><div class="track"></div>' +
+      '<div class="band" style="left:' + pos(-2) + "%;width:" + (pos(2) - pos(-2)) + '%"></div>' +
+      '<div class="mark" style="left:' + pos(n.night_z) + "%;background:" + col + '"></div></div>' +
+      '<div class="scale"><span>낮음</span><span>' + bandName + "</span><span>높음</span></div>";
+  }
+  const f = s.face;
+  return '<div class="card"><h2>' + (byFace ? "오늘 아침" : "어젯밤") + "</h2>" +
+    '<div class="metrics"><div class="metric"><b class="num">' + hr + "</b><span>" + (byFace ? "얼굴 심박" : "밤 심박") + "</span></div>" +
+    '<div class="metric"><b class="num">' + (ref ?? "–") + "</b><span>" + refName + "</span></div>" +
+    '<div class="metric"><b class="num">' + (delta != null ? sign(delta) : "–") + "</b><span>차이</span></div></div>" +
+    (byFace
+      ? '<p class="sub">밤 기록이 없어 얼굴로 봤어요. 덜 정확해서, 더 크게 벗어나야 달라졌다고 해요.</p>'
+      : (n.night_min != null ? '<p class="sub">수면 ' + hm(n.night_min) + "</p>" : "")) +
+    bar + faceCrossHtml(n) +
+    '<button class="btn small ghost" type="button" id="faceBtn">' + (f ? "얼굴 다시 재기" : "얼굴로 한 번 더") + "</button>" +
+    "</div>";
+}
+
+function faceCard(s) {
+  const f = s.face;
+  return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px">' +
+    '<div><h2>얼굴 체크</h2><p class="sub">밤 기록이 없는 날, 10초 안팎으로 봐요</p></div>' +
+    '<button class="btn small" id="faceBtn" type="button">' + (f ? "다시" : "시작") + "</button></div></div>";
+}
+
+function overlapCard(n) {
+  const why = OVERLAP_KO[n.explained_by] || n.explained_ko || "생활 기록";
+  return '<div class="card"><p class="kicker">겹치는 기록</p><h2>' + esc(josa(why, "과", "와")) + " 시점이 겹칩니다</h2>" +
+    '<p class="sub">이 기록이 원인을 만든 것은 아니에요. 변화가 그 이유가 보통 만드는 크기 안이면 설명을 덮고, 더 크면 남겨 둡니다.</p>' +
+    (editingContext ? "" : '<button class="btn small ghost" id="editCtx" type="button">다시 확인</button>') +
+    "</div>";
+}
+
+function confirmCard() {
+  const day = S.today;
+  const trace = openTrace(day);
+  if (trace) {
+    return '<div class="card"><p class="kicker">' + esc(trace.where) + "</p><h2>" + esc(trace.detail) + "</h2>" +
+      "<p>" + esc(trace.ask) + "</p>" +
+      '<p class="sub">찾은 흔적이지, 그 일을 했다고 보지 않아요.</p>' +
+      '<div class="yn" style="justify-content:flex-end">' +
+      '<button type="button" data-trace="' + trace.id + '" data-ctx="' + trace.ctx + '" data-val="0">아니요</button>' +
+      '<button type="button" data-trace="' + trace.id + '" data-ctx="' + trace.ctx + '" data-val="1">네</button></div></div>';
+  }
+  const micOn = mic && mic.listening;
+  const micBtn = speechReady()
+    ? '<button class="btn small ghost" id="micBtn" type="button" aria-pressed="' + (micOn ? "true" : "false") + '">' +
+      (micOn ? "듣는 중" : "말하기") + "</button>"
+    : "";
+  const other = showOther
+    ? '<div class="note"><input id="note" type="text" placeholder="예: 어제 감기약 먹음" value="' + esc(noteText) + '" autocomplete="off">' +
+      '<div class="row">' + micBtn +
+      '<button class="btn small" id="noteBtn" type="button">이 문장만 남기기</button></div></div>'
+    : "";
+  return '<div class="card"><h2>' + esc(askTitle(S)) + "</h2>" +
+    '<p class="sub">운동·음주·짧은 잠·긴장은 그 크기까지 봐서 가려요. 카페인과 감기는 메모로 남아요.</p>' +
+    '<div class="sym">' + causeChipsHtml() +
+    '<button type="button" data-extra="other">기타</button></div>' + other + "</div>";
+}
+
+// ---------- 얼굴 심박 교차 확인 ----------
+function faceCrossHtml(n) {
+  if (n.source === "face" || n.face_hr == null) {
+    return n.source === "face" ? "" :
+      '<div class="kv"><span>아침 얼굴 심박</span><span class="sub">오늘 아직 안 쟀어요 — 재면 밤 심박과 맞춰 봐요</span></div>';
+  }
+  const msg = {
+    both: ["두 신호 모두 평소보다 높아요", "left"],
+    night_only: ["얼굴은 평소 범위예요", "calm"],
+    face_only: ["얼굴만 높아요. 얼굴 혼자로는 달라졌다고 하지 않아요", "calm"],
+    border: ["밤 심박은 애매했지만 얼굴도 높아 달라졌다고 봤어요", "left"],
+    calm: ["두 신호 모두 평소 범위예요", "calm"],
+  }[n.agree];
+  return '<div class="kv"><span>아침 얼굴 심박</span><span class="num">' + n.face_hr + " bpm" +
+    (n.face_delta != null ? ' <span class="sub">(' + sign(n.face_delta) + ")</span>" : "") + "</span></div>" +
+    (msg ? '<p class="lv ' + msg[1] + '" style="font-size:13px; font-weight:600; padding:6px 12px; border-radius:10px; width:auto">' + msg[0] + "</p>" : "");
+}
+
+// ---------- 진료 안내 ----------
+function symKey() { return "eg-sym-" + (S ? S.today : ""); }
+function getSym() { try { return JSON.parse(localStorage.getItem(symKey()) || "[]"); } catch (e) { return []; } }
+function setSym(a) { try { localStorage.setItem(symKey(), JSON.stringify(a)); } catch (e) { /* 저장 못 해도 화면은 돈다 */ } }
+
+function guideHtml(s) {
+  const sel = getSym();
+  const sig = new Set();
+  const n = s.night || {}, f = s.face || {};
+  if (n.delta == null || n.delta > 0) sig.add("hr");
+  if (f.a_z != null && f.a_z >= 1.5) sig.add("red");
+  if (f.a_z != null && f.a_z <= -1.5) sig.add("pale");
+  const SIG_KO = { hr: "밤 심박 상승", red: "안색 붉어짐(실험)", pale: "안색 창백(실험)" };
+  const SYM_KO = Object.fromEntries(GUIDE.symptoms.map((x) => [x.key, x.label]));
+  const list = matchGuide(sel, sig);
+  const top = list.reduce((m, c) => Math.max(m, c.level), 0);
+
+  const urgentPicked = GUIDE.symptoms.some((x) => x.urgent && sel.includes(x.key));
+  const levelLabel = urgentPicked ? GUIDE.urgent.title : GUIDE.levels[top].label;
+  const levelTone = urgentPicked || top === 3 ? "alert" : GUIDE.levels[top].tone;
+
+  const body =
+    '<p class="sub">지금 있는 증상을 골라주시면 어디로, 언제 가보면 좋을지 알려드릴게요.</p>' +
+    '<div class="sym">' + GUIDE.symptoms.map((x) => '<button type="button" data-sym="' + x.key + '" aria-pressed="' +
+      sel.includes(x.key) + '">' + esc(x.label) + "</button>").join("") + "</div>" +
+    (urgentPicked ? '<div class="urgent"><b>' + esc(GUIDE.urgent.title) + "</b><p>" + esc(GUIDE.urgent.body) + "</p></div>" : "") +
+    (sel.length && !urgentPicked ? '<p class="lv ' + levelTone + '" style="font-size:15px; padding:8px 14px; border-radius:12px">' +
+      esc(levelLabel) + "</p>" : "") +
+    '<h2 style="margin-top:4px">' + (sel.length ? "증상과 겹쳐 볼 수 있는 경우" : "증상을 고르면 여기에 붙어요") + "</h2>" +
+    list.map((c) => '<div class="cond"><span class="lv ' + GUIDE.levels[c.level].tone + '">' + esc(GUIDE.levels[c.level].label) + "</span>" +
+      "<h3>" + esc(c.name) + "</h3>" +
+      '<div class="why-tags">' + c.hitG.map((k) => "<span>기기: " + esc(SIG_KO[k]) + "</span>").join("") +
+        c.hitS.map((k) => "<span>" + esc(SYM_KO[k]) + "</span>").join("") + "</div>" +
+      "<p>" + esc(c.note) + "</p><p><b>확인해 볼 것</b> " + esc(c.check) + "</p>" +
+      (c.extra ? '<p style="color:var(--alert-ink); font-weight:600">' + esc(c.extra) + "</p>" : "") +
+      "<p><b>어디로</b> " + esc(c.where) + "</p></div>").join("") +
+    '<p class="sub">' + esc(GUIDE.disclaimer) + "</p>" +
+    '<p class="help">도움이 필요할 때 ' + GUIDE.contacts.map((c) => '<a href="' + c.href + '">' + c.label + "</a> " + esc(c.sub)).join(" · ") + "</p>";
+
+  return '<details class="card" id="guide"><summary>증상이 있으면 타임라인에 남겨 두세요</summary>' +
+    '<p class="sub">병명을 고르지 않아요. 설명이 안 된 변화가 이어질 때, 느낀 것을 기록에 붙이는 자리예요.</p>' + body + "</details>";
+}
+
+// ---------- 기록 ----------
+function renderHistory() {
+  const h = (S.history || []).slice(-28);
+  const lab = { calm: "", explained: "", left: "", ask: "", alert: "", none: "", learning: "", recording: "" };
+  $("grid").innerHTML = h.map((d) => {
+    const day = Number(d.day.slice(8));
+    const rec = dayRecord(d);
+    const tag = d.state === "explained" ? (OVERLAP_KO[d.explained_by] || "")
+      : (rec && rec.length <= 12 ? rec : lab[d.state]);
+    return '<button type="button" class="cell ' + d.state + (selDay === d.day ? " sel" : "") + '" data-day="' + d.day +
+      '" aria-label="' + fmtDay(d.day) + '"><span class="num">' + day + "</span><small>" + esc(tag) + "</small></button>";
+  }).join("");
+
+  const c = (st) => h.filter((x) => x.state === st).length;
+  const recent = h.filter((d) => d.state === "explained" || d.state === "left" || d.state === "alert" || d.state === "ask").slice(-8);
+  const card = $("timelineCard");
+  if (card) {
+    card.innerHTML = '<p class="kicker">진료에 가져갈 기록</p><h2>설명된 날과 남은 날</h2>' +
+      '<p class="sub">' + esc(usualBand(h) || "평소 범위가 아직 짧아요") + "</p>" +
+      '<div class="kv"><span>설명된 변화</span><span>' + c("explained") + "일</span></div>" +
+      '<div class="kv"><span>설명되지 않은 변화</span><span>' + (c("left") + c("alert")) + "일</span></div>" +
+      timelineItems(recent);
+  }
+
+  const d = h.find((x) => x.day === selDay) || recent[recent.length - 1];
+  if (d && $("dayDetail")) {
+    $("dayDetail").innerHTML = "<h2>" + fmtDay(d.day) + "</h2>" +
+      '<div class="kv"><span>이 날</span><span>' + esc(dayTitle(d)) + "</span></div>" +
+      (dayRecord(d) ? '<div class="kv"><span>기록</span><span>' + esc(dayRecord(d)) + "</span></div>" : "") +
+      '<div class="kv"><span>밤 심박</span><span class="num">' + (d.night_hr ?? "–") +
+      (d.delta != null ? " · 평소보다 " + sign(d.delta) : "") + "</span></div>" +
+      (d.face_hr != null ? '<div class="kv"><span>얼굴 심박</span><span class="num">' + d.face_hr + "</span></div>" : "") +
+      '<p class="sub">점수가 아니라, 그 변화가 생활 기록으로 덮였는지입니다.</p>';
+  }
+}
+
+function render() {
+  if (!S) return;
+  $("date").textContent = fmtDay(S.today);
+  renderToday();
+  renderHistory();
+}
+
+// ---------- 이벤트 위임 ----------
+function noteMic() {
+  if (!speechReady()) return null;
+  if (mic) return mic;
+  mic = listenKo({
+    ontext(text) {
+      noteText = text;
+      const input = $("note");
+      if (input) input.value = text;
+    },
+    onstate(on) {
+      const b = $("micBtn");
+      if (!b) return;
+      b.textContent = on ? "듣는 중" : "말하기";
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    },
+    onerror(code) {
+      if (code === "not-allowed" || code === "service-not-allowed") toast("마이크를 쓸 수 없어요");
+    },
+  });
+  return mic;
+}
+
+document.addEventListener("input", (e) => {
+  if (e.target.id !== "note") return;
+  noteText = e.target.value;
+  if (mic && mic.listening) mic.stop();
+});
+
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest("button, a");
+  if (!t) return;
+  try {
+    if (t.dataset.sym) {
+      const cur = new Set(getSym());
+      cur.has(t.dataset.sym) ? cur.delete(t.dataset.sym) : cur.add(t.dataset.sym);
+      setSym([...cur]);
+      const open = document.querySelector("details#guide") && document.querySelector("details#guide").open;
+      renderToday();
+      const d = document.querySelector("details#guide"); if (d && open) d.open = true;
+      return;
+    }
+    if (t.dataset.goto) document.querySelector('.tabs [data-tab="' + t.dataset.goto + '"]').click();
+    else if (t.dataset.trace && t.dataset.val === "0") {
+      declineTrace(S.today, t.dataset.trace);
+      render();
+    } else if (t.id === "micBtn") {
+      const m = noteMic();
+      if (!m) return;
+      if (m.listening) m.stop();
+      else m.start((($("note") && $("note").value) || noteText || ""));
+    } else if (t.dataset.note) {
+      setDayNote(S.today, t.dataset.note);
+      S = await API.post("/api/context", { note: t.dataset.note, nothing: true });
+      editingContext = false;
+      showOther = false;
+      render();
+      toast("메모로 남겼어요. 이 이유만으로 변화를 설명하진 않아요.");
+    } else if (t.dataset.extra === "other") {
+      showOther = true;
+      render();
+    } else if (t.dataset.extra === "alcohol" || t.dataset.extra === "tense") {
+      if (mic) mic.stop();
+      setDayNote(S.today, "");
+      S = await API.post("/api/context", causeBody(t.dataset.extra));
+      editingContext = false;
+      showOther = false;
+      render();
+    } else if (t.dataset.extra) {
+      if (mic) mic.stop();
+      const label = (EXTRA_OPTS.find((x) => x.key === t.dataset.extra) || {}).label || "";
+      setDayNote(S.today, label);
+      S = await API.post("/api/context", { nothing: true, note: label });
+      editingContext = false;
+      showOther = false;
+      render();
+      toast("기록에 붙였어요. 이 변화는 생활 원인으로 덮지 않아요.");
+    } else if (t.id === "noteBtn") {
+      if (mic) mic.stop();
+      noteText = ($("note") && $("note").value) || noteText;
+      const hits = readNote(noteText);
+      setDayNote(S.today, noteText);
+      const body = { note: noteText };
+      if (hits.length) hits.forEach((k) => { body[k] = true; });
+      else body.nothing = true;
+      S = await API.post("/api/context", body);
+      editingContext = false;
+      showOther = false;
+      render();
+    } else if (t.id === "editCtx") {
+      editingContext = true;
+      render();
+    } else if (t.dataset.ctx) {
+      const key = t.dataset.ctx;
+      const on = t.dataset.val != null ? t.dataset.val === "1" : true;
+      setDayNote(S.today, "");
+      S = await API.post("/api/context", on ? causeBody(key) : { nothing: true, note: "" });
+      editingContext = false;
+      render();
+    } else if (t.dataset.demo) {
+      if (mic) mic.stop();
+      if (S && S.today) {
+        setTraces(S.today, DEMO_TRACES[t.dataset.demo] || []);
+        clearDeclined(S.today);
+        setDayNote(S.today, "");
+      }
+      showOther = false;
+      S = await API.post("/api/demo/night", { kind: t.dataset.demo });
+      document.querySelector('.tabs [data-tab="today"]').click();
+      render();
+    } else if (t.dataset.day) {
+      selDay = t.dataset.day;
+      const tab = document.querySelector('.tabs [data-tab="history"]');
+      if (tab && tab.getAttribute("aria-selected") !== "true") tab.click();
+      renderHistory();
+    }
+    else if (t.id === "seedInline" || t.id === "seedBtn") { S = await API.post("/api/demo/seed"); render(); toast("지난 5주 기록을 채웠어요"); }
+    else if (t.id === "resetBtn") { if (confirm("모든 기록을 지울까요?")) { S = await API.post("/api/reset"); render(); } }
+    else if (t.id === "faceBtn") openSheet();
+  } catch (err) { toast(err.message); }
+});
+
+// ---------- 수면 표 가져오기 ----------
+function sampleCsv() {
+  const end = new Date(((S && S.today) || new Date().toISOString().slice(0, 10)) + "T00:00:00");
+  const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" +
+    String(d.getDate()).padStart(2, "0");
+  const lines = ["날짜,심박,수면시간"];
+  const haveBase = S && S.baseline && S.baseline.valid_days >= 4;
+  if (!haveBase) {
+    for (let i = 8; i >= 1; i--) {
+      const d = new Date(end);
+      d.setDate(d.getDate() - i);
+      lines.push(iso(d) + "," + (57.4 + (i % 3) * 0.4).toFixed(1) + ",7.3");
+    }
+  }
+  lines.push(iso(end) + ",64.0,7.4");
+  return lines.join("\n");
+}
+$("sampleCsvBtn").addEventListener("click", () => {
+  $("importCsv").value = sampleCsv();
+});
+$("importFile").addEventListener("change", async () => {
+  const f = $("importFile").files && $("importFile").files[0];
+  if (!f) return;
+  $("importCsv").value = await f.text();
+  $("importFile").value = "";
+});
+$("importBtn").addEventListener("click", async () => {
+  const csv = $("importCsv").value.trim();
+  if (!csv) return toast("표를 먼저 넣어 주세요");
+  try {
+    S = await API.post("/api/import", { csv: csv });
+    const n = (S.imported && S.imported.n) || 0;
+    render();
+    toast(n + "일 기록을 넣고 다시 판정했어요");
+    document.querySelector('.tabs [data-tab="today"]').click();
+  } catch (err) { toast(err.message); }
+});
+
+// 발표 화면에서는 시연 버튼을 숨긴다. Shift+D 또는 주소 뒤 ?present=1 로만 연다.
+function presentOn() { return localStorage.getItem("vity-present") === "1"; }
+function applyPresent() {
+  const card = $("presentCard");
+  if (card) card.hidden = !presentOn();
+}
+(function () {
+  const q = new URLSearchParams(location.search).get("present");
+  if (q === "1") localStorage.setItem("vity-present", "1");
+  if (q === "0") localStorage.removeItem("vity-present");
+  applyPresent();
+})();
+document.addEventListener("keydown", (e) => {
+  const tag = (e.target && e.target.tagName) || "";
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if (!e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key !== "D" && e.key !== "d") return;
+  if (presentOn()) localStorage.removeItem("vity-present");
+  else localStorage.setItem("vity-present", "1");
+  applyPresent();
+  toast(presentOn() ? "시연 도구를 열었어요" : "시연 도구를 숨겼어요");
+});
+
+// ---------- 직접 입력 ----------
+$("manBtn").addEventListener("click", async () => {
+  const hr = parseFloat($("manHr").value), min = parseFloat($("manMin").value) || 0;
+  if (!(hr > 30 && hr < 140)) return toast("심박을 30–140 사이로 넣어주세요");
+  S = await API.post("/api/night", { night_hr: hr, night_min: min, source: "manual" });
+  render(); toast("어젯밤으로 저장했어요");
+  document.querySelector('.tabs [data-tab="today"]').click();
+});
+
+// ---------- 워치 주소 ----------
+const watchHref = location.origin + "/watch";
+$("watchUrl").textContent = watchHref.replace(/^https?:\/\//, "");
+$("copyWatch").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(watchHref); toast("주소를 복사했어요"); }
+  catch { toast(watchHref); }
+});
+
+// ---------- 블루투스 ----------
+let rec = null;          // 밤 기록 중이면 { start, samples: [] }
+let lastLive = 0;
+if (!BLE.supported()) {
+  $("bleHelp").textContent = window.isSecureContext
+    ? "이 브라우저는 블루투스를 지원하지 않아요. 안드로이드 Chrome에서 열어주세요."
+    : "블루투스는 https 주소에서만 쓸 수 있어요. 서버를 --https 로 켜고 https 주소로 열어주세요.";
+}
+$("bleBtn").addEventListener("click", async () => {
+  try {
+    const name = await BLE.connect();
+    $("liveBox").hidden = false; $("nightRec").hidden = false;
+    $("liveDev").textContent = name;
+    $("bleBtn").textContent = "연결됨";
+    toast(name + " 연결됨");
+  } catch (err) { toast(err.message); }
+});
+BLE.onBeat((m) => {
+  if (!m) { $("liveBpm").textContent = "–"; $("bleBtn").textContent = "다시 연결"; return; }
+  $("liveBpm").textContent = m.bpm;
+  if (rec) {
+    rec.samples.push(m.bpm);
+    const min = Math.round((Date.now() - rec.start) / 60000);
+    $("recInfo").textContent = min + "분 · " + rec.samples.length + "박";
+  }
+  if (Date.now() - lastLive > 1000) {       // 워치로 1초에 한 번
+    lastLive = Date.now();
+    API.post("/api/live", { bpm: m.bpm, rr: m.rr, at: m.at, device: m.device }).catch(() => {});
+  }
+});
+$("recBtn").addEventListener("click", async () => {
+  if (!rec) {
+    rec = { start: Date.now(), samples: [] };
+    $("recBtn").textContent = "일어났어요 — 기록 끝내고 보내기";
+    toast("화면을 켠 채 충전기에 두세요");
+    return;
+  }
+  const s = rec.samples.slice().sort((a, b) => a - b);
+  const minutes = (Date.now() - rec.start) / 60000;
+  rec = null;
+  $("recBtn").textContent = "잠들기 전 기록 시작";
+  if (s.length < 60) return toast("기록이 너무 짧아요");
+  // 안정시: 낮은 쪽 절반의 중앙값 (뒤척임·깸을 덜 탄다)
+  const low = s.slice(0, Math.ceil(s.length / 2));
+  const hr = low[Math.floor(low.length / 2)];
+  S = await API.post("/api/night", { night_hr: hr, night_min: minutes, source: "ble" });
+  render(); toast("어젯밤 " + hr + " bpm 으로 보냈어요");
+  document.querySelector('.tabs [data-tab="today"]').click();
+});
+
+// ---------- 얼굴 체크 ----------
+// Face ID 처럼: 얼굴이 자리 잡으면 저절로 시작하고, 심박 값이 안정되면 바로 끝낸다.
+// 보통 10초 안팎. 신호가 흔들리면 최대 20초까지 본다.
+const SCAN_MIN = 8, SCAN_MAX = 20, STABLE_BPM = 3, STABLE_N = 3;
+let cam = { stream: null, frames: [], t0: 0, raf: 0, running: false, readySince: 0, ests: [], detector: null, face: null };
+
+const OK_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
+const WARN_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 8v4.5M12 15.8v.2"></path></svg>';
+const li = (ok, text) => '<li><span class="' + (ok ? "ok" : "warn") + '">' + (ok ? OK_SVG : WARN_SVG) + "</span>" + text + "</li>";
+
+function ring(frac) { $("scanRing").setAttribute("stroke-dasharray", Math.max(0, Math.min(100, frac * 100)) + " 100"); }
+
+function setChecks(q, faceOk, est) {
+  const light = { ok: "조명이 고르게 들어와요", dark: "조금 더 밝은 곳으로 가주세요", bright: "빛이 너무 세요", wait: "조명 확인 중" }[q.light];
+  const still = { ok: "얼굴이 잘 고정돼 있어요", moving: "말하거나 움직이지 말아주세요", wait: "움직임 확인 중" }[q.still];
+  $("sheetChecks").innerHTML = li(faceOk, faceOk ? "얼굴을 찾았어요" : "타원 안에 얼굴을 맞춰주세요") +
+    li(q.light === "ok", light) + li(q.still === "ok", still) +
+    (cam.running ? li(!!est, est ? "얼굴 심박 " + Math.round(est.bpm) + " bpm" : "심박 신호 모으는 중") : "");
+}
+
+// 얼굴이 있나: 브라우저 FaceDetector 가 있으면 쓰고, 없으면 볼·이마 영역이 피부색인지로 본다
+async function facePresent(s) {
+  if (cam.detector) {
+    try {
+      const faces = await cam.detector.detect($("video"));
+      return faces.length > 0;
+    } catch (e) { cam.detector = null; }
+  }
+  return s.r > 60 && s.r > s.g && s.g > s.b * 0.9 && s.r - s.b > 12;
+}
+
+async function openSheet() {
+  Alarm.unlock();
+  $("sheet").classList.add("on");
+  $("sheetBtn").textContent = "바로 시작";
+  $("sheetBtn").disabled = false;
+  $("sheetTime").textContent = "얼굴을 맞춰주세요";
+  ring(0);
+  cam.frames = []; cam.ests = []; cam.readySince = 0; cam.running = false; cam.face = null;
+  setChecks({ light: "wait", still: "wait" }, false, null);
+  if (!navigator.mediaDevices || !window.isSecureContext) {
+    $("sheetChecks").innerHTML = "<li>카메라는 https 주소에서만 쓸 수 있어요. 서버를 --https 로 켜주세요.</li>";
+    $("sheetBtn").disabled = true;
+    return;
+  }
+  try {
+    cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio: false });
+    const v = $("video");
+    v.srcObject = cam.stream;
+    await v.play();
+    if ("FaceDetector" in window) { try { cam.detector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 }); } catch (e) { cam.detector = null; } }
+    cam.raf = requestAnimationFrame(loop);
+  } catch (err) {
+    const why = { NotAllowedError: "카메라 권한을 허용해 주세요 (주소창 왼쪽 자물쇠 → 카메라)",
+      NotFoundError: "이 기기에서 카메라를 찾지 못했어요", NotReadableError: "다른 앱이 카메라를 쓰고 있어요" }[err.name] || err.message;
+    $("sheetChecks").innerHTML = "<li>카메라를 열 수 없어요. " + esc(why) + "</li>";
+    $("sheetBtn").disabled = true;
+  }
+}
+
+function grab() {
+  const v = $("video"), c = $("canvas"), ctx = c.getContext("2d", { willReadFrequently: true });
+  const vw = v.videoWidth, vh = v.videoHeight;
+  if (!vw) return null;
+  const target = 3 / 4;                      // 화면에 보이는 가운데 3:4 영역
+  let sw = vw, sh = vh, sx = 0, sy = 0;
+  if (vw / vh > target) { sw = vh * target; sx = (vw - sw) / 2; } else { sh = vw / target; sy = (vh - sh) / 2; }
+  ctx.drawImage(v, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  const s = RPPG.sampleFrame(ctx, c.width, c.height);
+  s.t = performance.now();
+  return s;
+}
+
+async function loop() {
+  if (!$("sheet").classList.contains("on") || !cam.stream) return;
+  const s = grab();
+  const now = performance.now();
+  if (s) {
+    cam.frames.push(s);
+    if (!cam.running && cam.frames.length > 45) cam.frames.shift();
+  }
+  // 얼굴 찾기는 0.3초에 한 번만 (매 프레임 하면 느려진다)
+  if (s && (!loop._f || now - loop._f > 300)) { loop._f = now; cam.face = await facePresent(s); }
+  const q = RPPG.quality(cam.frames);
+
+  if (!cam.running) {
+    const ready = cam.face && q.light === "ok" && q.still === "ok";
+    cam.readySince = ready ? (cam.readySince || now) : 0;
+    ring(ready ? Math.min(1, (now - cam.readySince) / 600) * 0.06 : 0);
+    if (!loop._c || now - loop._c > 250) { loop._c = now; setChecks(q, !!cam.face, null); }
+    if (ready && now - cam.readySince > 600) start();      // 0.6초 자리 잡으면 시작
+  } else {
+    const el = (now - cam.t0) / 1000;
+    ring(Math.min(0.92, el / 12));                         // 보통 12초 안에 끝난다
+    $("sheetTime").textContent = "스캔 중 " + Math.floor(el) + "초";
+    if (el >= SCAN_MIN && (!loop._e || now - loop._e > 1000)) {
+      loop._e = now;
+      const est = RPPG.estimate(cam.frames);
+      if (est) cam.ests.push(est);
+      setChecks(q, !!cam.face, est);
+      const last = cam.ests.slice(-STABLE_N);
+      const stable = last.length === STABLE_N &&
+        Math.max(...last.map((e) => e.bpm)) - Math.min(...last.map((e) => e.bpm)) <= STABLE_BPM &&
+        last.every((e) => e.snr >= 0);
+      if (stable || el >= SCAN_MAX) return finish(stable);
+    } else if (el < SCAN_MIN && (!loop._c || now - loop._c > 250)) { loop._c = now; setChecks(q, !!cam.face, null); }
+  }
+  cam.raf = requestAnimationFrame(loop);
+}
+
+function start() {
+  if (cam.running || !cam.stream) return;       // 카메라가 꺼져 있으면(다시 재기 직전) 무시
+  cam.frames = []; cam.ests = []; cam.t0 = performance.now(); cam.running = true; loop._e = 0;
+  $("sheetBtn").textContent = "스캔 중…";
+  $("sheetBtn").disabled = true;
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+// 20초 안에 안정되지 않으면 값을 저장하지 않는다.
+// 공개 데이터(MCD-rPPG) 검증: 안정돼서 멈춘 측정은 오차가 1 bpm 안팎, 안정 안 된 측정은 20 bpm 안팎.
+async function finish(stable) {
+  cam.running = false;
+  const est = RPPG.estimate(cam.frames);
+  const lab = RPPG.color(cam.frames);
+  const secs = Math.round((performance.now() - cam.t0) / 100) / 10;
+  stopCam();
+  if (!est || !stable) {
+    ring(0);
+    $("sheetTime").textContent = "다시 재주세요";
+    $("sheetChecks").innerHTML = li(false, "신호가 흔들려 값을 믿기 어려워요. 밝은 곳에서, 말하지 말고 다시 재주세요.");
+    $("sheetBtn").textContent = "다시 재기";
+    $("sheetBtn").disabled = false;
+    $("sheetBtn").onclick = () => { $("sheetBtn").onclick = null; openSheet(); };
+    if (navigator.vibrate) navigator.vibrate(200);
+    return;
+  }
+  ring(1);
+  $("sheetTime").textContent = "완료 · " + secs + "초";
+  if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+  S = await API.post("/api/face", { face_hr: Math.round(est.bpm * 10) / 10, quality: Math.round(est.snr * 100) / 100,
+    L: Math.round(lab.L * 10) / 10, a: Math.round(lab.a * 10) / 10, b: Math.round(lab.b * 10) / 10 });
+  setTimeout(() => { $("sheet").classList.remove("on"); render(); toast("얼굴 심박 " + Math.round(est.bpm) + " bpm · " + secs + "초"); }, 500);
+}
+
+function stopCam() {
+  cancelAnimationFrame(cam.raf);
+  if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop());
+  cam.stream = null;
+}
+
+$("sheetBtn").addEventListener("click", start);
+$("sheetClose").addEventListener("click", () => { cam.running = false; stopCam(); $("sheet").classList.remove("on"); });
+
+// ---------- 알림 ----------
+function goContext() {
+  document.querySelector('.tabs [data-tab="today"]').click();
+  setTimeout(() => { const c = document.querySelector('[data-ctx="alcohol"]'); if (c) c.scrollIntoView({ behavior: "smooth", block: "center" }); }, 50);
+}
+function goGuide() {
+  document.querySelector('.tabs [data-tab="today"]').click();
+  setTimeout(() => { const g = $("guide"); if (g) g.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
+}
+Alarm.setActions({
+  ASK: { label: "확인하기", run: goContext },
+  ALERT: { label: "증상 확인하기", run: goGuide },
+});
+function showPerm() {
+  const p = Alarm.permission();
+  $("permState").textContent = { granted: "켜짐", denied: "막힘 — 브라우저 설정에서 허용", default: "꺼짐", unsupported: "지원 안 됨" }[p] || p;
+  $("notifBtn").hidden = p === "granted" || p === "unsupported";
+}
+showPerm();
+$("notifBtn").addEventListener("click", async () => {
+  try { await Alarm.enableSystem(); toast("알림창 알림을 켰어요"); } catch (err) { toast(err.message); }
+  showPerm();
+});
+$("testBtn").addEventListener("click", () => { Alarm.unlock(); API.post("/api/notify/test").catch((e) => toast(e.message)); });
+
+let lastWatch = null;
+function onPresence(p) {
+  const w = p.watch || 0;
+  $("watchCount").textContent = w ? w + "대" : "없음";
+  $("sync").querySelector("span").textContent = w ? "워치 연결됨" : "워치 없음";
+  $("sync").classList.toggle("on", w > 0);
+  if (lastWatch !== null && w !== lastWatch) toast(w > lastWatch ? "워치가 연결됐어요" : "워치 연결이 끊겼어요");
+  lastWatch = w;
+}
+
+// ---------- 시작 ----------
+API.get("/api/state").then((s) => { if (!S) { adoptServerNote(s); S = s; render(); } }).catch(() => {});
+subscribe("phone", {
+  state: (s) => { adoptServerNote(s); S = s; render(); },
+  notify: (n) => Alarm.show(n),
+  dismiss: (d) => Alarm.remove(d.id),
+  presence: onPresence,
+  conn: (on) => { if (!on) { $("sync").classList.remove("on"); $("sync").querySelector("span").textContent = "다시 연결 중"; } },
+});
+</script>
+</body>
+</html>

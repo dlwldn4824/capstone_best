@@ -36,3 +36,6 @@ outputs/nurse_features.csv
 data/raw/wesad/
 outputs/wesad_hrv.csv
 docs/WESAD_HRV.md
+
+# 웹앱 기록 DB · 개발용 인증서 — 개인 생체 기록이다
+data/app/
