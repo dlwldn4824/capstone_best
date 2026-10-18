@@ -39,3 +39,6 @@ docs/WESAD_HRV.md
 
 # 웹앱 기록 DB · 개발용 인증서 — 개인 생체 기록이다
 data/app/
+
+# 얼굴 메시 라이브러리·모델 — python webapp/fetch_vendor.py 로 받는다
+webapp/static/vendor/

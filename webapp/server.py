@@ -29,19 +29,25 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import engine as E
+import mirror as MI
 
 STATIC = Path(__file__).resolve().parent / "static"
 CERT_DIR = E.ROOT / "data" / "app"
 LOCK = threading.Lock()
 CON = None
+MCON = None                                         # 거울 기록 (mirror.py) — 보고서 설계
 SUBSCRIBERS: list[queue.Queue] = []
 LIVE = {"bpm": None, "rr": None, "at": None, "device": None}
 _LIVE_SIG = None
 PRESENCE = {"phone": 0, "watch": 0}                 # 지금 붙어 있는 화면 수
 
-ROUTES = {"/": "phone.html", "/watch": "watch.html", "/sw.js": "sw.js"}
+# / 는 보고서 설계(카메라 하나). 워치 버전은 /v1 (폰) · /watch 에 그대로 둔다.
+ROUTES = {"/": "mirror.html", "/v1": "phone.html", "/watch": "watch.html", "/sw.js": "sw.js"}
 mimetypes.add_type("application/manifest+json", ".webmanifest")
 mimetypes.add_type("text/javascript", ".js")
+mimetypes.add_type("text/javascript", ".mjs")
+mimetypes.add_type("application/wasm", ".wasm")
+mimetypes.add_type("application/octet-stream", ".task")
 
 
 def broadcast(kind, payload):
@@ -116,6 +122,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(state())
         if path == "/api/events":
             return self._events()
+        if path == "/api/m/state":
+            with LOCK:
+                return self._json(MI.state(MCON))
+        if path == "/api/m/records":
+            with LOCK:
+                return self._json(MI.records(MCON))
+        if path == "/api/m/report":
+            with LOCK:
+                return self._json(MI.report(MCON))
         name = ROUTES.get(path, path.lstrip("/"))
         f = (STATIC / name).resolve()
         if STATIC not in f.parents or not f.is_file():
@@ -162,6 +177,8 @@ class Handler(BaseHTTPRequestHandler):
             b = self._body()
         except (ValueError, json.JSONDecodeError):
             return self._json({"error": "JSON 이 아니다"}, 400)
+        if path.startswith("/api/m/"):
+            return self._mirror(path, b)
         day = b.get("day") or E.today()
         imported = None
         live_state = None
@@ -223,6 +240,42 @@ class Handler(BaseHTTPRequestHandler):
         return self._json(s)
 
 
+    def _mirror(self, path, b):
+        """거울 기록 API. 받는 것은 얼굴에서 뽑은 숫자뿐이다 (영상 · 사진 없음)."""
+        try:
+            with LOCK:
+                if path == "/api/m/record":
+                    out = MI.add_record(MCON, b.get("bpm"), b.get("snr"), b.get("bright"), b.get("motion"),
+                                        b.get("quality_ok"), b.get("a_rel"), b.get("a_cheek"),
+                                        bool(b.get("makeup")), b.get("routine"), None, b.get("trigger"),
+                                        int(b.get("retry") or 0))
+                elif path == "/api/m/answer":
+                    out = MI.answer(MCON, int(b["id"]), b["reason"], b.get("sub"))
+                elif path == "/api/m/routine":
+                    out = MI.set_routine(MCON, int(b["id"]), b["routine"])
+                elif path == "/api/m/settings":
+                    for k in ("consent", "k", "exam_start", "exam_end"):
+                        if k in b:
+                            v = b[k]
+                            if k == "k" and float(v) not in MI.K_CHOICES:
+                                raise ValueError("k 는 2, 2.5, 3 중 하나")
+                            MI.set_setting(MCON, k, float(v) if k == "k" else v)
+                    out = MI.state(MCON)
+                elif path == "/api/m/demo":
+                    MI.seed_demo(MCON)
+                    out = MI.state(MCON)
+                elif path == "/api/m/reset":
+                    MI.reset(MCON)
+                    out = MI.state(MCON)
+                else:
+                    return self._json({"error": "없는 경로"}, 404)
+        except KeyError as e:
+            return self._json({"error": "빠진 값: {}".format(e)}, 400)
+        except ValueError as e:
+            return self._json({"error": str(e)}, 400)
+        return self._json(out)
+
+
 def lan_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -260,7 +313,9 @@ def main():
     ap.add_argument("--demo", action="store_true", help="기록이 비어 있으면 시연용 지난 기록을 채운다")
     args = ap.parse_args()
 
+    global MCON
     CON = E.connect()
+    MCON = MI.connect()
     if args.demo and CON.execute("SELECT COUNT(*) FROM nights").fetchone()[0] == 0:
         E.seed_demo(CON)
 
@@ -276,7 +331,8 @@ def main():
         scheme = "https"
 
     print("핑계 게이지 서버")
-    print("  이 컴퓨터   {}://localhost:{}/        (폰 화면)".format(scheme, args.port))
+    print("  이 컴퓨터   {}://localhost:{}/        (거울 기록 — 보고서 설계)".format(scheme, args.port))
+    print("             {}://localhost:{}/v1      (워치 버전 폰 화면)".format(scheme, args.port))
     print("             {}://localhost:{}/watch   (워치 화면)".format(scheme, args.port))
     print("  같은 와이파이의 폰·워치에서")
     print("             {}://{}:{}/".format(scheme, ip, args.port))

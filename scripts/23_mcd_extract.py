@@ -32,6 +32,7 @@ CAMERA = "FullHDwebcam"          # 정면
 # 얼굴 상자 안에서의 비율 (x0, y0, x1, y1) — webapp/static/rppg.js 의 이마·볼과 같은 자리
 ROIS = [(0.32, 0.06, 0.68, 0.22), (0.14, 0.50, 0.38, 0.72), (0.62, 0.50, 0.86, 0.72)]
 DETECT_EVERY = 15
+TRACE_DIR = "traces"
 
 
 def fetch(rel, dest=None, tries=4):
@@ -57,7 +58,7 @@ def face_traces(video_path):
     import cv2
     cas = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
     cap = cv2.VideoCapture(str(video_path))
-    box, rgb, ok_flags = None, [], []
+    box, rgb, ok_flags, per_roi = None, [], [], []
     i = 0
     while True:
         ok, frame = cap.read()
@@ -71,20 +72,26 @@ def face_traces(video_path):
                 box = f if box is None else 0.7 * box + 0.3 * f     # 흔들림 줄이기
         if box is None:
             rgb.append([np.nan] * 3)
+            per_roi.append([[np.nan] * 3] * len(ROIS))
             ok_flags.append(False)
         else:
             x, y, w, h = box
-            acc, n = np.zeros(3), 0
+            acc, n, rois = np.zeros(3), 0, []
             for x0, y0, x1, y1 in ROIS:
                 a = frame[int(y + y0 * h):int(y + y1 * h), int(x + x0 * w):int(x + x1 * w)]
                 if a.size:
-                    acc += a.reshape(-1, 3).sum(0)
-                    n += a.shape[0] * a.shape[1]
+                    px = a.reshape(-1, 3)
+                    acc += px.sum(0)
+                    n += px.shape[0]
+                    rois.append(px.mean(0)[::-1].tolist())             # 영역별 (이마 · 왼볼 · 오른볼)
+                else:
+                    rois.append([np.nan] * 3)
             rgb.append((acc / max(n, 1))[::-1].tolist())             # BGR → RGB
+            per_roi.append(rois)
             ok_flags.append(n > 0)
         i += 1
     cap.release()
-    return np.asarray(rgb, float), np.asarray(ok_flags, bool)
+    return np.asarray(rgb, float), np.asarray(ok_flags, bool), np.asarray(per_roi, float)
 
 
 def read_meta(txt):
@@ -103,19 +110,19 @@ def read_ppg_sync(txt):
 
 def process(row, tmpdir):
     sid, state = int(row.patient_id), row.step
-    dest = OUT / "traces" / f"{sid}_{state}.npz"
+    dest = OUT / TRACE_DIR / f"{sid}_{state}.npz"
     if dest.exists():
         return f"{sid}_{state} 있음"
     vid = Path(tmpdir) / f"{sid}_{state}.avi"
     fetch(row.video, vid)
     try:
-        rgb, ok = face_traces(vid)
+        rgb, ok, roi = face_traces(vid)
     finally:
         vid.unlink(missing_ok=True)                                 # 영상은 남기지 않는다
     t = read_meta(fetch(row.meta))
     ppg = read_ppg_sync(fetch(row.ppg_sync))
     n = min(len(rgb), len(t), len(ppg))
-    np.savez_compressed(dest, t=t[:n], rgb=rgb[:n], ppg=ppg[:n], face_ok=ok[:n])
+    np.savez_compressed(dest, t=t[:n], rgb=rgb[:n], roi=roi[:n], ppg=ppg[:n], face_ok=ok[:n])
     return f"{sid}_{state} 프레임 {n} 얼굴 {ok[:n].mean():.0%}"
 
 
@@ -123,8 +130,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=100)
     ap.add_argument("--workers", type=int, default=3)
+    ap.add_argument("--out", default="traces", help="traces_roi 처럼 다른 폴더에 받기 (영역별 RGB 포함)")
     args = ap.parse_args()
-    (OUT / "traces").mkdir(parents=True, exist_ok=True)
+    global TRACE_DIR
+    TRACE_DIR = args.out
+    (OUT / TRACE_DIR).mkdir(parents=True, exist_ok=True)
 
     db = pd.read_csv(io.BytesIO(fetch("db.csv")))
     db.to_csv(OUT / "db.csv", index=False)
