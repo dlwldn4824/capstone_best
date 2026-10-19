@@ -30,11 +30,13 @@ from urllib.parse import parse_qs, urlparse
 
 import engine as E
 import mirror as MI
+import check as CK
 
 STATIC = Path(__file__).resolve().parent / "static"
 CERT_DIR = E.ROOT / "data" / "app"
 LOCK = threading.Lock()
 CON = None
+CCON = None                                         # 대학생 헬스체크 (check.py)
 MCON = None                                         # 거울 기록 (mirror.py) — 보고서 설계
 SUBSCRIBERS: list[queue.Queue] = []
 LIVE = {"bpm": None, "rr": None, "at": None, "device": None}
@@ -42,7 +44,7 @@ _LIVE_SIG = None
 PRESENCE = {"phone": 0, "watch": 0}                 # 지금 붙어 있는 화면 수
 
 # / 는 보고서 설계(카메라 하나). 워치 버전은 /v1 (폰) · /watch 에 그대로 둔다.
-ROUTES = {"/": "mirror.html", "/v1": "phone.html", "/watch": "watch.html", "/sw.js": "sw.js"}
+ROUTES = {"/": "mirror.html", "/check": "check.html", "/v1": "phone.html", "/watch": "watch.html", "/sw.js": "sw.js"}
 mimetypes.add_type("application/manifest+json", ".webmanifest")
 mimetypes.add_type("text/javascript", ".js")
 mimetypes.add_type("text/javascript", ".mjs")
@@ -131,6 +133,31 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/m/report":
             with LOCK:
                 return self._json(MI.report(MCON))
+        if path == "/api/c/state":
+            q = parse_qs(urlparse(self.path).query)
+            with LOCK:
+                return self._json(CK.state(CCON, mid=(q.get("member") or [None])[0]))
+        if path == "/api/c/result":
+            q = parse_qs(urlparse(self.path).query)
+            try:
+                with LOCK:
+                    return self._json(CK.result(CCON, int(q["id"][0]), mid=(q.get("member") or [None])[0]))
+            except (KeyError, ValueError):
+                return self._json({"error": "없는 측정"}, 404)
+        if path == "/api/c/groups":
+            q = parse_qs(urlparse(self.path).query)
+            with LOCK:
+                return self._json({"groups": CK.groups_state(CCON, (q.get("member") or [""])[0])})
+        if path == "/api/c/history":
+            q = parse_qs(urlparse(self.path).query)
+            with LOCK:
+                return self._json(CK.history(CCON, mid=(q.get("member") or [None])[0]))
+        if path == "/api/m/schedule.ics":
+            with LOCK:
+                sched = MI.settings(MCON)["schedule"]
+            origin = "{}://{}".format("https" if isinstance(self.connection, ssl.SSLSocket) else "http",
+                                      self.headers.get("Host", "localhost"))
+            return self._send(200, MI.schedule_ics(sched, origin), "text/calendar; charset=utf-8")
         name = ROUTES.get(path, path.lstrip("/"))
         f = (STATIC / name).resolve()
         if STATIC not in f.parents or not f.is_file():
@@ -179,6 +206,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"error": "JSON 이 아니다"}, 400)
         if path.startswith("/api/m/"):
             return self._mirror(path, b)
+        if path.startswith("/api/c/"):
+            return self._check(path, b)
         day = b.get("day") or E.today()
         imported = None
         live_state = None
@@ -240,6 +269,43 @@ class Handler(BaseHTTPRequestHandler):
         return self._json(s)
 
 
+    def _check(self, path, b):
+        """헬스체크 API. 받는 것은 브라우저가 계산한 지표 숫자와 세 가지 답뿐이다."""
+        try:
+            with LOCK:
+                if path == "/api/c/scan":
+                    num = lambda k, f=float: None if b.get(k) is None else f(b[k])  # noqa: E731
+                    out = CK.add_scan(CCON, b.get("metrics") or {}, num("sleep_h"), num("caffeine", int), num("mood", int),
+                                      b.get("kind") or "normal", num("pair", int), member=b.get("member"))
+                elif path == "/api/c/profile":
+                    CK.set_profile(CCON, b.get("member"), **{k: b[k] for k in ("height", "weight", "birth_year", "consent") if k in b})
+                    out = CK.state(CCON, mid=b.get("member"))
+                elif path == "/api/c/demo":
+                    CK.seed_demo(CCON, mid=b.get("member"))
+                    if b.get("member"):
+                        CK.seed_group_demo(CCON, b["member"], b.get("nick") or "나")
+                    out = CK.state(CCON, mid=b.get("member"))
+                elif path == "/api/c/group/create":
+                    out = {"group": CK.create_group(CCON, b["member"], b.get("nick"), b.get("name"), b.get("start") or "07:00",
+                                                    b.get("end") or "09:00", b.get("rule") or "", icon=b.get("icon") or "sleep")}
+                elif path == "/api/c/group/join":
+                    out = {"group": CK.join_group(CCON, b["member"], b.get("nick"), b.get("code"))}
+                elif path == "/api/c/group/leave":
+                    out = {"group": CK.leave_group(CCON, b["member"], b.get("code"))}
+                elif path == "/api/c/reset":
+                    CK.reset(CCON, b.get("member"))
+                    out = CK.state(CCON, mid=b.get("member"))
+                else:
+                    return self._json({"error": "없는 경로"}, 404)
+        except KeyError as e:
+            return self._json({"error": "빠진 값: {}".format(e)}, 400)
+        except (ValueError, TypeError) as e:
+            return self._json({"error": str(e)}, 400)
+        if path.startswith("/api/c/group/") and b.get("member"):
+            with LOCK:
+                out["groups"] = CK.groups_state(CCON, b["member"])
+        return self._json(out)
+
     def _mirror(self, path, b):
         """거울 기록 API. 받는 것은 얼굴에서 뽑은 숫자뿐이다 (영상 · 사진 없음)."""
         try:
@@ -254,6 +320,8 @@ class Handler(BaseHTTPRequestHandler):
                 elif path == "/api/m/routine":
                     out = MI.set_routine(MCON, int(b["id"]), b["routine"])
                 elif path == "/api/m/settings":
+                    if "schedule" in b:
+                        MI.set_setting(MCON, "schedule", MI.clean_schedule(b["schedule"]))
                     for k in ("consent", "k", "exam_start", "exam_end"):
                         if k in b:
                             v = b[k]
@@ -313,9 +381,10 @@ def main():
     ap.add_argument("--demo", action="store_true", help="기록이 비어 있으면 시연용 지난 기록을 채운다")
     args = ap.parse_args()
 
-    global MCON
+    global MCON, CCON
     CON = E.connect()
     MCON = MI.connect()
+    CCON = CK.connect()
     if args.demo and CON.execute("SELECT COUNT(*) FROM nights").fetchone()[0] == 0:
         E.seed_demo(CON)
 
@@ -331,7 +400,8 @@ def main():
         scheme = "https"
 
     print("핑계 게이지 서버")
-    print("  이 컴퓨터   {}://localhost:{}/        (거울 기록 — 보고서 설계)".format(scheme, args.port))
+    print("  이 컴퓨터   {}://localhost:{}/        (거울 기록 · 보고서 설계)".format(scheme, args.port))
+    print("             {}://localhost:{}/check   (대학생 헬스체크)".format(scheme, args.port))
     print("             {}://localhost:{}/v1      (워치 버전 폰 화면)".format(scheme, args.port))
     print("             {}://localhost:{}/watch   (워치 화면)".format(scheme, args.port))
     print("  같은 와이파이의 폰·워치에서")
