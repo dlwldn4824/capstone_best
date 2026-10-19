@@ -39,6 +39,12 @@ MAD_FLOOR_BPM = 1.0        # 준비 주간 값이 거의 같을 때 흩어짐 0 
 MAD_FLOOR_A = 0.3          # 안색 지표의 같은 용도
 MAD_SCALE = 1.4826         # 정규분포에서 MAD → 표준편차
 
+# 내 스케줄 — 루틴마다 하는 시각. 그 시각부터 DUE_MIN 분 동안 아직 안 했으면 배너로 스캔을 권한다.
+SCHEDULE_DEFAULT = {"morning": {"at": "07:30", "on": True}, "desk": {"at": "14:00", "on": True},
+                    "night": {"at": "23:00", "on": True}}
+DUE_MIN = 120
+CRLF = "\r\n"              # iCalendar 줄바꿈
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS records (
   id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT, day TEXT, routine TEXT, phase TEXT,
@@ -81,7 +87,69 @@ def settings(con):
         "k": float(get_setting(con, "k", K_DEFAULT)),
         "exam_start": get_setting(con, "exam_start"),
         "exam_end": get_setting(con, "exam_end"),
+        "schedule": get_setting(con, "schedule", SCHEDULE_DEFAULT),
     }
+
+
+def clean_schedule(v):
+    """{"morning": {"at": "07:30", "on": true}, …} 만 받는다."""
+    out = {}
+    for r in ROUTINES:
+        x = v.get(r, SCHEDULE_DEFAULT[r]) if isinstance(v, dict) else None
+        if not isinstance(x, dict):
+            raise ValueError("스케줄 형식이 맞지 않아요")
+        at = str(x.get("at", ""))
+        try:
+            hh, mm = (int(p) for p in at.split(":"))
+            assert 0 <= hh < 24 and 0 <= mm < 60
+        except (ValueError, AssertionError):
+            raise ValueError("시각은 HH:MM 으로 적어 주세요")
+        out[r] = {"at": "{:02d}:{:02d}".format(hh, mm), "on": bool(x.get("on", True))}
+    return out
+
+
+def _sched_dt(day, hhmm):
+    hh, mm = (int(p) for p in hhmm.split(":"))
+    return dt.datetime.combine(day, dt.time(hh, mm))
+
+
+def schedule_status(sched, done, at):
+    """지금 해야 할 루틴(due)과 다음 예정(next). done = 오늘 품질 통과 기록이 있는 루틴."""
+    due, nxt = None, None
+    for r in ROUTINES:
+        x = sched[r]
+        if not x["on"]:
+            continue
+        t = _sched_dt(at.date(), x["at"])
+        if r not in done and t <= at < t + dt.timedelta(minutes=DUE_MIN):
+            if due is None or t > _sched_dt(at.date(), sched[due]["at"]):
+                due = r                                   # 겹치면 더 최근 것
+        cand = t if t > at else t + dt.timedelta(days=1)
+        if nxt is None or cand < nxt[1]:
+            nxt = (r, cand)
+    return {"due": due, "due_since": sched[due]["at"] if due else None,
+            "next": {"routine": nxt[0], "at": nxt[1].isoformat(timespec="minutes")} if nxt else None}
+
+
+def schedule_ics(sched, origin):
+    """캘린더 앱용 — 매일 반복 일정 + 그 시각 알림. 일정 링크가 바로 15초 스캔을 연다."""
+    stamp = dt.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    start = dt.date.today().strftime("%Y%m%d")
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Vity//Mirror//KO", "CALSCALE:GREGORIAN"]
+    for r in ROUTINES:
+        x = sched[r]
+        if not x["on"]:
+            continue
+        hhmm = x["at"].replace(":", "")
+        url = "{}/?routine={}&go=1&t=calendar".format(origin.rstrip("/"), r)
+        lines += ["BEGIN:VEVENT", "UID:vity-{}@mirror".format(r), "DTSTAMP:" + stamp,
+                  "DTSTART:{}T{}00".format(start, hhmm), "DURATION:PT5M", "RRULE:FREQ=DAILY",
+                  "SUMMARY:Vity · {} 15초 스캔".format(ROUTINE_KO[r]), "URL:" + url,
+                  "DESCRIPTION:" + url, "BEGIN:VALARM", "ACTION:DISPLAY",
+                  "DESCRIPTION:{} 15초 스캔할 시간이에요".format(ROUTINE_KO[r]), "TRIGGER:PT0M",
+                  "END:VALARM", "END:VEVENT"]
+    lines.append("END:VCALENDAR")
+    return CRLF.join(lines) + CRLF
 
 
 # --- FR-02 루틴 식별 · ExamPeriod ---------------------------------------------------
@@ -273,12 +341,14 @@ def state(con, at=None):
         prep_days = {"day": max(0, min(BASELINE_DAYS, (at.date() - (st - dt.timedelta(days=BASELINE_DAYS))).days + 1)),
                      "of": BASELINE_DAYS, "exam_in": (st - at.date()).days}
     pending = [r for r in today if r["status"] == "ask"]
+    done = {r["routine"] for r in today if r["quality_ok"]}
     return {
         "today": day, "now_routine": routine_for(at), "phase": phase, "prep": prep_days,
         "settings": s, "baselines": {r: {k: (_num(v) if isinstance(v, float) else v) for k, v in b.items()}
                                      for r, b in bls.items()},
         "today_records": today, "pending": pending[-1] if pending else None,
         "labels": {"routine": ROUTINE_KO, "reason": REASON_KO, "caffeine": CAFFEINE_SUB, "question": QUESTION},
+        "schedule": schedule_status(s["schedule"], done, at),
         "report_ready": phase == "recovery" or (s.get("exam_end") is not None and day > s["exam_end"]),
     }
 

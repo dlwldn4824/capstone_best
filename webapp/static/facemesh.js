@@ -17,7 +17,7 @@ const FACE = (() => {
   const NOSE = 1, FACE_L = 234, FACE_R = 454;
   const BLINK = 0.5, TALK = 0.25;
 
-  let landmarker = null, source = "", lastPolys = null;
+  let landmarker = null, source = "", lastPolys = null, lastLm = null, tess = null;
 
   async function init() {
     if (landmarker) return source;
@@ -39,6 +39,7 @@ const FACE = (() => {
               outputFaceBlendshapes: true, outputFacialTransformationMatrixes: true,
             });
             source = t.name + " · " + delegate;
+            tess = (vision.FaceLandmarker.FACE_LANDMARKS_TESSELATION || []).map((c) => [c.start, c.end]);   // 화면에 그릴 메시 선
             return source;
           } catch (e) { last = e; }
         }
@@ -85,8 +86,9 @@ const FACE = (() => {
   function sample(video, canvas, tMs) {
     const W = canvas.width, H = canvas.height, ctx = canvas.getContext("2d", { willReadFrequently: true });
     const res = landmarker.detectForVideo(video, tMs);
-    if (!res.faceLandmarks || !res.faceLandmarks.length) return { t: tMs, face: false };
+    if (!res.faceLandmarks || !res.faceLandmarks.length) { lastLm = null; return { t: tMs, face: false }; }
     const lm = res.faceLandmarks[0];
+    lastLm = lm;
     ctx.drawImage(video, 0, 0, W, H);
     const img = ctx.getImageData(0, 0, W, H).data;
     const pt = (i) => [lm[i].x * W, lm[i].y * H];
@@ -140,5 +142,5 @@ const FACE = (() => {
     return { ok: !why, why, bright, motion, skip, lumOk, snr, face: f.length / frames.length };
   }
 
-  return { init, sample, quality, ROI, Q, source: () => source, lastPolys: () => lastPolys };
+  return { init, sample, quality, ROI, Q, source: () => source, lastPolys: () => lastPolys, lastLandmarks: () => lastLm, tessellation: () => tess };
 })();

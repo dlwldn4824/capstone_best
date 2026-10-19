@@ -165,3 +165,33 @@ def test_complexion_relative_index_cancels_common_light():
     a = R.complexion(fh, ck)
     b = R.complexion(fh * 1.15, ck * 1.15)
     assert abs(b["a_rel"] - a["a_rel"]) < abs(b["a_cheek"] - a["a_cheek"])
+
+
+# --- 내 스케줄 · 배너 ---------------------------------------------------------------
+def test_schedule_due_window_and_done(con):
+    s = M.settings(con)["schedule"]                                  # 기본 07:30 · 14:00 · 23:00
+    assert M.schedule_status(s, set(), at("2026-10-19", 14, 30))["due"] == "desk"
+    assert M.schedule_status(s, {"desk"}, at("2026-10-19", 14, 30))["due"] is None     # 이미 했으면 조용히
+    assert M.schedule_status(s, set(), at("2026-10-19", 16, 1))["due"] is None         # 두 시간 지나면 넘어감
+    assert M.schedule_status(s, set(), at("2026-10-19", 13, 59))["next"]["routine"] == "desk"
+
+
+def test_schedule_state_uses_quality_passed_records_only(con):
+    put(con, "2026-10-19", "desk", 72.0, q=False)
+    assert M.state(con, at("2026-10-19", 14, 30))["schedule"]["due"] == "desk"         # 품질 미달은 안 한 것
+    put(con, "2026-10-19", "desk", 72.0)
+    assert M.state(con, at("2026-10-19", 14, 30))["schedule"]["due"] is None
+
+
+def test_schedule_off_and_validation(con):
+    sc = M.clean_schedule({"morning": {"at": "6:05", "on": True}, "desk": {"at": "15:00", "on": False}})
+    assert sc["morning"]["at"] == "06:05" and sc["desk"]["on"] is False and sc["night"] == M.SCHEDULE_DEFAULT["night"]
+    assert M.schedule_status(sc, set(), at("2026-10-19", 15, 10))["due"] is None
+    with pytest.raises(ValueError):
+        M.clean_schedule({"morning": {"at": "25:00"}})
+
+
+def test_schedule_ics_opens_scan():
+    ics = M.schedule_ics(M.SCHEDULE_DEFAULT, "https://phone.local:8443")
+    assert ics.count("BEGIN:VEVENT") == 3 and "RRULE:FREQ=DAILY" in ics and "\r\n" in ics
+    assert "URL:https://phone.local:8443/?routine=desk&go=1&t=calendar" in ics
