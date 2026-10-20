@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview --host",
     "test": "vitest run",
+    "predeploy": "node scripts/sync-assets.mjs",
     "deploy": "gcloud run deploy vity-face --source . --project vity-face-kw2026 --region asia-northeast3 --allow-unauthenticated --memory 256Mi --max-instances 2"
   },
   "devDependencies": {
