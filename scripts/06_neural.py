@@ -65,7 +65,7 @@ def main():
     summary.to_csv(out / "tables" / "neural_summary.csv", index=False)
 
     report.write_md(
-        Path(__file__).resolve().parents[1] / "docs" / "NEURAL_RESULTS.md",
+        Path(__file__).resolve().parents[1] / "docs" / "research" / "NEURAL_RESULTS.md",
         [("# Neural baseline", ""),
          ("## 결과", report.md_table(summary)),
          ("## 설계 메모",
@@ -73,7 +73,7 @@ def main():
           "얼마나 혼동하는지가 NeSy 가 개선할 수 있는 상한이다.\n"
           "`neural_context` 는 같은 정보를 숫자로 받은 모델이므로, NeSy 는 이\n"
           "모델을 넘어서야 '규칙으로 넣는 것이 낫다'고 말할 수 있다.")])
-    print("\n-> outputs/predictions_neural.csv, docs/NEURAL_RESULTS.md")
+    print("\n-> outputs/predictions_neural.csv, docs/research/NEURAL_RESULTS.md")
 
 
 if __name__ == "__main__":

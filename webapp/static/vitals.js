@@ -5,7 +5,7 @@
 //   박동 간격  0.33–1.5초 · 전체 중앙값 ±30% · 이웃 중앙값 ±20% 밖은 버림
 //   HRV       RMSSD · SDNN · pNN50        스트레스  Baevsky SI = AMo / (2·Mo·MxDMn) → 0–100 (로그 눈금)
 //   호흡      기저선 · 진폭 · 간격 변조의 0.1–0.5 Hz 최고점, 품질 좋은 것끼리 맞으면 평균 (참고값)
-// 공개 데이터(MCD-rPPG 100명, 30초 창, 신호 좋음): 심박 0.33 bpm · RMSSD 7.5 ms · SDNN 6.1 ms · 스트레스 r 0.72 (docs/CHECK_DESIGN.md)
+// 공개 데이터(MCD-rPPG 100명, 30초 창, 신호 좋음): 심박 0.33 bpm · RMSSD 7.5 ms · SDNN 6.1 ms · 스트레스 r 0.72 (docs/app/CHECK_DESIGN.md)
 "use strict";
 
 const VITALS = (() => {

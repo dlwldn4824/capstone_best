@@ -103,7 +103,7 @@ def main():
     print("\n[피험자별]")
     print(per_subj.to_string(index=False))
 
-    report.write_md(ROOT / "docs" / "NURSE_AUDIT.md", [
+    report.write_md(ROOT / "docs" / "research" / "NURSE_AUDIT.md", [
         ("# Nurse Stress Dataset 세션 감사", ""),
         ("생성: `python scripts/10_nurse_audit.py`", ""),
         ("## 피험자별", report.md_table(per_subj)),
@@ -113,7 +113,7 @@ def main():
             [{"signal": k, "존재율": round(aud["has_" + k].mean(), 3)}
              for k in nurse.SIGNAL_FILES]))),
     ])
-    print("\n-> outputs/tables/nurse_session_audit.csv, docs/NURSE_AUDIT.md")
+    print("\n-> outputs/tables/nurse_session_audit.csv, docs/research/NURSE_AUDIT.md")
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@
     outputs/tables/threshold_sweep.csv
     outputs/tables/final_comparison.csv
     outputs/figures/fig4_confusion_nesy.png, fig6_case_study.png
-    docs/RULES.md
+    docs/research/RULES.md
 
 담당: 역할 C
 """
@@ -175,7 +175,7 @@ def main():
 
     # --- 6. RULES.md ------------------------------------------------------
     report.write_md(
-        Path(__file__).resolve().parents[1] / "docs" / "RULES.md",
+        Path(__file__).resolve().parents[1] / "docs" / "research" / "RULES.md",
         [("# Symbolic Rules", ""),
          ("## 규칙 정의", rules_mod.rules_markdown()),
          ("## Fact 정의",
@@ -195,7 +195,7 @@ def main():
           + "\n\n표본은 피험자다. n 이 작으므로 p 값만으로 결론 내리지 말고\n"
             "median_diff 의 크기와 n_better 를 함께 볼 것."),
          ("## 상태별 fact 발생률", report.md_table(dist.reset_index()))])
-    print("\n-> outputs/facts.csv, outputs/tables/final_comparison.csv, docs/RULES.md")
+    print("\n-> outputs/facts.csv, outputs/tables/final_comparison.csv, docs/research/RULES.md")
 
 
 if __name__ == "__main__":

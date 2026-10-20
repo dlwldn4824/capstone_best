@@ -10,4 +10,4 @@
 | [`s41551-020-00640-6-dual.pdf`](s41551-020-00640-6-dual.pdf) / [`mono`](s41551-020-00640-6-mono.pdf) | Mishra et al., *Nat. Biomed. Eng.* 2020. Pre-symptomatic detection of COVID-19 from smartwatch data. https://doi.org/10.1038/s41551-020-00640-6 | Personal baseline |
 | [`s41591-020-1123-x-dual.pdf`](s41591-020-1123-x-dual.pdf) / [`mono`](s41591-020-1123-x-mono.pdf) | Quer et al., *Nat. Med.* 2021. Wearable sensor data and self-reported symptoms for COVID-19 detection. https://doi.org/10.1038/s41591-020-1123-x | 센서 + 맥락 |
 
-연구 설계 본문: [`../연구설계.md`](../연구설계.md)
+연구 설계 본문: [`../연구설계.md`](../research/연구설계.md)

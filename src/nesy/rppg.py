@@ -1,4 +1,4 @@
-"""얼굴 영상 심박 (rPPG, POS) — webapp/static/rppg.js 를 한 줄씩 옮긴 것.
+"""얼굴 영상 심박 (rPPG, POS) — legacy/webapp_v1/static/rppg.js 를 한 줄씩 옮긴 것.
 
 웹앱이 브라우저에서 하는 계산과 **같은 계산**을 공개 데이터에 돌려
 앱의 얼굴 체크를 검증하기 위해 있다. 한쪽을 고치면 다른 쪽도 고칠 것.
@@ -118,7 +118,7 @@ def app_scan(t, rgb, t0, min_s=8, max_s=20, stable_bpm=3, stable_n=3, min_snr=0.
 # v2 — rPPG-Toolbox (Liu et al., NeurIPS 2023 Datasets & Benchmarks) 와 같은 처리 순서
 # =============================================================================
 # rPPG-Toolbox 의 라이선스는 Responsible AI License 라서 코드를 복사하지 않고
-# 같은 단계 · 같은 값으로 새로 썼다. webapp/static/rppg.js 의 v2 와 한 줄씩 대응한다.
+# 같은 단계 · 같은 값으로 새로 썼다. legacy/webapp_v1/static/rppg.js 의 v2 와 한 줄씩 대응한다.
 #   1. POS (Wang 2017): 1.6초 창, 창 평균으로 나눈 RGB 를 [0,1,-1] · [-2,1,1] 평면에 투영
 #   2. smoothness-priors 추세 제거 (Tarvainen 2002), λ = 100
 #   3. 1차 버터워스 대역 통과 0.75–3 Hz, 앞뒤 양방향(filtfilt)

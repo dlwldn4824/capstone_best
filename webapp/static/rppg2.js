@@ -5,7 +5,7 @@
 //   1. POS (Wang 2017) 1.6초 창          2. smoothness-priors 추세 제거 λ=100
 //   3. 1차 버터워스 0.75–3 Hz 양방향      4. 다시 추세 제거 → 0.6–3.3 Hz 양방향
 //   5. 2의 거듭제곱 FFT 최고점 = 심박     6. SNR = 1·2차 고조파 ±6 bpm / 나머지
-// 공개 데이터(MCD-rPPG 100명) 20초 창: 평균 오차 3.6 bpm, SNR ≥ 0 이면 0.7 bpm (docs/FACE_RPPG.md)
+// 공개 데이터(MCD-rPPG 100명) 20초 창: 평균 오차 3.6 bpm, SNR ≥ 0 이면 0.7 bpm (docs/research/FACE_RPPG.md)
 "use strict";
 
 const RPPG2 = (() => {

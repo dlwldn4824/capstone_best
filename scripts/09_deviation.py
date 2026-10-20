@@ -166,7 +166,7 @@ def main():
 
     # --- 5. 문서 ----------------------------------------------------------
     report.write_md(
-        Path(__file__).resolve().parents[1] / "docs" / "DEVIATION_RESULTS.md",
+        Path(__file__).resolve().parents[1] / "docs" / "research" / "DEVIATION_RESULTS.md",
         [("# 개인 baseline 이탈 + 설명 판정", ""),
          ("## baseline 선택 방식", report.md_table(pd.DataFrame(rows))),
          ("## 설명 판정 x 실제 상태", report.md_table(tab.reset_index())),
@@ -177,7 +177,7 @@ def main():
           + "- 분류기: `STRESS` 로 단정 {:.1%}\n\n".format(wrong_stress)
           + "분류기는 기권할 수 없으므로 모르는 맥락을 아는 것 중 하나로 "
             "밀어넣는다. 이 차이가 규칙을 두는 이유다.")])
-    print("\n-> outputs/deviation.csv, docs/DEVIATION_RESULTS.md")
+    print("\n-> outputs/deviation.csv, docs/research/DEVIATION_RESULTS.md")
 
 
 if __name__ == "__main__":

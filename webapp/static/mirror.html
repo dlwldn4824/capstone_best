@@ -308,7 +308,7 @@ input[type=time]{min-height:44px; border-radius:10px; border:1.5px solid var(--l
 <!-- 동의 (FR-16) — 여기서만 무엇을 하는지 분명히 쓴다 -->
 <div class="consent" id="consent" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
   <div class="in">
-    <img src="/characters/calm.png" alt="" style="width:96px; height:96px; object-fit:contain">
+    <img src="/assets/characters/calm.png" alt="" style="width:96px; height:96px; object-fit:contain">
     <h1 id="consentTitle">시험기간의 몸을 기록해요</h1>
     <ul>
       <li>아침 거울 · 공부 시작 · 밤 세안 때 <b>전면 카메라로 15초</b> 얼굴을 봐요.</li>
@@ -324,7 +324,7 @@ input[type=time]{min-height:44px; border-radius:10px; border:1.5px solid var(--l
 
 <div class="banner" id="banner" role="alert" aria-live="assertive">
   <div class="in">
-    <img id="bnImg" src="/characters/calm.png" alt="">
+    <img id="bnImg" src="/assets/characters/calm.png" alt="">
     <b id="bnTitle">스캔할 시간이에요</b>
     <span class="bs" id="bnSub">15초면 끝나요</span>
     <div class="acts"><button type="button" id="bnLater">10분 뒤</button><button type="button" class="go" id="bnGo">지금 스캔</button></div>
@@ -383,7 +383,7 @@ function go(tab) {
 
 // ---------- 오늘 ----------
 function phaseHtml(s) {
-  const img = '<img class="pimg" src="/characters/' + PHASE_CHAR[s.phase] + '.png" alt="">';
+  const img = '<img class="pimg" src="/assets/characters/' + PHASE_CHAR[s.phase] + '.png" alt="">';
   return phaseInner(s).replace(/^(<div class="phase"[^>]*>)/, "$1" + img);
 }
 function phaseInner(s) {
@@ -409,7 +409,7 @@ function renderHome() {
       esc(s.labels.routine[rt]) + "</b>" + (sc.on ? "<time>" + sc.at + "</time>" : "") + "<span>" + esc(st) + "</span></button>";
   }).join("");
   const sd = s.schedule, parts = [], cur = sd.due || s.now_routine;     // 스케줄에 걸린 루틴이 먼저
-  if (sd.due) parts.push('<div class="due"><img src="/characters/' + DUE_CHAR[sd.due] + '.png" alt=""><b>' + esc(s.labels.routine[sd.due]) + " 시간이에요</b>" +
+  if (sd.due) parts.push('<div class="due"><img src="/assets/characters/' + DUE_CHAR[sd.due] + '.png" alt=""><b>' + esc(s.labels.routine[sd.due]) + " 시간이에요</b>" +
     "<span>" + sd.due_since + " 스케줄 · 15초면 끝나요</span>" + '<button class="btn" type="button" data-open="' + sd.due + '">' + ic("scan-face", 20) + '지금 스캔</button></div>');
   parts.push(phaseHtml(s));
   if (s.pending) parts.push(questionCard(s.pending, false));
@@ -425,7 +425,7 @@ function renderHome() {
 
 function questionCard(r, inSheet) {
   const L = S.labels;
-  return (inSheet ? "" : '<div class="card"><div class="qc"><img src="/characters/ask.png" alt=""><h2>' + esc(r.routine_ko) + " · " + esc(r.question) + "</h2></div>") +
+  return (inSheet ? "" : '<div class="card"><div class="qc"><img src="/assets/characters/ask.png" alt=""><h2>' + esc(r.routine_ko) + " · " + esc(r.question) + "</h2></div>") +
     '<div class="chips" data-rid="' + r.id + '">' +
     ["alcohol", "caffeine", "exercise", "sleep"].map((k) => '<button class="chip" type="button" data-reason="' + k + '">' + ic(REASON_ICON[k], 20) + L.reason[k] + "</button>").join("") +
     '<button class="chip wide" type="button" data-reason="none">' + ic("ban", 20) + '해당 없음</button></div>' +
@@ -457,7 +457,7 @@ function showResult(r, q) {
     body = esc(r.question);
     extra = questionCard(r, true);
   }
-  $("resIn").innerHTML = '<div class="head"><img src="/characters/' + img + '.png" alt=""><div><h2 id="resTitle">' + title + '</h2><p class="sub">' +
+  $("resIn").innerHTML = '<div class="head"><img src="/assets/characters/' + img + '.png" alt=""><div><h2 id="resTitle">' + title + '</h2><p class="sub">' +
     esc(r.routine_ko) + "</p></div></div><p>" + body + "</p>" + extra;
   $("result").classList.add("on");
   if ($("closeRes")) $("closeRes").onclick = closeResult;
@@ -698,7 +698,7 @@ async function renderRecords() {
       '<div class="n">' + (r.reason_ko ? esc(r.reason_ko + (r.reason_sub_ko ? " · " + r.reason_sub_ko : "")) : "") +
       (r.makeup ? " · 화장" : r.a_judgement === "diff" ? " · 볼 붉은기 " + (r.a_delta > 0 ? "높음" : "낮음") : "") + "</div></div>" +
       '<span class="tag ' + r.status + '">' + STATUS_KO[r.status] + "</span></div>").join("") + "</div>").join("") ||
-    '<div class="card"><div class="rhead"><p class="sub">아직 기록이 없어요. 오늘 탭에서 15초 스캔을 해 보세요.</p><img src="/characters/idle.png" alt=""></div></div>';
+    '<div class="card"><div class="rhead"><p class="sub">아직 기록이 없어요. 오늘 탭에서 15초 스캔을 해 보세요.</p><img src="/assets/characters/idle.png" alt=""></div></div>';
   $("recList").querySelectorAll("select[data-rid]").forEach((sel) => sel.addEventListener("change", async () => {
     try { await api("/api/m/routine", { id: +sel.dataset.rid, routine: sel.value }); toast("루틴을 바꾸고 다시 비교했어요"); renderRecords(); refresh(); } catch (e) { toast(e.message); }
   }));
@@ -707,10 +707,10 @@ async function renderRecords() {
 // ---------- 리포트 (FR-14) ----------
 async function renderReport() {
   const rp = await api("/api/m/report");
-  if (!rp.ready) { $("v-report").innerHTML = '<div class="card"><div class="rhead"><div><h2>시험기간 리포트</h2><p class="sub">' + esc(rp.reason) + '</p></div><img src="/characters/idle.png" alt=""></div></div>'; return; }
+  if (!rp.ready) { $("v-report").innerHTML = '<div class="card"><div class="rhead"><div><h2>시험기간 리포트</h2><p class="sub">' + esc(rp.reason) + '</p></div><img src="/assets/characters/idle.png" alt=""></div></div>'; return; }
   const sm = rp.summary, mx = Math.max(1, ...sm.by_reason.map((b) => Math.abs(b.median_delta || 0)));
   $("v-report").innerHTML =
-    '<div class="card"><div class="rhead"><div><h2>시험기간 리포트</h2><p class="sub">' + rp.period[0] + " ~ " + rp.period[1] + " · 기록 정리이고 진단이 아니에요</p></div><img src=\"/characters/calm.png\" alt=\"\"></div>" +
+    '<div class="card"><div class="rhead"><div><h2>시험기간 리포트</h2><p class="sub">' + rp.period[0] + " ~ " + rp.period[1] + " · 기록 정리이고 진단이 아니에요</p></div><img src=\"/assets/characters/calm.png\" alt=\"\"></div>" +
     '<div class="row" style="text-align:center">' +
     [["기록", sm.records], ["이유 붙음", sm.with_reason], ["설명 안 됨", sm.unexplained]].map(([k, v]) =>
       '<div><div style="font-size:30px; font-weight:700" class="num">' + v + '</div><div class="sub">' + k + "</div></div>").join("") + "</div></div>" +
@@ -783,7 +783,7 @@ function saveSnooze() { try { localStorage.setItem("vity.snooze", JSON.stringify
 let bannerFor = null;
 function showBanner(rt) {
   bannerFor = rt;
-  $("bnImg").src = "/characters/" + DUE_CHAR[rt] + ".png";
+  $("bnImg").src = "/assets/characters/" + DUE_CHAR[rt] + ".png";
   $("bnTitle").textContent = S.labels.routine[rt] + " 시간이에요";
   $("bnSub").textContent = S.schedule.due_since + " 스케줄 · " + DUE_SUB[rt];
   $("banner").classList.add("on");
@@ -806,7 +806,7 @@ function checkDue() {
   if (document.hidden && "Notification" in window && Notification.permission === "granted" && !shown[key]) {
     shown[key] = 1; saveSnooze();
     try {
-      const n = new Notification("Vity · " + S.labels.routine[rt] + " 시간이에요", { body: "15초 스캔으로 오늘을 남겨요", tag: "vity-" + rt, icon: "/characters/" + DUE_CHAR[rt] + ".png" });
+      const n = new Notification("Vity · " + S.labels.routine[rt] + " 시간이에요", { body: "15초 스캔으로 오늘을 남겨요", tag: "vity-" + rt, icon: "/assets/characters/" + DUE_CHAR[rt] + ".png" });
       n.onclick = () => { window.focus(); n.close(); hideBanner(); openMirror(rt, false); };
     } catch (e) { /* 일부 브라우저는 서비스 워커로만 */ }
   }

@@ -4,7 +4,7 @@
     set SYNAPSE_AUTH_TOKEN=...        # Synapse > Account Settings > Personal Access Token
     python scripts/17_homekit_download.py
 
-신청 절차는 docs/HOMEKIT.md. 토큰은 **환경변수로만** 받는다. 파일에 쓰지 말 것.
+신청 절차는 docs/research/HOMEKIT.md. 토큰은 **환경변수로만** 받는다. 파일에 쓰지 말 것.
 데이터 이용 조건상 원자료·중간 산출물을 저장소에 올리면 안 된다
 (data/raw/* 와 outputs/ 는 .gitignore 에 있다).
 """
@@ -33,7 +33,7 @@ def main():
 
     token = os.environ.get("SYNAPSE_AUTH_TOKEN")
     if not token:
-        sys.exit("SYNAPSE_AUTH_TOKEN 환경변수가 없다. docs/HOMEKIT.md 참고.")
+        sys.exit("SYNAPSE_AUTH_TOKEN 환경변수가 없다. docs/research/HOMEKIT.md 참고.")
     try:
         import synapseclient
     except ImportError:

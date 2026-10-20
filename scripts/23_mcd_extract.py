@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data/raw/mcd_rppg"
 CAMERA = "FullHDwebcam"          # 정면
 
-# 얼굴 상자 안에서의 비율 (x0, y0, x1, y1) — webapp/static/rppg.js 의 이마·볼과 같은 자리
+# 얼굴 상자 안에서의 비율 (x0, y0, x1, y1) — legacy/webapp_v1/static/rppg.js 의 이마·볼과 같은 자리
 ROIS = [(0.32, 0.06, 0.68, 0.22), (0.14, 0.50, 0.38, 0.72), (0.62, 0.50, 0.86, 0.72)]
 DETECT_EVERY = 15
 TRACE_DIR = "traces"

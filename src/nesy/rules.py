@@ -1,7 +1,7 @@
 """Symbolic rule 정의 + coverage 측정.
 
 규칙은 데이터로 학습하지 않고 생리학적 근거로 고정한다. 근거는
-docs/RULES.md 에 논문 인용과 함께 적는다. 규칙을 데이터에 맞춰 튜닝하기
+docs/research/RULES.md 에 논문 인용과 함께 적는다. 규칙을 데이터에 맞춰 튜닝하기
 시작하면 그건 그냥 또 하나의 (성능 나쁜) 분류기이지 지식이 아니다.
 
 담당: 역할 C (NeSy/Rule)
@@ -172,7 +172,7 @@ def coverage(facts, labels, rules=None):
 
 
 def rules_markdown(rules=None):
-    """docs/RULES.md 의 규칙 표를 자동 생성한다 (코드와 문서 동기화)."""
+    """docs/research/RULES.md 의 규칙 표를 자동 생성한다 (코드와 문서 동기화)."""
     rules = rules or RULES
     lines = ["| Rule | 사용 | Produces | Weight | 근거 | 인용 |",
              "| --- | --- | --- | --- | --- | --- |"]

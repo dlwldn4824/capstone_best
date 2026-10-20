@@ -3,7 +3,7 @@
     python webapp/server.py                 # http://localhost:8000
     python webapp/server.py --https         # 폰에서 카메라·블루투스를 쓰려면 (아래 참고)
 
-설치할 것 없음 — 표준 라이브러리 http.server + sqlite3. 판정은 webapp/engine.py
+설치할 것 없음 — 표준 라이브러리 http.server + sqlite3. 판정은 legacy/webapp_v1/engine.py
 (= src/nesy 연구 코드)가 한다.
 
 **왜 --https 인가.** 브라우저는 카메라(getUserMedia)와 Web Bluetooth 를 보안
@@ -23,16 +23,24 @@ import queue
 import socket
 import ssl
 import subprocess
+import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-import engine as E
+ROOT_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT_DIR / "legacy" / "webapp_v1"))   # 수정 전 버전(/v1 · /watch)의 판정 엔진
+import engine as E  # noqa: E402
 import mirror as MI
 import check as CK
 
 STATIC = Path(__file__).resolve().parent / "static"
+# 화면 파일을 찾는 순서: 지금 웹 → 공용 에셋(캐릭터 · 글꼴) → 수정 전 웹
+# (주소 앞부분, 폴더, 허용 하위 폴더): /assets/characters/… → assets/characters/… 처럼 주소와 폴더가 같다
+STATIC_ROOTS = [("", STATIC, ""),
+                ("assets/", ROOT_DIR / "assets", ("characters/", "fonts/")),
+                ("", ROOT_DIR / "legacy" / "webapp_v1" / "static", "")]
 CERT_DIR = E.ROOT / "data" / "app"
 LOCK = threading.Lock()
 CON = None
@@ -159,8 +167,19 @@ class Handler(BaseHTTPRequestHandler):
                                       self.headers.get("Host", "localhost"))
             return self._send(200, MI.schedule_ics(sched, origin), "text/calendar; charset=utf-8")
         name = ROUTES.get(path, path.lstrip("/"))
-        f = (STATIC / name).resolve()
-        if STATIC not in f.parents or not f.is_file():
+        f = None
+        for prefix, root, only in STATIC_ROOTS:
+            if not name.startswith(prefix):
+                continue
+            sub = name[len(prefix):]
+            if only and not sub.startswith(only):              # 에셋 폴더는 캐릭터 · 글꼴만 내보낸다
+                continue
+            c = (root / sub).resolve()
+            dirs = [(root / o).resolve() for o in only] if only else [root.resolve()]
+            if any(d in c.parents for d in dirs) and c.is_file():
+                f = c
+                break
+        if f is None:
             return self._send(404, "not found", "text/plain; charset=utf-8")
         ctype = mimetypes.guess_type(str(f))[0] or "application/octet-stream"
         if ctype.startswith("text/") or ctype.endswith("javascript"):

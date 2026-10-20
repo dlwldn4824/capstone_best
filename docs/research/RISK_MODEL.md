@@ -2,7 +2,7 @@
 
 ```bash
 python scripts/20_mishra_persistence.py   # 캐시 생성 (처음 한 번)
-python scripts/22_risk_model.py           # 학습 · 평가 · webapp/model/risk_v1.json 저장
+python scripts/22_risk_model.py           # 학습 · 평가 · legacy/webapp_v1/model/risk_v1.json 저장
 ```
 
 ## 설계

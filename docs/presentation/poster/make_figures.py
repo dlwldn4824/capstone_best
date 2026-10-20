@@ -1,6 +1,6 @@
 """포스터 그림 — 전부 우리 실험 결과(outputs/, data/raw/mcd_rppg)에서 그린다.
 
-    python docs/poster/make_figures.py
+    python docs/presentation/poster/make_figures.py
 """
 import datetime as dt
 import sys
@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "webapp"))
 from nesy import rppg as R  # noqa: E402

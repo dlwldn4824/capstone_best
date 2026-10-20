@@ -114,7 +114,7 @@ body{display:grid; place-items:center; color:var(--ink); font-family:var(--sans)
         <b class="num" id="time">--:--</b>
         <small>심박</small>
       </div>
-      <img class="char" id="char" alt="" src="/characters/idle.png">
+      <img class="char" id="char" alt="" src="/assets/characters/idle.png">
       <p class="status" id="status">…</p>
       <div class="slider" id="slider">
         <div class="track">
@@ -187,7 +187,7 @@ function render() {
   const refWord = { early: "최근 안정", adapting: "최근", personal: "평소" }[modeOf(S)] || "평소";
   if (modeOf(S) !== "personal") $("status").textContent = v.title || v.short;
   else $("status").innerHTML = hr == null ? v.short : v.short + " · " + Math.round(hr) + "<em>bpm</em>";
-  $("char").src = "/characters/" + faceName(S) + ".png";
+  $("char").src = "/assets/characters/" + faceName(S) + ".png";
 
   let line = v.body || v.title;
   if (n.source === "face" && n.face_hr != null) {

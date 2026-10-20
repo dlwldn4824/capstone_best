@@ -130,7 +130,7 @@ signed-rank, 효과 크기 rank-biserial 포함). `07_nesy.py` 가
 ## 8. Li et al. 2026 인용은 지금 보류해야 한다
 
 세 차례 검색으로도 해당 논문을 찾지 못했다. 우리 audit 구조의 유일한 직접
-선행연구인데 DOI 가 없다. `docs/LITERATURE_VERIFICATION.md` 5절 참조.
+선행연구인데 DOI 가 없다. `docs/research/LITERATURE_VERIFICATION.md` 5절 참조.
 **존재하지 않는 논문 인용은 심사에서 가장 먼저 지적된다.**
 
 ## 9. 일정: Day 13 (WESAD) 은 거의 확실히 못 한다

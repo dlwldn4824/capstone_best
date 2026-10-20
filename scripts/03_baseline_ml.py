@@ -86,7 +86,7 @@ def main():
     print(imp.head(10).to_string(index=False))
 
     report.write_md(
-        Path(__file__).resolve().parents[1] / "docs" / "BASELINE_RESULTS.md",
+        Path(__file__).resolve().parents[1] / "docs" / "research" / "BASELINE_RESULTS.md",
         [("# Baseline ML 결과", ""),
          ("## 과제별 성능", report.md_table(summary)),
          ("## Feature importance (XGBoost, 3-class)", report.md_table(imp.head(20))),
@@ -95,7 +95,7 @@ def main():
           "`group_kfold` 와의 차이가 그 누수의 크기다. 논문 수치(93/91/84%)와\n"
           "직접 비교할 수 있는 것은 `random` 쪽이며, 우리가 보고할 값은\n"
           "`group_kfold` 다.")])
-    print("\n-> outputs/results.csv, docs/BASELINE_RESULTS.md")
+    print("\n-> outputs/results.csv, docs/research/BASELINE_RESULTS.md")
 
 
 if __name__ == "__main__":

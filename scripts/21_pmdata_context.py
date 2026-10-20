@@ -2,10 +2,10 @@
 
     python scripts/21_pmdata_context.py      # 처음엔 원자료를 읽어 캐시 (1~2분)
 
-데이터: data/raw/pmdata/pXX/ (docs/PMDATA.md)
+데이터: data/raw/pmdata/pXX/ (docs/research/PMDATA.md)
 
 README 첫 문장 — "어제 술을 마셔서 그런 건데요" — 을 실제 기록으로 잰다.
-Mishra 에서는 걸음·수면만으로 설명된 이탈일이 16% 뿐이었다 (docs/MISHRA.md).
+Mishra 에서는 걸음·수면만으로 설명된 이탈일이 16% 뿐이었다 (docs/research/MISHRA.md).
 
 1. 효과 크기: 그 원인이 있던 밤과 없던 밤의 밤 심박 차이, **사람별로** 짝지어 본다.
    규칙을 쓰기 전에 그 원인이 실제로 밤 심박을 올리는지부터 확인한다.
