@@ -11,6 +11,7 @@ python -m pytest -q && npm --prefix webapp/face test   # 연구 · 서버(pytest
 | 폴더 | 무엇 | 먼저 볼 것 |
 | --- | --- | --- |
 | [`webapp/`](webapp/) | **지금 웹** — Vity 체크(`/check`) · 거울 기록(`/`) 서버와 화면 | [개발 현황](docs/app/STATUS.md) |
+| [`webapp/face/`](webapp/face/) | **Vity 얼굴 체크(`/face`)** — 얼굴 카메라 시연 PWA (Vite · vitest). `cd webapp/face && npm ci && npm run build` 뒤 서버가 `/face/` 로 연다 | [설계](docs/app/FACE_DESIGN.md) |
 | [`assets/`](assets/) | **캐릭터 · 글꼴 에셋** (`characters/` 12장 · `fonts/`) | [assets/README](assets/README.md) |
 | [`legacy/`](legacy/) | **수정 전 버전** — 폰 · 워치 웹앱 v1(`/v1` · `/watch`), Apple Watch 앱 소스, 워치 데모 | [legacy/README](legacy/README.md) |
 | [`docs/`](docs/) | **자료** — `app/`(현황 · 설계 · 화면 캡처) · `research/`(실험 기록) · `presentation/`(포스터 · 발표) · `papers/` | [docs/README](docs/README.md) |
