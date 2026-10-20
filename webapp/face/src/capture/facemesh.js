@@ -1,10 +1,11 @@
 // MediaPipe Tasks Vision FaceLandmarker (478 랜드마크 + 블렌드셰이프).
-// wasm과 모델은 앱과 같은 서버(public/mediapipe/)에서 받는다. 외부 요청이 없고, 카메라 프레임은 이 기기 밖으로 나가지 않는다.
+// wasm과 모델은 앱과 같은 서버(public/mediapipe/ → /face/mediapipe/)에서 받는다. 외부 요청이 없고, 카메라 프레임은 이 기기 밖으로 나가지 않는다.
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 export const MP_VERSION = '0.10.14';
-export const WASM_URL = '/mediapipe';                          // node_modules/@mediapipe/tasks-vision/wasm 복사본
-export const MODEL_URL = '/mediapipe/face_landmarker.task';     // face_landmarker float16 v1
+const BASE = import.meta.env?.BASE_URL ?? '/';                    // vite base ('/face/'). 테스트(node)에서는 '/'
+export const WASM_URL = BASE + 'mediapipe';                        // node_modules/@mediapipe/tasks-vision/wasm 복사본 (scripts/sync-assets.mjs)
+export const MODEL_URL = BASE + 'mediapipe/face_landmarker.task';  // face_landmarker float16 v1
 
 let landmarker = null;
 // 화면에 그릴 메시 선 [시작, 끝] (계산에는 쓰지 않는다)

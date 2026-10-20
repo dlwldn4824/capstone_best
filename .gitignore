@@ -46,5 +46,5 @@ webapp/static/vendor/
 # /face (webapp/face) — npm 설치물 · 빌드 결과 · 빌드 때 복사해 오는 에셋 · MediaPipe 모델
 webapp/face/node_modules/
 webapp/face/dist/
-webapp/face/public/assets/
+webapp/face/shared-assets/
 webapp/face/public/mediapipe/

@@ -47,7 +47,7 @@ async function renderHome() {
     <div class="hero">
       <p class="eyebrow">${DAY(new Date())}</p>
       <h1>얼굴 30초로<br><em>지금 몸 상태</em>를<br>읽어 볼게요</h1>
-      <img src="/characters/coffee.png" alt="" width="136" height="136">
+      <img src="/assets/characters/coffee.png" alt="" width="136" height="136">
       <div class="reads">${['심박', '맥파', '박동 간격', '호흡', '눈 깜빡임', '머리 흔들림'].map(t => `<span class="chip">${t}</span>`).join('')}</div>
     </div>
     <div class="start">
@@ -333,7 +333,7 @@ function showResult(scan) {
   CUR = scan; VIEW = resultView(scan);
   const v = VIEW, d = new Date(scan.ts);
   let h = `<div class="bar"><button class="x" type="button" data-act="close" aria-label="닫기">${ic('x', 22)}</button><span>${DAY(d)} ${HM(d)}</span><span></span></div>`;
-  if (v.status !== 'ok') h += `<div class="retry"><div><h2>${esc(v.title)}</h2><p>${esc(v.message)}</p></div><img src="/characters/idle.png" alt=""></div>`;
+  if (v.status !== 'ok') h += `<div class="retry"><div><h2>${esc(v.title)}</h2><p>${esc(v.message)}</p></div><img src="/assets/characters/idle.png" alt=""></div>`;
   if (v.status === 'noface') return openPage(h);
   h += `<button class="big${v.hr.shown ? '' : ' off'}" type="button" data-detail="hr">
       <span class="k">심박 <span class="chip ${v.signal.tone}">${v.signal.label}</span></span>
@@ -402,7 +402,7 @@ async function renderLog() {
           <span class="chip ${v.status === 'ok' ? '' : 'warn'}">${v.status === 'ok' ? '통과' : '미달'}</span>
           <span class="n">${HM(new Date(s.ts))}${blink && blink.state !== 'held' ? ` · 깜빡임 ${blink.value}회/분` : ''}</span></button>`;
       }).join('')}</div>`).join('') + '<button class="link-quiet" type="button" data-act="wipe">기록 모두 지우기</button>'
-    : `<div class="empty"><img src="/characters/sleep.png" alt="" width="120" height="120"><p>아직 기록이 없어요</p><button class="btn" type="button" data-act="prep" style="max-width:240px">첫 측정 하기</button></div>`);
+    : `<div class="empty"><img src="/assets/characters/sleep.png" alt="" width="120" height="120"><p>아직 기록이 없어요</p><button class="btn" type="button" data-act="prep" style="max-width:240px">첫 측정 하기</button></div>`);
 }
 
 // ---------- 이벤트 ----------
@@ -419,6 +419,6 @@ document.addEventListener('click', async e => {
 });
 
 persistStorage();
-if ('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register('/sw.js');
+if ('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js', { scope: import.meta.env.BASE_URL });
 renderHome();
 if (!DEMO) loadFaceMesh().catch(() => { /* 촬영 화면에서 다시 불러오며 안내한다 */ });
