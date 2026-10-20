@@ -7,6 +7,7 @@
 //   숫자가 생리적으로 말이 안 되면   → 보류  (RMSSD > 200 ms, 호흡 8–30회/분 밖)
 //   깜빡임은 얼굴이 실제로 잡혀 있던 시간(f.durationSec)이 20초 이상일 때만
 //   값이 '–' 이면 단위를 붙이지 않는다 (hr.unit 도 같은 규칙)
+//   빠르게 잰 스캔(mode 'quick', 25초 미만)에서 빠진 항목은 '전체 측정에서 볼 수 있어요'
 import { REASON_TEXT } from '../pipeline/quality.js';
 
 const ok = v => v != null && Number.isFinite(v);
@@ -15,6 +16,8 @@ export const SIGNAL_GOOD_DB = 10;   // hrvReliable 과 같은 기준: 이 위에
 
 export function resultView(scan) {
   const r = scan?.r, f = scan?.f;
+  // 빠르게 잰 스캔(30초 전에 끝남)에서 박동 간격 · 호흡 · 깜빡임이 빠지면 "전체 측정"으로 안내한다
+  const short = scan?.mode === 'quick' && r && r.durationSec < 25;
   if (!r) return { status: 'noface', title: '얼굴이 거의 잡히지 않았어요', message: '휴대폰을 세워 두고, 원 안에 얼굴이 들어오게 한 뒤 다시 해 주세요.', tiles: [], quality: [] };
 
   const q = r.quality, pass = !!q.pass;
@@ -31,15 +34,15 @@ export function resultView(scan) {
 
   const hrvOk = pass && r.hrvReliable === true && ok(r.rmssd) && r.rmssd > 0 && r.rmssd <= 200;
   view.tiles.push({ key: 'hrv', label: '박동 간격 흔들림', value: hrvOk ? fmt(r.rmssd) : '–', unit: hrvOk ? 'ms' : '', state: hrvOk ? 'ref' : 'held',
-    sub: hrvOk ? `박동 간격 ${r.hrvPairs ?? r.rr.length}쌍` : pass ? '신호가 약해 보류했어요' : '다시 재면 볼 수 있어요' });
+    sub: hrvOk ? `박동 간격 ${r.hrvPairs ?? r.rr.length}쌍` : pass ? (short ? '전체 측정에서 볼 수 있어요' : '신호가 약해 보류했어요') : '다시 재면 볼 수 있어요' });
 
   const rate = r.resp?.rate, respOk = pass && ok(rate) && rate >= 8 && rate <= 30;
   view.tiles.push({ key: 'resp', label: '호흡', value: respOk ? fmt(rate) : '–', unit: respOk ? '회/분' : '', state: respOk ? 'ref' : 'held',
-    sub: respOk ? '머리 · 밝기 주기 일치' : pass ? '호흡 주기가 안 잡혔어요' : '다시 재면 볼 수 있어요' });
+    sub: respOk ? '머리 · 밝기 주기 일치' : pass ? (short ? '전체 측정에서 볼 수 있어요' : '호흡 주기가 안 잡혔어요') : '다시 재면 볼 수 있어요' });
 
   const blinkOk = f && f.durationSec >= 20 && ok(f.blinkPerMin);
   view.tiles.push({ key: 'blink', label: '눈 깜빡임', value: blinkOk ? fmt(f.blinkPerMin) : '–', unit: blinkOk ? '회/분' : '', state: blinkOk ? 'ok' : 'held',
-    sub: blinkOk ? `${Math.round(f.durationSec)}초 동안 ${f.blinks}번` : '얼굴이 잡힌 시간이 짧았어요' });
+    sub: blinkOk ? `${Math.round(f.durationSec)}초 동안 ${f.blinks}번` : short ? '전체 측정에서 볼 수 있어요' : '얼굴이 잡힌 시간이 짧았어요' });
 
   const headOk = f && ok(f.headMovePct);
   view.tiles.push({ key: 'head', label: '머리 흔들림', value: headOk ? fmt(f.headMovePct, 1) : '–', unit: headOk ? '%' : '', state: headOk ? 'ok' : 'held',

@@ -69,10 +69,12 @@ describe('결과 화면 규칙', () => {
     }
   });
 
-  it('심박 대역 끄덕임: 다시 재기, 이유 문구가 비어 있지 않음', () => {
-    const v = resultView(scanOf(synthSamples({ bpm: 70, seed: 3, nodHz: 1.25, nodShade: 0.01, nodPx: 6 })));
-    expect(v.status).toBe('retry');
-    expect(v.message.length).toBeGreaterThan(5);
+  it('심박 대역 끄덕임: 살렸으면 맞는 심박, 못 살렸으면 다시 재기와 이유 문구', () => {
+    for (const seed of [2, 3]) {
+      const v = resultView(scanOf(synthSamples({ bpm: 70, seed, nodHz: 1.25, nodShade: 0.01, nodPx: 6 })));
+      if (v.status === 'ok') expect(Math.abs(Number(v.hr.value) - 70)).toBeLessThanOrEqual(2);
+      else { expect(v.status).toBe('retry'); expect(v.message.length).toBeGreaterThan(5); }
+    }
   });
 
   it('호흡 성분 없음: 호흡 타일은 보류', () => {
@@ -111,6 +113,20 @@ describe('결과 화면 규칙', () => {
       const v = resultView(scanOf(s));
       const text = JSON.stringify(v);
       expect(text).not.toMatch(/NaN|undefined|Infinity/);
+    }
+  });
+});
+
+describe('빠르게 잰 스캔', () => {
+  it('12초 스캔: 심박은 보이고, 박동 간격 · 호흡 · 깜빡임은 "전체 측정에서 볼 수 있어요"', () => {
+    const s = synthSamples({ bpm: 72, seed: 1, durationSec: 12, noise: 0.2 });
+    const v = resultView({ mode: 'quick', ...scanOf(s) });
+    expect(v.status).toBe('ok');
+    expect(Math.abs(Number(v.hr.value) - 72)).toBeLessThanOrEqual(1);
+    for (const k of ['hrv', 'resp', 'blink']) {
+      const t = v.tiles.find(x => x.key === k);
+      expect(t.state).toBe('held');
+      expect(t.sub).toBe('전체 측정에서 볼 수 있어요');
     }
   });
 });

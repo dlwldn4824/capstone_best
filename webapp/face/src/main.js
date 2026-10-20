@@ -6,7 +6,7 @@ import { openCamera, closeCamera } from './capture/camera.js';
 import { loadFaceMesh, detect, TESSELATION } from './capture/facemesh.js';
 import { RoiSampler } from './capture/roi.js';
 import { framingIssue, measureFraming } from './capture/framing.js';
-import { analyze, quickBpm } from './pipeline/index.js';
+import { analyze, liveEstimate, stableEnough, EARLY_STOP } from './pipeline/index.js';
 import { faceState } from './pipeline/face.js';
 import { synthSamples } from './debug/synth.js';
 import { ic } from './ui/icons.js';
@@ -16,6 +16,9 @@ import { createOverlay } from './ui/overlay.js';
 import { putScan, listScans, clearScans, persistStorage } from './store/db.js';
 
 const SECS = 30, HOLD_MS = 1000, SHAKE_MS = 500;
+// 측정 방식: quick = 맥박이 안정되고 품질을 통과하면 10초부터 끝냄(최대 30초) · full = 30초 (박동 간격 · 호흡 · 깜빡임까지)
+let MODE = (() => { try { return localStorage.getItem('vity.mode') || 'quick'; } catch { return 'quick'; } })();
+function setMode(m) { MODE = m; try { localStorage.setItem('vity.mode', m); } catch { /* 사생활 모드 */ } }
 const DEMO = new URLSearchParams(location.search).has('demo');   // 개발 확인용 합성 신호
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -66,12 +69,17 @@ async function renderHome() {
 // ---------- 준비 시트 ----------
 function openPrep() {
   const row = (i, t, d) => `<li><i>${ic(i, 22)}</i><div><b>${t}</b><span>${d}</span></div></li>`;
-  openSheet(`<h2>촬영 전에 확인해 주세요</h2>
+  const mode = (k, t, d) => `<button class="mode" type="button" role="radio" aria-checked="${MODE === k}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
+  openSheet(`<h2>어떻게 잴까요?</h2>
+    <div class="modes" role="radiogroup" aria-label="측정 방식">
+      ${mode('quick', '빠르게', '심박 · 맥파<br>보통 10–20초')}
+      ${mode('full', '전체', '박동 간격 · 호흡 · 깜빡임까지<br>30초')}
+    </div>
     <ul class="prep-list prep">
-      ${row('smartphone', '휴대폰을 세워 두세요', '책이나 컵에 기대 눈높이에 두면 30초 동안 흔들리지 않아요.')}
+      ${row('smartphone', '휴대폰을 세워 두세요', '책이나 컵에 기대 눈높이에 두면 재는 동안 흔들리지 않아요.')}
       ${row('scan-face', '팔 길이만큼 떨어져 앉아요', '얼굴이 원을 꽉 채우는 거리예요. 30–40cm 정도.')}
       ${row('sun', '빛은 얼굴 앞쪽에', '창문이나 조명을 등지면 얼굴이 어두워져요.')}
-      ${row('mic-off', '30초 동안 말하지 않아요', '입을 움직이면 맥박 신호가 흔들려요.')}
+      ${row('mic-off', '재는 동안 말하지 않아요', '입을 움직이면 맥박 신호가 흔들려요.')}
     </ul>
     <button class="btn" type="button" data-act="scan">카메라 켜기</button>`);
 }
@@ -225,13 +233,13 @@ function align(fr, now) {
 }
 
 function startMeasure() {
-  Object.assign(cam, { phase: 'measure', samples: [], t0: performance.now(), f0: null, lastSample: performance.now() });
+  Object.assign(cam, { phase: 'measure', samples: [], t0: performance.now(), f0: null, lastSample: performance.now(), mode: MODE, hist: [] });
   live.at = 0;
   flash('locked', 420);                                          // 타원이 한 번 맥동하고 흰 링이 사라진다
   setTimeout(() => { if (cam.phase === 'measure') { ring(0); setPhaseUI('measure'); } }, 180);
-  $('count').textContent = SECS;
+  $('count').textContent = cam.mode === 'quick' ? 0 : SECS;
   buzz(20);
-  say('breathe', '그대로 편하게 숨 쉬세요', { tip: '말하지 말고 화면을 봐 주세요', force: true });
+  say('breathe', '그대로 편하게 숨 쉬세요', { tip: breatheTip(), force: true });
 }
 
 function measure(det, roi, fr, now, frameMs) {
@@ -240,23 +248,27 @@ function measure(det, roi, fr, now, frameMs) {
   if (!det) say('lost', '얼굴이 원 밖으로 나갔어요', { tip: '원 안으로 돌아오면 이어서 재요', warn: true });
   else if (fr.issue === 'mouth') say('mouth', '말하지 말고 그대로 있어 주세요', { warn: true });
   else if (!fr.ok) say(fr.issue, fr.text, { warn: true });
-  else say('breathe', '그대로 편하게 숨 쉬세요', { tip: '말하지 말고 화면을 봐 주세요' });
+  else say('breathe', '그대로 편하게 숨 쉬세요', { tip: breatheTip() });
 }
+const breatheTip = () => (cam.mode === 'quick' ? '맥박이 안정되면 바로 끝나요' : '말하지 말고 화면을 봐 주세요');
 
 function tick(now) {
   const el = (now - cam.t0) / 1000;
   if (scanEl().classList.contains('measuring')) ring(el / SECS);
-  $('count').textContent = Math.max(0, Math.ceil(SECS - el));
+  $('count').textContent = cam.mode === 'quick' ? Math.floor(el) : Math.max(0, Math.ceil(SECS - el));   // 빠르게: 지난 초 · 전체: 남은 초
   if (now - live.at > 1000) {
     live.at = now;
     const fresh = now - (cam.lastSample ?? 0) < 1500;            // 얼굴을 놓치면 이전 숫자를 계속 보여 주지 않는다
-    const q = fresh && cam.samples.length > 60 ? quickBpm(cam.samples, 10) : { bpm: NaN };
+    const q = fresh ? liveEstimate(cam.samples) : { bpm: NaN, snrDb: -Infinity };
+    cam.hist.push({ t: el, bpm: q.bpm, snrDb: q.snrDb });
     const show = ok(q.bpm) && q.snrDb >= 0;
     $('live').hidden = !show;
     live.bpm = show ? q.bpm : NaN;
     if (show) { $('liveBpm').textContent = Math.round(q.bpm); document.querySelector('.live .heart').style.animationDuration = (60 / q.bpm).toFixed(2) + 's'; }
+    // 빠르게: 최근 3번이 ±2 bpm 안 · SNR ≥ 3 dB · 10초 이상이고, 지금까지 전체가 품질을 통과하면 끝낸다
+    if (cam.mode === 'quick' && stableEnough(cam.hist, el) && analyze(cam.samples, { resp: false }).quality.pass) return finish();
   }
-  if (el >= SECS) finish();
+  if (el >= EARLY_STOP.maxSec) finish();
 }
 
 function stopCam() {
@@ -276,7 +288,8 @@ $('scanX').onclick = closeScan;
 async function finish() {
   if (cam.phase !== 'measure') return;                           // 두 번 불려도 한 번만
   cam.phase = 'done'; stopCam(); clearTimeout(swapTimer);
-  ring(1); setPhaseUI('done'); center('done'); $('live').hidden = true;
+  scanEl().classList.add('retract'); ring(1);                     // 빠르게 끝나면 남은 링이 부드럽게 찬다
+  setPhaseUI('done'); center('done'); $('live').hidden = true;
   if (cam.lastDraw) {                                          // 측정 영역이 사라지는 0.25초
     const t0 = performance.now(), fade = () => { const n = performance.now(); overlay.draw({ phase: 'done', ...cam.lastDraw, now: n, bpm: NaN }); if (n - t0 < 300) requestAnimationFrame(fade); };
     requestAnimationFrame(fade);
@@ -287,11 +300,11 @@ async function finish() {
   await new Promise(r => setTimeout(r, 30));
   const samples = cam.samples;
   let scan;
-  if (samples.length < 60) scan = { id: Date.now(), ts: Date.now(), r: null, f: null };
+  if (samples.length < 60) scan = { id: Date.now(), ts: Date.now(), mode: cam.mode, r: null, f: null };
   else {
     const r = analyze(samples);
     const { debug, ...rest } = r;                                  // 그래프용 원신호는 저장하지 않는다
-    scan = { id: Date.now(), ts: Date.now(), r: rest, f: faceState(samples), pulse: Array.from(debug.pulse.slice(-300), v => Math.round(v * 1e4) / 1e4) };
+    scan = { id: Date.now(), ts: Date.now(), mode: cam.mode, r: rest, f: faceState(samples), pulse: Array.from(debug.pulse.slice(-300), v => Math.round(v * 1e4) / 1e4) };
     await putScan(scan);
   }
   await new Promise(r => setTimeout(r, Math.max(0, 750 - (performance.now() - t))));   // 완료 표시를 볼 시간
@@ -410,6 +423,7 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.show) { const s = (await listScans()).find(x => String(x.id) === b.dataset.show); if (s) showResult(s); return; }
   if (b.dataset.detail && CUR?.r) return detail(b.dataset.detail);
+  if (b.dataset.mode) { setMode(b.dataset.mode); document.querySelectorAll('.mode').forEach(x => x.setAttribute('aria-checked', x.dataset.mode === MODE)); return; }
   const a = b.dataset.act;
   if (a === 'prep') openPrep();
   else if (a === 'scan') { if ($('sheet').classList.contains('on')) { closeSheet(); setTimeout(openScan, 140); } else openScan(); }

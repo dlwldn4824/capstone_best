@@ -1,8 +1,12 @@
 // 파이프라인 공개 인터페이스. UI는 이 파일의 analyze()·quickBpm()만 호출한다.
 //
 // Sample = { t(ms), forehead[r,g,b], lcheek[r,g,b], rcheek[r,g,b], faceWidth, faceCenter[x,y], brightness, blink, mouthOpen }
-// Result = { bpm, snrDb, rr, rmssd, sdnn, pnn50, baevskySI, meanRR, hrvReliable, hrvPairs, quality, roiBest, perRoi,
+// Result = { bpm, snrDb, rr, rmssd, sdnn, pnn50, baevskySI, meanRR, hrvReliable, hrvPairs, quality, roiBest, perRoi, method,
 //            fsEstimated, fsGrid, durationSec, coverage, interference, resp, debug }
+//
+// 맥파 고르기 (G2, scripts/experiments/p1_motion.js): 합친 RGB · 이마 · 양 볼 맥파를 6초 창마다 SNR 가중으로 융합한다.
+// 그 결과가 품질 기준에 떨어지면 한 번만, 머리 움직임 참조로 NLMS 상쇄를 한 뒤 다시 융합해 본다. 통과하면 그것을 쓴다.
+// 합성 움직임 9종: ±5 bpm 81% → 96%, 품질 통과 57% → 73%, 거짓 통과 0%.
 
 import { pos } from './pos.js';
 import { bandpass } from './filter.js';
@@ -11,6 +15,8 @@ import { hrvFromPulse } from './hrv.js';
 import { assessQuality, ROBUST } from './quality.js';
 import { toUniform, coverageOf, observedFs, GRID_FS } from './resample.js';
 import { respFromSamples } from './resp.js';
+import { fuseWindows } from './fuse.js';
+import { motionRefs, nlmsCancel } from './motion.js';
 
 export const ROIS = ['forehead', 'lcheek', 'rcheek'];
 export const PULSE_FILTER = [0.5, 4.0];     // 맥파 대역통과. 하한을 0.7보다 낮춰 서맥 기본파가 깎이지 않게 한다
@@ -46,6 +52,31 @@ function interferenceAt(rows, rgb, fs, fHz) {
   return { motionAmp: m.amp, motionFrac: m.frac, lightAmp: light.amp, lightRatio: green.amp > 0 ? light.amp / green.amp : Infinity };
 }
 
+// rows: 균일 격자 Sample[]. cancel: 움직임 참조 상쇄 여부 → { fused: {bpm, snrDb, pulse, spectrum}, perRoi, candidates }
+function extractFused(rows, fs, band, cancel) {
+  const candidates = { all: combinedRgb(rows) };
+  for (const r of ROIS) candidates[r] = rows.map(s => s[r]);
+  const refs = cancel ? motionRefs(rows, fs, PULSE_FILTER) : null;
+  const perRoi = {};
+  for (const [name, rgb] of Object.entries(candidates)) {
+    let pulse = bandpass(pos(rgb, fs), fs, PULSE_FILTER[0], PULSE_FILTER[1]);
+    if (refs) pulse = nlmsCancel(pulse, refs);
+    const sp = estimateBpm(pulse, fs, band, 4096, SPEC_OPTS);
+    perRoi[name] = { bpm: sp.bpm, snrDb: sp.snrDb, pulse };
+  }
+  const pulse = fuseWindows(['all', ...ROIS].map(k => perRoi[k].pulse), fs, band, SPEC_OPTS);
+  const sp = estimateBpm(pulse, fs, band, 4096, SPEC_OPTS);
+  return { fused: { bpm: sp.bpm, snrDb: sp.snrDb, pulse, spectrum: { f: sp.freqs, p: sp.power } }, perRoi, candidates };
+}
+
+function judge(samples, rows, fs, band, coverage, cancel) {
+  const { fused, perRoi, candidates } = extractFused(rows, fs, band, cancel);
+  const roiAgree = ROIS.filter(r => Math.abs(perRoi[r].bpm - fused.bpm) <= ROBUST.roiAgreeBpm).length;
+  const interference = rows.length > 8 ? interferenceAt(rows, candidates.all, fs, fused.bpm / 60) : null;
+  const quality = assessQuality(samples, fused.snrDb, undefined, { coverage, interference, roiAgree });
+  return { fused, perRoi, roiAgree, interference, quality, method: cancel ? 'fused+motion' : 'fused' };
+}
+
 export function analyze(samples, opts = {}) {
   const fs = opts.fs || GRID_FS;
   const band = opts.band || SEARCH_BAND;
@@ -53,26 +84,14 @@ export function analyze(samples, opts = {}) {
   const coverage = coverageOf(samples);
   const { rows, valid } = toUniform(samples, fs);
 
-  // ROI별 + 합성 신호 각각 계산
-  const perRoi = {};
-  const candidates = { all: combinedRgb(rows) };
-  for (const r of ROIS) candidates[r] = rows.map(s => s[r]);
-
-  let best = null;
-  for (const [name, rgb] of Object.entries(candidates)) {
-    const raw = pos(rgb, fs);
-    const pulse = bandpass(raw, fs, PULSE_FILTER[0], PULSE_FILTER[1]);
-    const sp = estimateBpm(pulse, fs, band, 4096, SPEC_OPTS);
-    perRoi[name] = { bpm: sp.bpm, snrDb: sp.snrDb, pulse, spectrum: { f: sp.freqs, p: sp.power } };
-    if (!best || sp.snrDb > perRoi[best].snrDb) best = name;
+  let j = judge(samples, rows, fs, band, coverage, false);
+  if (!j.quality.pass && rows.length >= 60 && opts.motionRetry !== false) {
+    const k = judge(samples, rows, fs, band, coverage, true);
+    if (k.quality.pass) j = k;
   }
-
-  const chosen = perRoi[best];
+  const chosen = j.fused, quality = j.quality;
   const hrv = hrvFromPulse(chosen.pulse, fs, chosen.bpm, 250, valid);
-  const roiAgree = ROIS.filter(r => Math.abs(perRoi[r].bpm - chosen.bpm) <= ROBUST.roiAgreeBpm).length;
-  const interference = rows.length > 8 ? interferenceAt(rows, candidates[best], fs, chosen.bpm / 60) : null;
-  const quality = assessQuality(samples, chosen.snrDb, undefined, { coverage, interference, roiAgree });
-  const resp = respFromSamples(samples);
+  const resp = opts.resp === false ? { rate: NaN, agree: false, head: NaN, light: NaN } : respFromSamples(samples);
   const hrvReliable = Number.isFinite(chosen.snrDb) && chosen.snrDb >= HRV_GATE.snrDbMin && hrv.pairs >= HRV_GATE.pairsMin && quality.pass;
 
   return {
@@ -82,14 +101,15 @@ export function analyze(samples, opts = {}) {
     rmssd: hrv.rmssd, sdnn: hrv.sdnn, pnn50: hrv.pnn50, baevskySI: hrv.baevskySI, meanRR: hrv.meanRR,
     hrvReliable, hrvPairs: hrv.pairs,
     quality,
-    roiBest: best,
-    perRoi: Object.fromEntries(Object.entries(perRoi).map(([k, v]) => [k, { bpm: v.bpm, snrDb: v.snrDb }])),
-    roiAgree,
+    method: j.method,
+    roiBest: 'fused',
+    perRoi: Object.fromEntries(Object.entries(j.perRoi).map(([k, v]) => [k, { bpm: v.bpm, snrDb: v.snrDb }])),
+    roiAgree: j.roiAgree,
     fsEstimated: fsObserved,
     fsGrid: fs,
     durationSec: samples.length ? (samples[samples.length - 1].t - samples[0].t) / 1000 : 0,
     coverage: { ratio: coverage.ratio, maxGapSec: coverage.maxGapSec },
-    interference,
+    interference: j.interference,
     resp: { rate: resp.rate, agree: resp.agree, head: resp.head, light: resp.light },
     debug: { pulse: chosen.pulse, spectrum: chosen.spectrum },
   };
@@ -112,4 +132,31 @@ export function quickBpm(samples, windowSec = 10) {
   const pulse = bandpass(pos(combinedRgb(rows), GRID_FS), GRID_FS, PULSE_FILTER[0], PULSE_FILTER[1]);
   const sp = estimateBpm(pulse, GRID_FS, SEARCH_BAND, 1024, SPEC_OPTS);
   return { bpm: sp.bpm, snrDb: sp.snrDb, pulse };
+}
+
+// ---------- 빠른 측정: 조기 종료 ----------
+// 1초마다 최근 10초를 같은 방법(analyze)으로 잰 값을 쌓고, 최근 3개가 최신값 ±2 bpm 안이며 최신 SNR ≥ 3 dB 이고
+// 최소 10초가 지났으면 "멈춰도 되는지" 후보가 된다. 실제로 멈추는 것은 그때까지 전체 샘플의 analyze() 가 품질을 통과할 때뿐이다.
+// 합성 실험(scripts/experiments/results_p2b_earlystop.md): 중앙 10초 · 평균 13초, 맞게 끝남 99%, 일찍 틀린 값 수락 0%.
+// 거짓 수락을 막은 것은 안정성 조건이 아니라 품질 조건이었다 → 품질 조건을 빼지 않는다.
+export const EARLY_STOP = { minSec: 10, maxSec: 30, K: 3, tolBpm: 2, snrDbMin: 3, windowSec: 10 };
+
+// 최근 windowSec 의 실시간 추정. 조기 종료 판단과 화면의 실시간 숫자에 같이 쓴다.
+export function liveEstimate(samples, windowSec = EARLY_STOP.windowSec) {
+  if (samples.length < 60) return { bpm: NaN, snrDb: -Infinity, pulse: null };
+  const tEnd = samples[samples.length - 1].t;
+  const recent = samples.filter(s => s.t >= tEnd - windowSec * 1000);
+  const cov = coverageOf(recent);
+  if (recent.length < 60 || cov.validSec < windowSec * 0.8 || cov.maxGapSec > ROBUST.maxGapSecMax) return { bpm: NaN, snrDb: -Infinity, pulse: null };
+  const r = analyze(recent, { resp: false });
+  return { bpm: r.bpm, snrDb: r.snrDb, pulse: r.debug.pulse };
+}
+
+// history: [{ t: 초, bpm, snrDb }] (1초마다 하나). 안정성 조건만 본다 — 품질은 호출하는 쪽이 analyze() 로 확인한다.
+export function stableEnough(history, tSec, rule = EARLY_STOP) {
+  if (tSec < rule.minSec || history.length < rule.K) return false;
+  const w = history.slice(-rule.K);
+  if (w.some(x => !Number.isFinite(x.bpm))) return false;
+  const last = w[w.length - 1];
+  return w.every(x => Math.abs(x.bpm - last.bpm) <= rule.tolBpm) && last.snrDb >= rule.snrDbMin;
 }

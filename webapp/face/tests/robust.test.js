@@ -29,12 +29,16 @@ describe('견고성: 시간축·간섭·고조파·호흡', () => {
       expect(r.quality.pass).toBe(false);
     }
   });
-  it('심박 대역 끄덕임 (1.25Hz, 6px) → interference 로 실패', () => {
+  it('심박 대역 끄덕임 (1.25Hz, 6px) → 움직임 상쇄로 맞게 살리거나, interference 로 실패. 틀린 값 통과는 없다', () => {
     for (const seed of SEEDS) {
       const r = analyze(synthSamples({ bpm: 72, seed, nodHz: 1.25, nodShade: 0.01, nodPx: 6 }));
-      expect(r.quality.pass).toBe(false);
-      expect(r.quality.reason).toBe('interference');
-      expect(r.quality.interferenceOk).toBe(false);
+      if (r.quality.pass) {
+        expect(r.method).toBe('fused+motion');          // 기본 융합은 실패하고 움직임 상쇄 재시도로 통과
+        expect(Math.abs(r.bpm - 72)).toBeLessThanOrEqual(2);
+      } else {
+        expect(r.quality.reason).toBe('interference');
+        expect(r.quality.interferenceOk).toBe(false);
+      }
     }
   });
   it('호흡 성분 없음 → resp.rate NaN, 호흡 있음 → 15회/분 근처', () => {
