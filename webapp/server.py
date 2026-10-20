@@ -41,6 +41,10 @@ STATIC = Path(__file__).resolve().parent / "static"
 STATIC_ROOTS = [("", STATIC, ""),
                 ("assets/", ROOT_DIR / "assets", ("characters/", "fonts/")),
                 ("", ROOT_DIR / "legacy" / "webapp_v1" / "static", "")]
+# /face (Vity 얼굴 체크): webapp/face 를 npm run build 한 결과. git 에는 없다
+FACE_DIST = Path(__file__).resolve().parent / "face" / "dist"
+FACE_MISSING = ("/face 는 아직 빌드되지 않았어요.\n"
+                "cd webapp/face && npm ci && npm run build 를 실행한 뒤 서버를 다시 켜 주세요.\n")
 CERT_DIR = E.ROOT / "data" / "app"
 LOCK = threading.Lock()
 CON = None
@@ -166,6 +170,14 @@ class Handler(BaseHTTPRequestHandler):
             origin = "{}://{}".format("https" if isinstance(self.connection, ssl.SSLSocket) else "http",
                                       self.headers.get("Host", "localhost"))
             return self._send(200, MI.schedule_ics(sched, origin), "text/calendar; charset=utf-8")
+        if path == "/face":
+            self.send_response(301)
+            self.send_header("Location", "/face/")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        if path.startswith("/face/"):
+            return self._face(path[len("/face/"):])
         name = ROUTES.get(path, path.lstrip("/"))
         f = None
         for prefix, root, only in STATIC_ROOTS:
@@ -181,6 +193,21 @@ class Handler(BaseHTTPRequestHandler):
                 break
         if f is None:
             return self._send(404, "not found", "text/plain; charset=utf-8")
+        ctype = mimetypes.guess_type(str(f))[0] or "application/octet-stream"
+        if ctype.startswith("text/") or ctype.endswith("javascript"):
+            ctype += "; charset=utf-8"
+        self._send(200, f.read_bytes(), ctype)
+
+    def _face(self, sub):
+        """/face/… → webapp/face/dist/…. 파일이 아닌 앱 안 주소는 index.html 로 돌린다 (SPA)."""
+        root = FACE_DIST.resolve()
+        if not (root / "index.html").is_file():
+            return self._send(503, FACE_MISSING, "text/plain; charset=utf-8")
+        f = (root / sub).resolve()
+        if not (root in f.parents and f.is_file()):
+            if "." in sub.rsplit("/", 1)[-1]:                  # 없는 파일(.js · .png …)은 404
+                return self._send(404, "not found", "text/plain; charset=utf-8")
+            f = root / "index.html"
         ctype = mimetypes.guess_type(str(f))[0] or "application/octet-stream"
         if ctype.startswith("text/") or ctype.endswith("javascript"):
             ctype += "; charset=utf-8"
@@ -421,6 +448,8 @@ def main():
     print("핑계 게이지 서버")
     print("  이 컴퓨터   {}://localhost:{}/        (거울 기록 · 보고서 설계)".format(scheme, args.port))
     print("             {}://localhost:{}/check   (대학생 헬스체크)".format(scheme, args.port))
+    print("             {}://localhost:{}/face/   (Vity 얼굴 체크{})".format(
+        scheme, args.port, "" if (FACE_DIST / "index.html").is_file() else " — 빌드 필요: cd webapp/face && npm ci && npm run build"))
     print("             {}://localhost:{}/v1      (워치 버전 폰 화면)".format(scheme, args.port))
     print("             {}://localhost:{}/watch   (워치 화면)".format(scheme, args.port))
     print("  같은 와이파이의 폰·워치에서")
