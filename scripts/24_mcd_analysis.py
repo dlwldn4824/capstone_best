@@ -4,7 +4,7 @@
     python scripts/24_mcd_analysis.py
 
 과제명 "Face ID 영상을 이용하여 건강상태를 분류" 의 근거 실험이다.
-얼굴 심박은 webapp/static/rppg.js 와 같은 계산(src/nesy/rppg.py)으로 낸다.
+얼굴 심박은 legacy/webapp_v1/static/rppg.js 와 같은 계산(src/nesy/rppg.py)으로 낸다.
 
 1. 얼굴 심박 정확도 — 10 · 20 · 30초 창, 5초 간격, 정답 = 프레임 동기 PPG
 2. 앱 얼굴 체크 그대로 — 8초 뒤 3번 연속 ±3 bpm 이면 멈춤, 최대 20초

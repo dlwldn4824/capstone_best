@@ -2,7 +2,7 @@
 
     python scripts/20_mishra_persistence.py          # 처음엔 원자료를 읽어 캐시를 만든다 (수 분)
 
-데이터: data/raw/mishra/COVID-19-Wearables/ + mishra_supp_tables.xlsx (docs/MISHRA.md)
+데이터: data/raw/mishra/COVID-19-Wearables/ + mishra_supp_tables.xlsx (docs/research/MISHRA.md)
 
 README 의 출발점인 '건강한 사람 월 0.66회 헛경보' 를 **같은 데이터**에서 다시 잰다.
 

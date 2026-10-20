@@ -1,8 +1,8 @@
-"""Vity 체크(/check) 화면을 하나씩 캡처 — 헤드리스 Chrome + DevTools 프로토콜 (docs/check/screens).
+"""Vity 체크(/check) 화면을 하나씩 캡처 — 헤드리스 Chrome + DevTools 프로토콜 (docs/app/screens).
 
     python webapp/server.py                      # 다른 창에서 서버 켜 두기
     pip install websocket-client
-    python scripts/28_capture_check.py [docs/check/screens] [http://localhost:8000]
+    python scripts/28_capture_check.py [docs/app/screens] [http://localhost:8000]
 카메라는 헤드리스에서 쓸 수 없어 스캔 화면은 MediaPipe 표준 얼굴 메시(모델 파일 안의 468점)를 그려 넣는다.
 """
 import base64
@@ -19,7 +19,7 @@ from pathlib import Path
 import websocket
 
 REPO = Path(__file__).resolve().parents[1]
-OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else REPO / "docs/check/screens"
+OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else REPO / "docs/app/screens"
 OUT.mkdir(parents=True, exist_ok=True)
 BASE = sys.argv[2] if len(sys.argv) > 2 else "http://localhost:8000"
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"

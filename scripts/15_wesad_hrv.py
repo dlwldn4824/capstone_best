@@ -210,13 +210,13 @@ def main():
     print("  Hongn (실험실, 손목)  36명 중 18명 감소 — 우연")
     print("  Nurse (실환경, 손목)  15명 중  7명 감소 — 우연")
 
-    report.write_md(ROOT / "docs" / "WESAD_HRV.md", [
+    report.write_md(ROOT / "docs" / "research" / "WESAD_HRV.md", [
         ("# WESAD — 손목 PPG HRV 는 측정 한계인가 생리적 사실인가", ""),
         ("## 1. 신호 품질", report.md_table(q.reset_index())),
         ("## 2. 두 방식의 일치도", report.md_table(agree)),
         ("## 3. 스트레스 반응", report.md_table(resp)),
     ])
-    print("\n-> outputs/wesad_hrv.csv, docs/WESAD_HRV.md")
+    print("\n-> outputs/wesad_hrv.csv, docs/research/WESAD_HRV.md")
 
 
 if __name__ == "__main__":

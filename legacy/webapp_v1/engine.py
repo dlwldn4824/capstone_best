@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]       # legacy/webapp_v1/ → 저장소
 sys.path.insert(0, str(ROOT / "src"))
 from nesy import homekit as H, persistence as P  # noqa: E402
 
@@ -45,7 +45,7 @@ EARLY_RECENT_N = 4
 MAX_LIVE = 240
 SOFT_NOTES = {"카페인", "감기 기운", "약 복용"}   # 메모일 뿐, 밤을 끝까지 설명하지는 않는다
 
-# 얼굴 심박 — 밤 심박의 교차 확인 신호 (docs/FACE_RPPG.md)
+# 얼굴 심박 — 밤 심박의 교차 확인 신호 (docs/research/FACE_RPPG.md)
 # 공개 데이터 100명: 품질을 통과한 측정은 87% 가 ±5 bpm 안, 그래도 밤 심박보다 덜 정확하다.
 # 그래서 얼굴 혼자서는 더 큰 이탈을 요구하고, 밤 심박이 애매할 때 같은 쪽을 가리키면 보탠다.
 FACE_MIN_SNR = 0.0            # 앱의 멈춤 기준과 같다 — 이보다 낮은 측정은 기준선에도 판정에도 안 쓴다
@@ -101,7 +101,7 @@ def today(now=None):
 
 # --- 위험도 모델 (scripts/22_risk_model.py 가 학습) -------------------------------
 # 판정은 규칙이 한다. 모델은 같은 날을 따로 본 '두 번째 의견' 으로만 보여준다.
-# 공개 데이터 사건 32건에서 규칙과 탐지율이 같았다 (docs/RISK_MODEL.md).
+# 공개 데이터 사건 32건에서 규칙과 탐지율이 같았다 (docs/research/RISK_MODEL.md).
 def _load_model():
     try:
         return json.loads(MODEL_PATH.read_text(encoding="utf-8"))

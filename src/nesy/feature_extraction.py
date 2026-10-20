@@ -1,7 +1,7 @@
 """세션 폴더 -> features.csv.
 
 features.csv 는 A/B/C 세 역할이 공유하는 고정 인터페이스다.
-컬럼 구조는 docs/SCHEMAS.md 에 정의되어 있고 여기서만 바뀐다.
+컬럼 구조는 docs/research/SCHEMAS.md 에 정의되어 있고 여기서만 바뀐다.
 
 메타 컬럼
     sample_id, subject_id, session_type, session_id, version,

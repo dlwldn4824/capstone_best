@@ -140,7 +140,7 @@ def main():
         "dev_low_activity", "dev_temporal"]].to_csv(
         out / "nurse_deviation.csv", index=False)
 
-    report.write_md(ROOT / "docs" / "NURSE_RESULTS.md", [
+    report.write_md(ROOT / "docs" / "research" / "NURSE_RESULTS.md", [
         ("# Nurse 실환경 검증 결과", ""),
         ("## 1. 피험자 내 생리 반응 (보고된 스트레스 - 보고된 평온)",
          report.md_table(ws)),
@@ -148,7 +148,7 @@ def main():
         ("## 3. 실험실 규칙의 실환경 발화", report.md_table(
             cov[["rule", "produces", "active", "fire_rate", "precision", "recall"]])),
     ])
-    print("\n-> outputs/nurse_deviation.csv, docs/NURSE_RESULTS.md")
+    print("\n-> outputs/nurse_deviation.csv, docs/research/NURSE_RESULTS.md")
 
 
 if __name__ == "__main__":

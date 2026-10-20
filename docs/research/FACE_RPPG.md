@@ -1,7 +1,7 @@
 # 얼굴 영상 → 심박 · 상태 분류 — MCD-rPPG 100명
 
 과제명 "Face ID 영상을 이용하여 건강상태를 분류" 의 근거 실험.
-얼굴 심박은 웹앱(`webapp/static/rppg.js`)과 **같은 계산**(`src/nesy/rppg.py`, 합성 신호에서 소수점까지 일치)으로 냈다.
+얼굴 심박은 웹앱(`legacy/webapp_v1/static/rppg.js`)과 **같은 계산**(`src/nesy/rppg.py`, 합성 신호에서 소수점까지 일치)으로 냈다.
 
 ```bash
 python scripts/23_mcd_extract.py --n 100   # 영상 200개(16 GB)를 받아 얼굴 색 신호만 남기고 지운다 (~25분)
@@ -91,7 +91,7 @@ python scripts/24_mcd_analysis.py
 반면 심박(rPPG)은 POS 가 1.6초 창마다 색을 그 창의 평균으로 나누므로 조명 세기·느린 색 변화는 지워진다.
 남는 문제는 움직임과 빛 깜빡임이고, 그것은 SNR 이 잡아낸다 (2번 표).
 
-## 6. 서비스 판정에 넣은 방식 (`webapp/engine.py` `fuse`)
+## 6. 서비스 판정에 넣은 방식 (`legacy/webapp_v1/engine.py` `fuse`)
 
 | 상황 | 판정 |
 | --- | --- |

@@ -3,7 +3,7 @@
 Hosseini et al., Sci Data 9 (2022). Dryad doi:10.5061/dryad.5hqbzkh6f (CC-BY 4.0).
 간호사 15명이 실제 병원 근무 중 착용한 Empatica E4 기록.
 
-Hongn 과 다른 점 (구조 감사 결과는 docs/NURSE_DATASET_AUDIT.md)
+Hongn 과 다른 점 (구조 감사 결과는 docs/research/NURSE_DATASET_AUDIT.md)
     세션    E4 녹화 단위로 zip 이 나뉜다. 파일명 epoch 가 시작 시각.
             609개 세션 / 15명 (1인당 9~90개)
     라벨    tags.csv 가 비어 있다. 설문(SurveyResults.xlsx)의 사건 시각으로 붙인다.

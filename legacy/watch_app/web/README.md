@@ -55,5 +55,5 @@ Windows / macOS / Linux 어느 브라우저에서나 열립니다.
 ## 주의
 
 시나리오 세 개의 수치는 **화면 설명용 예시**입니다. 실제 검증 결과가 아닙니다.
-그리고 사흘 누적 부분은 아직 검증되지 않았습니다 ([`../../docs/PERSISTENCE.md`](../../docs/PERSISTENCE.md)).
+그리고 사흘 누적 부분은 아직 검증되지 않았습니다 ([`../../docs/research/PERSISTENCE.md`](../../../docs/research/PERSISTENCE.md)).
 화면에도 그렇게 적어뒀으니 발표에서 지우지 마십시오.

@@ -1,7 +1,7 @@
-> **2026-10-20 현재 중심 앱은 `/check` (Vity 체크)** — 화면별 상태 · 캡처는 [`docs/STATUS.md`](../docs/STATUS.md), 설계 · 검증은 [`docs/CHECK_DESIGN.md`](../docs/CHECK_DESIGN.md).
+> **2026-10-20 현재 중심 앱은 `/check` (Vity 체크)** — 화면별 상태 · 캡처는 [`docs/app/STATUS.md`](../docs/app/STATUS.md), 설계 · 검증은 [`docs/app/CHECK_DESIGN.md`](../docs/app/CHECK_DESIGN.md).
 > **2026-10-19 기획 변경:** `/` 는 이제 워치 없는 **거울 기록**(전면 카메라 심박 · 안색 · 루틴별 베이스라인 · 시험기간 리포트)이다.
-> 설계와 검증은 [`docs/MIRROR_DESIGN.md`](../docs/MIRROR_DESIGN.md). 아래 워치 버전은 `/v1` · `/watch` 에 남아 있다.
-> 얼굴 메시를 처음 한 번 받아두려면 `python webapp/fetch_vendor.py`.
+> 설계와 검증은 [`docs/app/MIRROR_DESIGN.md`](../docs/app/MIRROR_DESIGN.md). 아래 워치 버전(v1)은 [`legacy/webapp_v1/`](../legacy/webapp_v1/) 로 옮겼고 `/v1` · `/watch` 로 계속 열린다.
+> 얼굴 메시를 처음 한 번 받아두려면 `python webapp/fetch_vendor.py`. 캐릭터 · 글꼴은 [`assets/`](../assets/) 에 있고 서버가 `/assets/characters` · `/assets/fonts` 로 내보낸다.
 
 # 핑계 게이지 웹앱 — 폰 + 워치
 
@@ -36,7 +36,7 @@ python webapp/server.py --demo --https    # 폰에서 카메라·블루투스까
 | 안색 (CIELAB a\*) | ⚠ 실험 | 본인 지난 5회 대비 차이만. 화면에 "검증 안 됨" 표시 |
 | 블루투스 심박 센서 | ✅ 표준 프로필 | Polar H10/Verity Sense, 심박 방송을 켠 워치. 안드로이드 Chrome + https |
 | 밤 기록 | ✅ 블루투스 / 직접 입력 / 시연 | 블루투스는 폰 화면을 켠 채 충전기에 두어야 한다 |
-| Galaxy Watch 피부전도·체온 | ❌ 아직 | 네이티브 앱(Health Sensor SDK) 필요 — `docs/PROTOTYPE_PLAN.md` |
+| Galaxy Watch 피부전도·체온 | ❌ 아직 | 네이티브 앱(Health Sensor SDK) 필요 — `docs/research/PROTOTYPE_PLAN.md` |
 
 ## 시연 순서 (3분)
 

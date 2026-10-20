@@ -78,7 +78,7 @@ def main():
         by_subj_dir.to_csv(out / "tables" / "per_subject_errors.csv")
 
     report.write_md(
-        Path(__file__).resolve().parents[1] / "docs" / "SPLIT_RESULTS.md",
+        Path(__file__).resolve().parents[1] / "docs" / "research" / "SPLIT_RESULTS.md",
         [("# Subject-independent 평가", ""),
          ("## 분할 방식 비교", report.md_table(summary)),
          ("## 해석",
@@ -87,7 +87,7 @@ def main():
           "**{:+.3f}** 가\n그 누수의 크기다. 우리가 보고하는 값은 LOSO / GroupKFold 다."
           .format(gap)),
          ("## 피험자별 정확도 (LOSO)", report.md_table(per_subj))])
-    print("\n-> outputs/tables/split_comparison.csv, docs/SPLIT_RESULTS.md")
+    print("\n-> outputs/tables/split_comparison.csv, docs/research/SPLIT_RESULTS.md")
 
 
 if __name__ == "__main__":

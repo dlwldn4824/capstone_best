@@ -1,12 +1,12 @@
 """Homekit2020 로더 — 지속성 계층을 실제 감염 라벨로 검증하기 위한 데이터.
 
 Merrill et al., CHIL 2023. Evidation Health, 2020-02 ~ 2020-05.
-Synapse syn22803188 (통제 접근 — docs/HOMEKIT.md 신청 절차 참고).
+Synapse syn22803188 (통제 접근 — docs/research/HOMEKIT.md 신청 절차 참고).
 Fitbit 분 단위 기록(심박·걸음·수면) + 매일 증상 설문 + PCR 독감 결과.
 
 왜 이 데이터인가
     Nurse 는 근무 중에만 쟀고 사건이 자기보고 스트레스라서 지속성 계층을
-    검증할 수 없었다 (docs/PERSISTENCE.md). Homekit 은 **잘 때도 쟀고**
+    검증할 수 없었다 (docs/research/PERSISTENCE.md). Homekit 은 **잘 때도 쟀고**
     **PCR 로 확인된 독감**이 있다.
 
 Hongn / Nurse 와 다른 점

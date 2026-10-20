@@ -1,4 +1,4 @@
-"""Day 1 — 데이터 구조 감사 -> docs/DATA_AUDIT.md
+"""Day 1 — 데이터 구조 감사 -> docs/research/DATA_AUDIT.md
 
 확인 항목
   - 세션/피험자 목록
@@ -81,8 +81,8 @@ def main():
     print("\n피험자 {}명 / 세션 {}개".format(audit["subject"].nunique(), len(audit)))
     print("프로토콜 불일치 세션: {} (feature 추출에서 자동 제외됨)".format(n_bad))
 
-    # --- docs/DATA_AUDIT.md -------------------------------------------------
-    docs = Path(__file__).resolve().parents[1] / "docs"
+    # --- docs/research/DATA_AUDIT.md -------------------------------------------------
+    docs = Path(__file__).resolve().parents[1] / "docs" / "research"
     docs.mkdir(exist_ok=True)
     lines = [
         "# DATA AUDIT",
@@ -108,7 +108,7 @@ def main():
         "4. 그 다음에만 `02_build_features.py` 로 넘어간다.",
     ]
     (docs / "DATA_AUDIT.md").write_text("\n".join(lines), encoding="utf-8")
-    print("\n-> docs/DATA_AUDIT.md, outputs/tables/data_audit.csv")
+    print("\n-> docs/research/DATA_AUDIT.md, outputs/tables/data_audit.csv")
 
 
 if __name__ == "__main__":

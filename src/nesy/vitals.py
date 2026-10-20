@@ -11,7 +11,7 @@
     호흡      맥파의 기저선(RIIV) · 진폭(RIAV) · 간격(RIFV) 변조를 각각 0.1–0.5 Hz 스펙트럼 최고점으로,
               품질 좋은 것끼리 맞으면 평균 (Karlen 2013 'smart fusion' 방식)
 
-진단 기기가 아니다. 혈압 · 산소포화도 · 체온 · 피부나이는 일부러 재지 않는다 (docs/CHECK_DESIGN.md).
+진단 기기가 아니다. 혈압 · 산소포화도 · 체온 · 피부나이는 일부러 재지 않는다 (docs/app/CHECK_DESIGN.md).
 """
 from __future__ import annotations
 

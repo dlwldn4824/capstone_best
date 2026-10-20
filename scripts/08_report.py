@@ -2,7 +2,7 @@
 
     python scripts/08_report.py
 
-docs/EXPERIMENT_LOG.md 를 생성한다. 교수님 보고용 초안이자
+docs/research/EXPERIMENT_LOG.md 를 생성한다. 교수님 보고용 초안이자
 outputs/ 아래 모든 표를 한 곳에서 볼 수 있는 색인이다.
 """
 import argparse
@@ -79,7 +79,7 @@ def main():
     ])))
 
     p = report.write_md(
-        Path(__file__).resolve().parents[1] / "docs" / "EXPERIMENT_LOG.md",
+        Path(__file__).resolve().parents[1] / "docs" / "research" / "EXPERIMENT_LOG.md",
         sections)
     print("-> {}".format(p))
 

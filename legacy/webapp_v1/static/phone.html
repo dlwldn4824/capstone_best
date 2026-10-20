@@ -438,7 +438,7 @@ function renderToday() {
       Array.from({ length: k }, (_, i) => '<span class="' + (i < run ? "f" : "") + '"></span>').join("") + "</div>";
   }
   const face = s.status === "ALERT" ? "alert" : chosenFace(s);
-  const mascot = face ? "/characters/" + face + ".png" : "";
+  const mascot = face ? "/assets/characters/" + face + ".png" : "";
   parts.push('<article class="card hero tone-' + v.tone + (mascot ? " has-mascot" : "") + '">' +
     (mascot ? '<img class="mascot" src="' + mascot + '" alt="">' : "") +
     '<div class="copy"><p class="kicker">' + esc(v.short) + "</p><h2>" +

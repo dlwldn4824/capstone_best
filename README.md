@@ -1,8 +1,25 @@
-> **지금 개발 현황 (2026-10-20):** 서비스는 웹앱 **Vity 체크** (`python webapp/server.py` → `http://localhost:8000/check`) —
-> 30초 얼굴 스캔으로 심박 · HRV · 스트레스 지수, 오늘의 공부 모드, 친구들과 기상 · 공부 시작 인증.
-> 화면별 상태 · 캡처 · 남은 일은 [`docs/STATUS.md`](docs/STATUS.md). 아래는 처음 연구 동기와 실험 기록이다.
+# Vity — 시험기간 30초 얼굴 컨디션 체크 (Team 삼삼오오 캡스톤)
 
-# 설명되지 않는 몸의 변화 찾기
+```bash
+python webapp/server.py        # http://localhost:8000/check  (폰 카메라는 --https)
+python -m pytest -q            # 139개
+```
+
+## 폴더
+
+| 폴더 | 무엇 | 먼저 볼 것 |
+| --- | --- | --- |
+| [`webapp/`](webapp/) | **지금 웹** — Vity 체크(`/check`) · 거울 기록(`/`) 서버와 화면 | [개발 현황](docs/app/STATUS.md) |
+| [`assets/`](assets/) | **캐릭터 · 글꼴 에셋** (`characters/` 12장 · `fonts/`) | [assets/README](assets/README.md) |
+| [`legacy/`](legacy/) | **수정 전 버전** — 폰 · 워치 웹앱 v1(`/v1` · `/watch`), Apple Watch 앱 소스, 워치 데모 | [legacy/README](legacy/README.md) |
+| [`docs/`](docs/) | **자료** — `app/`(현황 · 설계 · 화면 캡처) · `research/`(실험 기록) · `presentation/`(포스터 · 발표) · `papers/` | [docs/README](docs/README.md) |
+| `src/` · `scripts/` · `tests/` · `configs/` · `data/` | **연구 코드** — 신호 처리 · 판정 엔진(`src/nesy`), 번호 순 실험 스크립트, 테스트, 설정, 데이터 자리(원본은 git 제외) | `scripts/00_…` 부터 |
+
+---
+
+> 아래는 처음 연구 동기와 실험 기록이다. 지금 서비스(Vity 체크)의 화면별 상태 · 캡처 · 남은 일은 [`docs/app/STATUS.md`](docs/app/STATUS.md).
+
+## 연구 동기 — 설명되지 않는 몸의 변화 찾기
 
 스마트워치가 "오늘 컨디션이 안 좋다"고 알려줍니다.
 그런데 **어제 술을 마셔서 그런 건데요.**
@@ -287,7 +304,7 @@ CONFLICT + UNCERTAIN 을 "믿지 말라"로 표시하면 **신경망 오류의 8
 ### 6. 모른다고 말할 수 있는지 (Exp 1c)
 
 운동 규칙을 통째로 지우고, 비교 대상도 운동을 배운 적 없는 분류기로 맞췄습니다.
-운동 구간 287개 중 이탈로 잡힌 **80개**에 대해 (`docs/DEVIATION_RESULTS.md`):
+운동 구간 287개 중 이탈로 잡힌 **80개**에 대해 (`docs/research/DEVIATION_RESULTS.md`):
 
 | | 결과 |
 | --- | --- |
@@ -373,7 +390,7 @@ Nurse 15명 · 관측일 236일 = **7.75 인·월** (`tables/persistence_sweep.c
 
 안 된다고 나온 게 아니라 **이 데이터로는 답이 안 나오는 것**입니다.
 이 계층은 자는 동안 재는 걸 전제하는데 Nurse 는 전부 근무 중입니다.
-자세한 것은 [`docs/PERSISTENCE.md`](docs/PERSISTENCE.md).
+자세한 것은 [`docs/research/PERSISTENCE.md`](docs/research/PERSISTENCE.md).
 
 ### 결과를 다시 만들려면
 
@@ -396,7 +413,7 @@ python scripts/16_persistence.py      # 지속성 계층
 ```
 
 원본 데이터는 각각 PhysioNet · Dryad · UCI 에서 받아 `data/raw/` 에 둡니다
-([`docs/EXP1_STRESS_EXERCISE.md`](docs/EXP1_STRESS_EXERCISE.md)).
+([`docs/research/EXP1_STRESS_EXERCISE.md`](docs/research/EXP1_STRESS_EXERCISE.md)).
 
 ---
 
@@ -454,7 +471,7 @@ Nurse는 전부 **근무 중**이고, 사건이 관측일의 39.8%로 전혀 드
 교란을 없애려고 새벽에 재는 설계를 **교란이 최대인 조건에서 시험한 셈**입니다.
 
 **안 된다고 나온 게 아니라 답이 아직 없는 것**입니다. 그 구별은 흐리지 않습니다.
-자세한 내용과 무엇이 더 필요한지는 [`docs/PERSISTENCE.md`](docs/PERSISTENCE.md).
+자세한 내용과 무엇이 더 필요한지는 [`docs/research/PERSISTENCE.md`](docs/research/PERSISTENCE.md).
 
 > **진단하지 않습니다.** "감염이 의심됩니다"는 의료기기 영역입니다.
 > 우리는 **설명하지 못한 변화가 있다는 사실**만 알립니다.
@@ -463,8 +480,8 @@ Nurse는 전부 **근무 중**이고, 사건이 관측일의 39.8%로 전혀 드
 
 | | |
 | --- | --- |
-| [`watch/web/index.html`](watch/web/index.html) | **더블클릭하면 열립니다.** Windows 포함 어디서나 |
-| [`watch/ExcuseGauge/`](watch/ExcuseGauge/) | 원본 SwiftUI 앱 (watchOS, Xcode 필요) |
+| [`legacy/watch_app/web/index.html`](legacy/watch_app/web/index.html) | **더블클릭하면 열립니다.** Windows 포함 어디서나 |
+| [`legacy/watch_app/ExcuseGauge/`](legacy/watch_app/ExcuseGauge/) | 원본 SwiftUI 앱 (watchOS, Xcode 필요) |
 
 둘은 같은 판정 코드로 돕니다. 웹 사본에는 발표용으로 **판정 과정 패널**이 붙어 있어
 칩을 누르면 계산이 어떻게 바뀌는지 옆에서 같이 보입니다.
@@ -488,7 +505,7 @@ python scripts/07_nesy.py
 
 가짜 데이터의 성능 수치는 **연구 결과가 아닙니다.** 코드가 도는지만 확인하는 용도입니다.
 
-실제 데이터는 [`docs/EXP1_STRESS_EXERCISE.md`](docs/EXP1_STRESS_EXERCISE.md) 참고.
+실제 데이터는 [`docs/research/EXP1_STRESS_EXERCISE.md`](docs/research/EXP1_STRESS_EXERCISE.md) 참고.
 
 ---
 
@@ -496,27 +513,27 @@ python scripts/07_nesy.py
 
 | 처음이라면 | |
 | --- | --- |
-| [`docs/NARRATIVE.md`](docs/NARRATIVE.md) | **전체 이야기.** 문제 → 접근 → 검증 → 서비스 |
-| [`docs/HRV_VERDICT.md`](docs/HRV_VERDICT.md) | 가장 견고한 발견 하나만 본다면 |
+| [`docs/presentation/NARRATIVE.md`](docs/presentation/NARRATIVE.md) | **전체 이야기.** 문제 → 접근 → 검증 → 서비스 |
+| [`docs/research/HRV_VERDICT.md`](docs/research/HRV_VERDICT.md) | 가장 견고한 발견 하나만 본다면 |
 
 | 코드를 만진다면 | |
 | --- | --- |
-| [`docs/SCHEMAS.md`](docs/SCHEMAS.md) | 파일 주고받는 규칙. **먼저 읽을 것** |
-| [`docs/EXP1_STRESS_EXERCISE.md`](docs/EXP1_STRESS_EXERCISE.md) | 실행 순서, 역할 분담 |
+| [`docs/research/SCHEMAS.md`](docs/research/SCHEMAS.md) | 파일 주고받는 규칙. **먼저 읽을 것** |
+| [`docs/research/EXP1_STRESS_EXERCISE.md`](docs/research/EXP1_STRESS_EXERCISE.md) | 실행 순서, 역할 분담 |
 
 | 결과를 확인한다면 | |
 | --- | --- |
-| [`docs/RESULTS_20260905.md`](docs/RESULTS_20260905.md) | 실험실 데이터 전체 결과 |
-| [`docs/NURSE_TRANSFER.md`](docs/NURSE_TRANSFER.md) | 실환경 이식 검증 |
-| [`docs/DEVIATION_REDESIGN.md`](docs/DEVIATION_REDESIGN.md) | 이탈 점수 설계 |
-| [`docs/PERSISTENCE.md`](docs/PERSISTENCE.md) | 알림 누적 계층 (**검증 미완**) |
+| [`docs/research/RESULTS_20260905.md`](docs/research/RESULTS_20260905.md) | 실험실 데이터 전체 결과 |
+| [`docs/research/NURSE_TRANSFER.md`](docs/research/NURSE_TRANSFER.md) | 실환경 이식 검증 |
+| [`docs/research/DEVIATION_REDESIGN.md`](docs/research/DEVIATION_REDESIGN.md) | 이탈 점수 설계 |
+| [`docs/research/PERSISTENCE.md`](docs/research/PERSISTENCE.md) | 알림 누적 계층 (**검증 미완**) |
 
 | 다음 단계라면 | |
 | --- | --- |
-| [`docs/PPT_REVIEW.md`](docs/PPT_REVIEW.md) | **발표 자료** — 무엇을 고칠지와 슬라이드 원고 (+ `docs/발표보강안.pptx` 19장) |
-| [`docs/RESEARCH_REVIEW.md`](docs/RESEARCH_REVIEW.md) | 심사에서 나올 질문과 대응 |
-| [`docs/LITERATURE_VERIFICATION.md`](docs/LITERATURE_VERIFICATION.md) | 인용 검증 (**Li 2026은 보류**) |
-| [`docs/EXPERIMENT_PROTOCOL.md`](docs/EXPERIMENT_PROTOCOL.md) | 자체 측정 절차 |
+| [`docs/presentation/PPT_REVIEW.md`](docs/presentation/PPT_REVIEW.md) | **발표 자료** — 무엇을 고칠지와 슬라이드 원고 (+ `docs/presentation/발표보강안.pptx` 19장) |
+| [`docs/research/RESEARCH_REVIEW.md`](docs/research/RESEARCH_REVIEW.md) | 심사에서 나올 질문과 대응 |
+| [`docs/research/LITERATURE_VERIFICATION.md`](docs/research/LITERATURE_VERIFICATION.md) | 인용 검증 (**Li 2026은 보류**) |
+| [`docs/research/EXPERIMENT_PROTOCOL.md`](docs/research/EXPERIMENT_PROTOCOL.md) | 자체 측정 절차 |
 
 ---
 
@@ -532,7 +549,7 @@ src/nesy/          분석 코드
   wesad / nurse    데이터셋별 로더
 
 scripts/           00부터 순서대로 실행
-watch/ExcuseGauge/ watchOS 데모 앱
+legacy/watch_app/ExcuseGauge/ watchOS 데모 앱
 docs/              문서
 ```
 

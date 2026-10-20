@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "webapp"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "legacy" / "webapp_v1"))
 import engine as E  # noqa: E402
 
 

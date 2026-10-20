@@ -86,7 +86,7 @@ def main():
         print(pd.crosstab(errors["true_label"], errors["pred_label"]).to_string())
 
     report.write_md(
-        Path(__file__).resolve().parents[1] / "docs" / "ABLATION_RESULTS.md",
+        Path(__file__).resolve().parents[1] / "docs" / "research" / "ABLATION_RESULTS.md",
         [("# Feature ablation: Stress vs Exercise", ""),
          ("## 결과", report.md_table(summary)),
          ("## 핵심으로 볼 것",
@@ -95,7 +95,7 @@ def main():
           "ACC 를 넣었을 때 이 두 값이 떨어지지 않으면, NeSy 의 activity rule 도\n"
           "같은 이유로 효과가 없을 가능성이 높다. 그 경우 Day 12 이후의 실패\n"
           "분석(결과 D)으로 바로 넘어간다.")])
-    print("\n-> outputs/tables/ablation.csv, docs/ABLATION_RESULTS.md")
+    print("\n-> outputs/tables/ablation.csv, docs/research/ABLATION_RESULTS.md")
 
 
 if __name__ == "__main__":

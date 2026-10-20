@@ -1,6 +1,6 @@
 # 2주 프로토타입 계획 — 예산 150만원
 
-목표: 지금 `watch/web/index.html` 은 **시나리오를 손으로 고르는 데모**다.
+목표: 지금 `legacy/watch_app/web/index.html` 은 **시나리오를 손으로 고르는 데모**다.
 2주 뒤에는 **팀원이 실제로 찬 워치 + 아침 얼굴 체크**가 같은 화면을 움직이게 한다.
 
 ```
@@ -78,7 +78,7 @@ MCD-rPPG 의 "휴식 vs 운동 후" 는 우리 질문과 같은 구조다 — **
 
 | 날 | 할 일 | 산출물 |
 | --- | --- | --- |
-| 1 | 하드웨어 주문 · PMData 결과 정리 | `docs/PMDATA.md` |
+| 1 | 하드웨어 주문 · PMData 결과 정리 | `docs/research/PMDATA.md` |
 | 1~3 | rPPG 파이프라인 → UBFC/MCD 에서 Polar 없이 정확도 확인 | 얼굴 심박 MAE (bpm) |
 | 2~4 | Watch8 수집 앱 (Kotlin, Health Sensor SDK 샘플 기반) — 밤 심박·EDA·체온 → CSV | 워치에서 하룻밤 기록 |
 | 3~5 | FastAPI: CSV → `homekit.build_day_table` 형식 → `persistence` → JSON | `/today` API |
@@ -106,7 +106,7 @@ MCD-rPPG 의 "휴식 vs 운동 후" 는 우리 질문과 같은 구조다 — **
 | ✅ 얼굴 심박은 정답 대비 오차 X bpm | UBFC/MCD + Polar |
 | ✅ 술 마신 다음 날 밤 심박이 오른다 (+2.6 bpm, 12/13명) — 설명 규칙의 근거 | PMData |
 | ✅ 맥락을 기록하면 이탈의 55~60% 가 설명된다 (센서만 16~40%) | PMData · Mishra |
-| ✅ 걸음·수면만으로는 설명 계층이 일하지 않는다 | Mishra (`docs/MISHRA.md`) |
+| ✅ 걸음·수면만으로는 설명 계층이 일하지 않는다 | Mishra (`docs/research/MISHRA.md`) |
 | ❌ 감염을 미리 잡는다 | 팀원 2주 착용으로는 감염 사건이 없다 |
 | ❌ 안색으로 아픈 것을 안다 | 검증 데이터가 없다 |
 

@@ -1,7 +1,7 @@
 """연속 feature -> 이산 생리 fact.
 
 fact 는 NeSy 의 입력 어휘다. 무엇을 fact 로 삼는지가 곧 "우리가 어떤 생리
-지식을 명시적으로 쓰는가" 이므로, 근거는 docs/RULES.md 에 정리한다.
+지식을 명시적으로 쓰는가" 이므로, 근거는 docs/research/RULES.md 에 정리한다.
 
 threshold 전략 (세 방식을 반드시 비교할 것 - 2주 계획 Day 10/11)
   fixed        : train fold 의 전역 분포로 임계 결정. 개인차를 무시한다.

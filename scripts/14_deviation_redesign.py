@@ -134,14 +134,14 @@ def main():
         float(n_res.query("채널=='all4' and 집계=='mean'")["통합AUC"].iloc[0]),
         float(h_res.query("채널=='all4' and 집계=='mean'")["통합AUC"].iloc[0])))
 
-    report.write_md(ROOT / "docs" / "DEVIATION_REDESIGN.md", [
+    report.write_md(ROOT / "docs" / "research" / "DEVIATION_REDESIGN.md", [
         ("# 이탈 점수 재설계", ""),
         ("## Nurse (실환경)", report.md_table(n_res)),
         ("## Hongn (실험실)", report.md_table(h_res)),
         ("## 두 환경 종합", report.md_table(
             both[key + ["통합AUC_nurse", "통합AUC_hongn", "최소"]])),
     ])
-    print("\n-> docs/DEVIATION_REDESIGN.md")
+    print("\n-> docs/research/DEVIATION_REDESIGN.md")
 
 
 if __name__ == "__main__":

@@ -37,7 +37,7 @@ from nesy import homekit as H, mishra as M, persistence as P
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = ROOT / "data/cache"
 OUT = ROOT / "outputs"
-MODEL_OUT = ROOT / "webapp/model/risk_v1.json"
+MODEL_OUT = ROOT / "legacy/webapp_v1/model/risk_v1.json"
 EV_KW = dict(match_before=7, match_after=3)
 POS_WIN = (-5, 2)          # 증상 시작 기준 양성 창
 EXCL_WIN = (-21, 28)       # 이 안의 나머지 날은 학습에서 뺀다
