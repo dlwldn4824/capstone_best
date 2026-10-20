@@ -44,7 +44,10 @@ src/pipeline/hrv.js      협대역 → 250Hz 보간 → 피크 → RR → RMSSD(
 src/pipeline/resp.js     호흡: 머리 움직임 · 밝기 두 주기가 ±2회/분 안에서 맞을 때만
 src/pipeline/face.js     깜빡임 횟수 · 눈 감긴 비율 · 하품 후보 · 머리 흔들림
 src/pipeline/quality.js  발표 4조건 + 견고성 조건(coverage · interference · roi), 사용자 문구
-src/pipeline/index.js    analyze(), quickBpm()
+src/pipeline/index.js    analyze()(G2: 창별 ROI 융합, 품질 미달이면 움직임 상쇄 재시도), liveEstimate(), stableEnough()(빠른 측정 조기 종료), quickBpm()
+src/pipeline/fuse.js     fuseWindows(): 6초 창마다 SNR 가중 ROI 융합
+src/pipeline/motion.js   motionRefs() · nlmsCancel(): 얼굴 위치 · 크기 참조 NLMS 움직임 상쇄 (실패한 스캔에만)
+scripts/experiments/     흔들림 보정 · 측정 시간 단축 합성 실험과 결과(results_*.md)
 src/store/db.js          IndexedDB(scans, kv)
 src/debug/synth.js       합성 Sample[] (간섭 · 구멍 · 고조파 옵션)
 scripts/robustness/      합성 견고성 감사 스크립트와 결과(results_before.md / results_after.md)
@@ -67,6 +70,7 @@ FaceState = { durationSec, blinkPerMin, blinks, eyeClosedRatio, yawns, headMoveP
 ```
 
 ## 촬영 흐름
+0. 측정 방식(준비 시트에서 고름, localStorage 'vity.mode'): 빠르게 = 최근 10초 실시간 추정 3번이 ±2 bpm 안 · SNR ≥ 3 dB · 10초 이상 · 전체 품질 통과면 끝(최대 30초, 심박 · 맥파만) / 전체 = 30초(박동 간격 · 호흡 · 깜빡임까지). 합성 실험: 중앙 10초, 일찍 틀린 값 수락 0%
 1. 준비 시트: 휴대폰 세워 두기(눈높이) · 팔 길이(30–40cm) · 빛은 얼굴 앞 · 30초 말하지 않기
 2. 자세 맞추기: 전체 화면 카메라, 타원 밖은 어둡게. `framingIssue` 우선순위 noface → far/near(얼굴 폭 = 타원 폭의 60–95%) → center(18%) → angle(좌우·갸웃 15°, 위아래 20°, MediaPipe 변환 행렬) → dark/bright(70–215) → shake(0.5초 코끝 2%) → mouth. 안내는 한 줄만. 모두 맞고 1초 유지되면 시작
 3. 30초: 메시는 그대로, 빛 띠가 훑고 박동마다 이마 · 볼 선이 밝아지며 측정점이 깜빡인다. 타원 테두리가 진행 링. 샘플 시각은 requestVideoFrameCallback 의 mediaTime(자세 맞추는 동안 증가가 확인될 때만, 아니면 콜백 시각). 얼굴을 놓치면 안내가 노랗게 바뀌고 실시간 bpm 을 숨긴다. ROI 가 화면 밖인 프레임은 버린다
