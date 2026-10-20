@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.firebase/
+.firebaserc
+*.log
+.DS_Store
+.omc/
+.claude/
+.playwright-mcp/

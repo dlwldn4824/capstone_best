@@ -1,0 +1,10 @@
+.git
+node_modules
+dist
+mockup
+scripts
+.omc
+.claude
+*.log
+.DS_Store
+.playwright-mcp
