@@ -1,0 +1,35 @@
+{
+  "version": "risk_v1",
+  "trained": "2026-10-03",
+  "data": "Mishra et al. 2020 (Nat Biomed Eng) COVID-19 Wearables — 공개",
+  "features": [
+    "night_z",
+    "z3",
+    "dev3"
+  ],
+  "coef": [
+    0.11793197327883646,
+    0.25002621846055983,
+    0.206970635328073
+  ],
+  "intercept": -0.23707302920315396,
+  "levels": {
+    "watch": 0.6222190085523494,
+    "check": 0.7342529326050037,
+    "alert": 0.7647
+  },
+  "label": "COVID 증상 시작 -5~2일",
+  "metrics": {
+    "auc_oof": 0.627920314424034,
+    "auc_night_z": 0.6424972870243858,
+    "detection_at_matched_alerts": 0.28125,
+    "detection_ci": [
+      0.15564406845647866,
+      0.4537483693811179
+    ],
+    "rule_detection": 0.28125,
+    "healthy_alerts_per_person_month": 0.34468386284995284,
+    "events": 32
+  },
+  "caution": "사건 32건으로 학습한 시연용 모델. 진단 모델이 아니다."
+}

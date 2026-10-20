@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>거울 기록 포스터</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--ink:#0B0F17; --blue:#1D4ED8; --blue2:#9DB4F0; --blue3:#E8EEFB; --grey:#5B6472; --line:#D9DEE7; --bg:#FFFFFF}
+@page{size:1684px 2384px; margin:0}
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+html,body{margin:0; background:var(--bg); color:var(--ink)}
+body{width:1684px; height:2384px; overflow:hidden; font-family:"Pretendard Variable",Pretendard,"Malgun Gothic",sans-serif; font-size:17px; line-height:1.5; letter-spacing:-.01em; word-break:keep-all}
+header{background:var(--ink); color:#fff; padding:44px 56px 36px; display:grid; grid-template-columns:1fr auto; gap:24px; align-items:end}
+header .kicker{color:var(--blue2); font-weight:700; font-size:20px; letter-spacing:.02em}
+header h1{margin:10px 0 12px; font-size:58px; line-height:1.12; font-weight:800; letter-spacing:-.035em}
+header h1 em{font-style:normal; color:#7EA2FF}
+header .sub{font-size:24px; color:#C9D3E6; font-weight:500}
+header .who{text-align:right; font-size:19px; color:#C9D3E6; line-height:1.6}
+header .who b{color:#fff; font-size:22px}
+.flow{margin:28px 56px 0; display:grid; grid-template-columns:repeat(6,1fr); gap:0; border:2px solid var(--ink); border-radius:18px; overflow:hidden}
+.flow > div{padding:16px 18px 18px; border-right:2px solid var(--ink); position:relative}
+.flow > div:last-child{border-right:0}
+.flow > div.hi{background:var(--blue); color:#fff}
+.flow .n{font-weight:800; font-size:15px; color:var(--blue)}
+.flow .hi .n{color:#CFE0FF}
+.flow b{display:block; font-size:21px; margin:2px 0 6px; letter-spacing:-.02em}
+.flow p{margin:0; font-size:15px; line-height:1.45}
+.flow > div:not(:last-child)::after{content:""; position:absolute; right:-13px; top:50%; width:22px; height:22px; background:inherit; border-top:2px solid var(--ink); border-right:2px solid var(--ink); transform:translateY(-50%) rotate(45deg); z-index:2}
+.flow > div:not(.hi):not(:last-child)::after{background:#fff}
+main{display:grid; grid-template-columns:1fr 1.08fr 1fr; gap:34px; padding:26px 56px 0}
+section{margin-bottom:22px}
+h2{margin:0 0 10px; font-size:27px; font-weight:800; letter-spacing:-.03em; display:flex; gap:10px; align-items:baseline; border-bottom:3px solid var(--ink); padding-bottom:6px}
+h2 .no{color:var(--blue)}
+h3{margin:12px 0 6px; font-size:19px; font-weight:700}
+p{margin:0 0 8px}
+.mut{color:var(--grey)}
+.small{font-size:14.5px}
+img.fig{width:100%; display:block}
+.cap{font-size:14px; color:var(--grey); margin-top:4px}
+table{width:100%; border-collapse:collapse; font-size:16px}
+th,td{padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+th{font-weight:700; border-bottom:2px solid var(--ink)}
+td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
+td.best{color:var(--blue); font-weight:800}
+.eq{background:var(--blue3); border-radius:12px; padding:12px 16px; margin:8px 0; font-size:16.5px; line-height:1.6}
+.eq code, code{font-family:"Cascadia Mono",Consolas,monospace; font-size:.92em}
+ol.steps{margin:6px 0 8px; padding-left:24px}
+ol.steps li{margin-bottom:5px}
+ol.steps li b{color:var(--blue)}
+.big{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:8px 0 10px}
+.big div{border:2px solid var(--ink); border-radius:14px; padding:10px 12px}
+.big div.on{background:var(--ink); color:#fff}
+.big strong{display:block; font-size:38px; font-weight:800; line-height:1.05; letter-spacing:-.03em}
+.big strong small{font-size:18px; font-weight:700}
+.big span{font-size:14px}
+.big div.on span{color:#C9D3E6}
+.gate{display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:16px}
+.gate b{color:var(--blue)}
+.facebox{display:grid; grid-template-columns:200px 1fr; gap:14px; align-items:center}
+.rule{border:2px solid var(--blue); border-radius:14px; padding:12px 14px; margin:8px 0}
+.rule .r{display:grid; grid-template-columns:110px 1fr; gap:6px; padding:5px 0; border-bottom:1px dashed var(--line)}
+.rule .r:last-child{border:0}
+.rule .r .tag{justify-self:start; align-self:start}
+.tag{display:inline-block; font-weight:800; border-radius:999px; padding:1px 10px; font-size:14.5px}
+.t-same{background:var(--blue3); color:var(--blue)} .t-diff{background:var(--blue); color:#fff} .t-low{background:var(--line); color:var(--ink)} .t-build{border:1.5px solid var(--grey); color:var(--grey)}
+.phones{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px}
+.phone{border:3px solid var(--ink); border-radius:22px; overflow:hidden; height:318px; background:#F4F7FD; position:relative}
+.phone > img{width:110%; margin-left:-5%; display:block}
+.phone .lab{position:absolute; left:0; right:0; bottom:0; background:var(--ink); color:#fff; font-size:14px; font-weight:700; padding:6px 10px}
+.qcard{padding:18px 16px; font-size:15px}
+.qcard .h{display:flex; gap:10px; align-items:center}
+.qcard img{width:58px; height:58px; object-fit:contain}
+.qcard h4{margin:0; font-size:21px; font-weight:800}
+.qcard .chips{display:flex; flex-wrap:wrap; gap:7px; margin-top:12px}
+.qcard .chips span{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:6px 11px; font-weight:600; font-size:14px}
+.qcard .chips span.sel{background:var(--blue); border-color:var(--blue); color:#fff}
+.qcard .sub2{margin-top:10px; padding:10px; background:#fff; border-radius:12px; font-size:13.5px}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+ul.tight{margin:4px 0 6px; padding-left:20px} ul.tight li{margin-bottom:4px}
+footer{position:absolute; left:56px; right:56px; bottom:30px; border-top:3px solid var(--ink); padding-top:10px; font-size:13px; color:var(--grey); line-height:1.5; columns:2; column-gap:34px}
+footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="kicker">2026 캡스톤디자인 · Face ID 영상을 이용한 건강상태 분류</div>
+    <h1>설명되는 변화와 <em>설명되지 않는 변화</em>의 기록</h1>
+    <div class="sub">전면 카메라 15초 rPPG · 안색 지수 · 루틴별 개인 베이스라인으로 시험기간의 몸을 기록한다</div>
+  </div>
+  <div class="who"><b>Team 삼삼오오</b><br>이교원 · 이지우 · 이지연<br>지도교수 조민수 · [학교 · 학과]</div>
+</header>
+
+<!-- 전체 흐름 -->
+<div class="flow">
+  <div><span class="n">01 트리거</span><b>알람 끄면 바로 거울</b><p>iOS 단축어 자동화(알람 해제 · 집중 모드) 또는 NFC 스티커가 <code>/?routine=desk&amp;go=1</code> 을 연다</p></div>
+  <div><span class="n">02 측정</span><b>15초 거울</b><p>얼굴 · 밝기가 맞으면 자동 시작, 화면 테두리 카운트다운. 사용자는 거울처럼 보기만</p></div>
+  <div class="hi"><span class="n">03 기기 안 계산</span><b>메시 → 맥박 · 안색</b><p>MediaPipe 478점 → 이마 · 양 볼 RGB → POS 심박 + Lab 안색 + 품질 판정</p></div>
+  <div><span class="n">04 판정</span><b>루틴별 내 평소와 비교</b><p>|x − 중앙값| ≥ k·MAD 이면 ‘다름’. 아침 · 공부 · 밤 기준을 섞지 않음</p></div>
+  <div class="hi"><span class="n">05 알림 = 질문</span><b>다를 때만 한 번 묻기</b><p>같음 → 조용히 저장 · 다름 → “방금 뭐 마셨어요?” · 품질 미달 → 다시 보기</p></div>
+  <div><span class="n">06 리포트</span><b>시험기간 정리</b><p>이유별 심박 차이 · 설명 안 된 날짜 · 회복일. 진단 · 조언 없음</p></div>
+</div>
+
+<main>
+<!-- ===== 1열 ===== -->
+<div>
+  <section>
+    <h2><span class="no">1</span>문제: 경보보다 기록</h2>
+    <p>웨어러블 이상 알림은 <b>건강한 사람에게도 월 0.66회</b> 헛경보를 낸다 (Mishra 2020). 심박이 평소와 다른 날은 운동 · 음주 · 카페인 · 늦잠으로 <b>월 15회 안팎</b>, 실제 감염은 <b>월 0.2회</b> 수준이다.</p>
+    <p>→ “이상”을 단정하지 않고, <b>달라진 순간에 이유를 한 번 물어</b> 설명된 변화와 설명되지 않은 변화를 나눠 기록한다. 워치 없이 <b>폰 전면 카메라 하나</b>로.</p>
+  </section>
+
+  <section>
+    <h2><span class="no">2</span>측정을 어떻게 시작하나</h2>
+    <table>
+      <tr><th>루틴</th><th>트리거</th><th>질문</th></tr>
+      <tr><td><b>아침 거울</b></td><td>기상 알람 해제 → 단축어</td><td>어젯밤 뭐 했어요?</td></tr>
+      <tr><td><b>공부 시작</b></td><td>집중 모드 켜기 · 책상 NFC</td><td>방금 뭐 마셨어요?</td></tr>
+      <tr><td><b>밤 세안</b></td><td>세면대 NFC 스티커</td><td>오늘 하루 어땠어요?</td></tr>
+    </table>
+    <p class="small mut" style="margin-top:6px">iOS 는 앱이 스스로 카메라를 켤 수 없어 <b>사용자 행동에 붙인 URL 호출</b>로 연다. 루틴은 호출값 우선, 없으면 시각(4–11시 아침 · 11–20시 공부 · 그 외 밤). 기록 탭에서 바꾸면 재판정.</p>
+  </section>
+
+  <section>
+    <h2><span class="no">3</span>얼굴 영역 추적 · 품질</h2>
+    <div class="facebox">
+      <svg viewBox="0 0 200 240" width="200" height="240" aria-label="얼굴 영역">
+        <ellipse cx="100" cy="122" rx="78" ry="104" fill="#F4F7FD" stroke="#0B0F17" stroke-width="2.5"/>
+        <g fill="none" stroke="#9DB4F0" stroke-width="1"><path d="M40 70 L160 70 M30 120 L170 120 M40 170 L160 170 M100 20 L100 226 M60 30 L60 210 M140 30 L140 210"/></g>
+        <polygon points="72,40 100,34 128,40 132,62 100,68 68,62" fill="#1D4ED8" fill-opacity=".85"/>
+        <path d="M62 92 q14 -8 28 0 M110 92 q14 -8 28 0" stroke="#0B0F17" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <polygon points="40,128 70,120 80,140 72,166 48,160 38,144" fill="#1D4ED8" fill-opacity=".85"/>
+        <polygon points="160,128 130,120 120,140 128,166 152,160 162,144" fill="#1D4ED8" fill-opacity=".85"/>
+        <path d="M100 100 L94 140 L106 140" stroke="#0B0F17" stroke-width="2.5" fill="none"/>
+        <path d="M80 182 q20 12 40 0" stroke="#0B0F17" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <text x="100" y="56" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">이마</text>
+        <text x="58" y="147" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">볼</text>
+        <text x="142" y="147" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">볼</text>
+      </svg>
+      <div class="small">
+        <p><b>MediaPipe Face Landmarker</b> (Apache-2.0, 브라우저 WASM · GPU): 메시 <b>478점</b> + 표정 계수 <b>52종</b> + 머리 자세. ARKit 과 같은 역할.</p>
+        <p>매 프레임 메시 번호로 세 영역 <b>볼록 다각형</b>을 만들고 그 안 픽셀의 평균 RGB 만 남긴다.</p>
+        <p class="mut">이마 151·108·337·69·299·109·338<br>왼볼 116–119·100·36·205·187·123<br>오른볼 345–348·329·266·425·411·352</p>
+      </div>
+    </div>
+    <h3>품질 판정 (하나라도 걸리면 ‘다시 보기’)</h3>
+    <div class="gate">
+      <b>조명</b><span>얼굴 밝기 55–225 인 프레임 ≥ 90%</span>
+      <b>움직임</b><span>코 위치 / 얼굴 폭의 중앙 이탈 &lt; 0.035 (거리와 무관)</span>
+      <b>표정</b><span>깜빡임(eyeBlink &gt; 0.5) · 말하기(jawOpen &gt; 0.25) 프레임 &lt; 30% — 해당 프레임은 제외</span>
+      <b>신호</b><span>심박 SNR ≥ 0 dB (아래 4)</span>
+    </div>
+    <p class="small mut" style="margin-top:6px">품질 미달 기록은 판정 · 베이스라인 모두에서 빠진다. 두 번 실패하면 ‘이번엔 건너뛰기’.</p>
+  </section>
+
+  <section>
+    <h2><span class="no">4</span>안색 지수: 이마 대비 볼 붉은기</h2>
+    <div class="eq">RGB → sRGB 선형화 → XYZ(D65) → <b>CIE Lab</b><br>
+      <b>a<sub>rel</sub> = median<sub>t</sub>( a*<sub>볼</sub>(t) − a*<sub>이마</sub>(t) )</b><br>
+      <span class="small">같은 프레임 안의 차이 → 조명 · 노출 변화가 상쇄된다</span></div>
+    <img class="fig" src="fig/f4_complexion.png" alt="">
+    <p class="cap">MCD-rPPG 60명 · 20초 구간 961개. 상대값이 측정 잡음 <b>2.5배↓</b>, 밝기 추종 ρ −0.16 → 0.08.</p>
+    <p class="small">단, 운동 후 붉어짐의 방향은 일관되지 않았다 (52%, p = 0.30). 그래서 안색은 <b>판정을 바꾸지 않는 보조 기록</b>이고, 화장 · 선크림 토글이 켜지면 빠진다.</p>
+  </section>
+</div>
+
+<!-- ===== 2열 ===== -->
+<div>
+  <section>
+    <h2><span class="no">5</span>얼굴로 맥박 재기 — rPPG (POS)</h2>
+    <p>심장이 뛸 때마다 피부 혈액량이 변해 <b>녹색 빛 흡수가 0.1–0.5% 흔들린다.</b> 카메라 RGB 평균에서 이 흔들림만 골라낸다. 처리 순서는 <b>rPPG-Toolbox</b>(Liu 2023)와 같게, 코드는 직접 작성(라이선스 RAIL).</p>
+    <ol class="steps">
+      <li><b>재표본</b> 세 영역 평균 RGB 를 30 Hz 로 보간</li>
+      <li><b>POS</b> (Wang 2017) 1.6초 창마다 C<sub>n</sub> = C / μ(C),<br>
+        S = <code>[[0, 1, −1], [−2, 1, 1]]</code>·C<sub>n</sub>, &nbsp; h = S₁ + (σ<sub>S₁</sub>/σ<sub>S₂</sub>)·S₂ → 겹쳐 더하기<br><span class="small mut">피부색 방향과 직교하는 평면에 투영 → 조명 세기 · 반사광 성분을 제거</span></li>
+      <li><b>추세 제거</b> smoothness priors: x − (I + λ²DᵀD)⁻¹x, λ = 100</li>
+      <li><b>대역 통과</b> 1차 Butterworth 0.75–3 Hz, filtfilt (위상 0)</li>
+      <li><b>심박</b> 다시 추세 제거 · 0.6–3.3 Hz 통과 → FFT(2<sup>⌈log₂n⌉</sup>) 최고점 × 60</li>
+      <li><b>SNR</b> = 10·log₁₀( 1·2차 고조파 ±6 bpm 에너지 / 나머지 )</li>
+    </ol>
+    <img class="fig" src="fig/f1_pipeline.png" alt="">
+    <p class="cap">MCD-rPPG 1명, 20초. 얼굴에서 뽑은 맥파(파랑)가 손끝 PPG(회색)와 박자를 맞춘다 → 75.6 bpm 일치.</p>
+    <p class="small">브라우저 <code>rppg2.js</code> 와 Python <code>rppg.py</code> 가 같은 입력에서 <b>소수점 8자리까지 일치</b> (단위 테스트로 고정).</p>
+  </section>
+
+  <section>
+    <h2><span class="no">6</span>정확도 검증 (공개 데이터 MCD-rPPG)</h2>
+    <p class="small">100명 · 운동 전후 영상 · 손끝 PPG 정답 · 20초 창 <b>3,201개</b>.</p>
+    <div class="big">
+      <div class="on"><strong>3.6<small> bpm</small></strong><span>평균 절대 오차 (원 논문 POS 3.80)</span></div>
+      <div><strong>0.7<small> bpm</small></strong><span>SNR ≥ 0 통과 창의 오차</span></div>
+      <div><strong>80<small>%</small></strong><span>±5 bpm 안에 든 창</span></div>
+    </div>
+    <img class="fig" src="fig/f3_scatter.png" alt="">
+    <table style="margin-top:8px">
+      <tr><th></th><th class="num">이전 앱 (v1)</th><th class="num">rPPG-Toolbox 방식 (v2)</th></tr>
+      <tr><td>평균 오차</td><td class="num">12.5 bpm</td><td class="num best">3.6 bpm</td></tr>
+      <tr><td>±5 bpm 안</td><td class="num">68%</td><td class="num best">80%</td></tr>
+      <tr><td>SNR ≥ 0 통과율</td><td class="num">18%</td><td class="num best">44%</td></tr>
+      <tr><td>통과 창 오차</td><td class="num">3.1 bpm</td><td class="num best">0.7 bpm</td></tr>
+    </table>
+    <p class="cap">SNR 문턱은 남는 측정과 오차를 맞바꾼다. 앱은 0 dB 를 쓰고, 미달이면 이유를 묻지 않고 다시 찍게 한다 — 틀린 심박으로 질문하지 않기 위해.</p>
+  </section>
+</div>
+
+<!-- ===== 3열 ===== -->
+<div>
+  <section>
+    <h2><span class="no">7</span>루틴별 개인 베이스라인 · 판정</h2>
+    <div class="eq">준비 주간(시험 전 7일), 루틴마다 <b>품질 통과 기록 ≥ 4회</b><br>
+      med = 중앙값, &nbsp; s = max( 1.4826 · MAD, 1 bpm )<br>
+      <b>|x − med| ≥ k · s → 다름</b> &nbsp; (k = 2.5, 설정 2 / 2.5 / 3)</div>
+    <img class="fig" src="fig/f5_baseline.png" alt="">
+    <p class="cap">시연 기록 · 공부 시작 루틴. 띠 안은 조용히 저장, 띠 밖(파랑)은 이유를 물었다.</p>
+    <div class="rule">
+      <div class="r"><span class="tag t-same">같음</span><span>알림 없음. 기록만 남긴다</span></div>
+      <div class="r"><span class="tag t-diff">다름</span><span>결과 화면에서 이유 한 번 묻기 → 설명됨 / 설명 안 됨</span></div>
+      <div class="r"><span class="tag t-low">다시</span><span>품질 미달. 이유를 묻지 않고 다시 보기</span></div>
+      <div class="r"><span class="tag t-build">쌓는 중</span><span>그 루틴 기준이 4회 미만</span></div>
+    </div>
+    <ul class="tight small">
+      <li>아침 · 공부 · 밤을 섞지 않는다 — 섞으면 앉은 직후 심박은 매번 ‘상승’</li>
+      <li><b>시험 주간 기록은 기준에 넣지 않는다</b> — 넣으면 변화가 기준에 묻힌다</li>
+      <li>중앙값 · MAD → 하루 이상치에 기준이 끌려가지 않는다</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="no">8</span>알림은 경보가 아니라 질문</h2>
+    <div class="phones">
+      <div class="phone"><img src="shots/home.png" alt=""><div class="lab">오늘 · 세 루틴</div></div>
+      <div class="phone"><div class="qcard">
+        <div class="h"><img src="../../webapp/static/characters/ask.png" alt=""><div><h4>평소와 달라요</h4><span class="mut">공부 시작 · +9 bpm</span></div></div>
+        <p style="margin:10px 0 0; font-weight:700">방금 뭐 마셨어요?</p>
+        <div class="chips"><span>음주</span><span class="sel">카페인</span><span>운동</span><span>수면부족</span><span>해당 없음</span></div>
+        <div class="sub2">커피 · <b style="color:var(--blue)">에너지드링크</b> · 기타</div>
+      </div><div class="lab">다를 때만 묻기</div></div>
+      <div class="phone"><img src="shots/records.png" alt="" style="margin-top:-60px"><div class="lab">기록 · 상태별</div></div>
+      <div class="phone"><img src="shots/report.png" alt="" style="margin-top:-60px"><div class="lab">시험기간 리포트</div></div>
+    </div>
+    <p class="small" style="margin-top:8px">리포트 문장은 수치 요약에서 규칙으로 만든다: “카페인이 있던 날 공부 시작 심박이 평소보다 +10 bpm (4회)”, “이유 없이 달랐던 기록 2회(10/08, 10/11)”, “아침 심박은 10/15 에 평소 범위로”. ‘진단 · 위험 · 무리하지’ 같은 표현은 테스트로 금지.</p>
+  </section>
+
+  <section>
+    <h2><span class="no">9</span>개인정보 · 한계 · 다음</h2>
+    <div class="two small">
+      <div><h3 style="margin-top:0">개인정보</h3><ul class="tight">
+        <li>영상 · 메시 · 픽셀은 <b>브라우저 밖으로 안 나감</b></li>
+        <li>저장: 심박 · SNR · 안색 숫자 · 품질 · 루틴 · 시각 · 응답</li>
+        <li>첫 화면 동의(카메라 혈류 분석 명시, 개인정보보호법 제23조 민감정보) · 전체 삭제</li></ul></div>
+      <div><h3 style="margin-top:0">한계 → 다음</h3><ul class="tight">
+        <li>실기기 · 실조명 오차 미측정 → 팀원 2주 운용</li>
+        <li>k 값 → 헛 ‘달라요’ 비율로 결정</li>
+        <li>음주 붉어짐 공개 데이터 없음 → 음주 전후 자기 촬영</li>
+        <li>웹 → iOS 앱(ARKit · Face ID 잠금)</li></ul></div>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer>
+  <b>참고문헌</b> Wang W. et al., Algorithmic principles of remote PPG (POS), IEEE TBME 2017 · Liu X. et al., rPPG-Toolbox, NeurIPS Datasets &amp; Benchmarks 2023 · Lugaresi C. et al., MediaPipe, 2019 / Face Landmarker · Egorov K. et al., MCD-rPPG 공개 데이터셋, 2025 · Mishra T. et al., Pre-symptomatic detection of COVID-19 from smartwatch data, Nat. Biomed. Eng. 2020 · Quer G. et al., Wearable sensor data and self-reported symptoms for COVID-19 detection, Nat. Med. 2021 · Haugg F. et al., Assessment of blood pulse wave in rPPG, 2022 · Thambawita V. et al., PMData, MMSys 2020.<br>
+  <b>구현</b> webapp/static/facemesh.js · rppg2.js · mirror.html, webapp/mirror.py, src/nesy/rppg.py · 검증 scripts/25_rppg_v1_v2.py · 26_complexion.py · 테스트 118개 통과
+</footer>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#071018">
+<title>Vity · 워치</title>
+<link rel="stylesheet" href="/app.css">
+<style>
+:root{
+  --ground:#071018; --surface:#0E1A2B; --ink:#F4F7FB; --ink2:#9AA8BC; --line:#243044;
+  --calm:#1A6DFF; --left:#1A6DFF; --left-soft:#163056; --left-ink:#D6E6FF;
+  --alert:#E25B4A; --alert-soft:#3A1A18; --alert-ink:#FFD0C8;
+  --btn:#1A6DFF; --btn-ink:#fff;
+  --w:min(92vw, 380px); --h:calc(var(--w) * 1.22);
+  --sans:"Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+}
+html,body{height:100%; margin:0; background:#E7EEF8}
+body{display:grid; place-items:center; color:var(--ink); font-family:var(--sans); overflow:hidden}
+.stage{display:grid; place-items:center}
+.case{position:relative; padding:14px 18px 14px 14px; border-radius:74px; background:#1A1D22;
+  box-shadow:0 28px 60px rgba(20,40,70,.28), inset 0 0 0 2px #2C3138}
+.crown,.sidebtn{position:absolute; right:-6px; width:6px; border-radius:0 4px 4px 0; background:#3A4048}
+.crown{top:28%; height:46px}
+.sidebtn{top:46%; height:28px}
+.face{width:var(--w); height:var(--h); border-radius:58px; position:relative; overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 18%, #16345C 0%, #0B1828 46%, #071018 100%);
+  display:flex; flex-direction:column; align-items:center; padding:7% 8% 6%}
+.top{align-self:flex-end; text-align:right; line-height:1.05; margin-top:2%}
+.top b{display:block; font-size:calc(var(--w) * 0.078); font-weight:650; letter-spacing:-.03em}
+.top small{display:block; margin-top:2px; font-size:calc(var(--w) * 0.034); color:#C9D7EA; font-weight:600; letter-spacing:.04em}
+.live{position:absolute; top:8%; left:9%; display:flex; align-items:center; gap:4px;
+  font-size:calc(var(--w) * 0.04); font-weight:650; color:#F4F7FB}
+.live svg{width:calc(var(--w) * 0.04); height:calc(var(--w) * 0.04); color:#E25B4A}
+.live.beat svg{animation:beat .35s ease-out}
+@keyframes beat{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+.char{margin-top:1%; width:62%; height:36%; object-fit:contain; background:none;
+  filter:drop-shadow(0 12px 16px rgba(0,0,0,.35))}
+.status{margin:7% 0 0; font-size:calc(var(--w) * 0.058); font-weight:750; letter-spacing:-.03em; text-align:center; line-height:1.25; word-break:keep-all}
+.status em{font-style:normal; font-weight:650; font-size:.72em; margin-left:1px; color:#D5E4F7}
+.slider{width:78%; margin-top:5%; position:relative}
+.track{height:14px; border-radius:99px; position:relative;
+  background:linear-gradient(90deg, #D6E6FF 0%, #7EB0FF 42%, #1A6DFF 100%)}
+.usual{position:absolute; top:3px; width:2px; height:8px; border-radius:2px; background:rgba(16,32,58,.45);
+  transform:translateX(-50%)}
+.knob{position:absolute; top:50%; width:26px; height:26px; border-radius:50%; background:#F4F7FB;
+  border:3px solid #16345C; transform:translate(-50%, -50%); box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.when{display:block; margin-top:8px; text-align:center; font-size:calc(var(--w) * 0.034); color:#9AA8BC; font-weight:600}
+.dots{display:flex; gap:8px; min-height:14px; margin-top:4%}
+.dots span{width:8px; height:8px; border-radius:50%; background:#243044}
+.dots span.f{background:#1A6DFF}
+.dots.bad span.f{background:#E25B4A}
+.dock{margin-top:auto; width:100%; display:flex; justify-content:space-between; padding:0 4% 2%}
+.dock button{width:54px; height:54px; border-radius:50%; border:none; background:#121C2C; color:#F4F7FB;
+  display:grid; place-items:center; box-shadow:inset 0 0 0 1px #243044}
+.dock button svg{width:22px; height:22px}
+.dock .ask{box-shadow:0 0 0 3px #1A6DFF}
+.off,.peer{position:absolute; top:7%; left:0; right:0; text-align:center; font-size:12px; font-weight:650}
+.off{color:#E25B4A; display:none}
+.off.on{display:block}
+.peer{color:#9AA8BC; opacity:0; transition:opacity .3s}
+.peer.on{opacity:1}
+.sheet{position:absolute; inset:0; background:#071018; display:none; flex-direction:column; align-items:center;
+  justify-content:center; gap:10px; padding:16% 12%; text-align:center}
+.sheet.on{display:flex}
+.sheet h2{margin:0; font-size:calc(var(--w) * 0.05); font-weight:700; line-height:1.35; word-break:keep-all}
+.sheet p{margin:0; font-size:calc(var(--w) * 0.038); color:#9AA8BC; line-height:1.45; word-break:keep-all}
+.pgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%}
+.pgrid button,.pnone,.done{min-height:48px; border-radius:16px; border:none; background:#121C2C; color:#F4F7FB;
+  font-size:15px; font-weight:650}
+.pgrid button[data-val="1"]{background:#1A6DFF}
+.pnone,.done{width:100%}
+.done{background:transparent; color:#9AA8BC}
+#wsheet{padding:10% 10% 8%; gap:8px; overflow:auto}
+#wsheet input,#wsheet .wmic,#wsheet .wsave{align-self:stretch; width:100%}
+#wsheet input{min-height:44px; border-radius:14px; border:1.5px solid var(--line); background:#121C2C; color:var(--ink); padding:0 12px; font-size:16px; text-align:left}
+#wsheet .wmic,#wsheet .wsave{min-height:48px; border-radius:16px; border:none; background:#121C2C; color:#F4F7FB; font-size:15px; font-weight:650}
+#wsheet .wsave{background:#1A6DFF; color:#fff}
+#wsheet .wmic[aria-pressed="true"]{background:#163056; color:#D6E6FF}
+[hidden]{display:none !important}
+.alarm{background:rgba(8,16,28,.55)}
+.alarm-card{width:var(--w); height:var(--h); max-width:none; border-radius:58px; background:#071018; color:var(--ink);
+  box-shadow:none; align-items:center; justify-content:center; text-align:center; padding:16% 12%; gap:10px}
+.alarm-icon{width:54px; height:54px; border-radius:50%; background:#163056; color:#D6E6FF}
+.alarm-alert .alarm-icon{background:#3A1A18; color:#FFD0C8}
+.alarm-title{font-size:calc(var(--w) * 0.06)}
+.alarm-body{font-size:calc(var(--w) * 0.038); color:#9AA8BC; line-height:1.45;
+  display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden}
+.alarm-flag{margin:0; font-size:calc(var(--w) * 0.034); color:#F4F7FB; line-height:1.4}
+.alarm-actions{width:100%; flex-direction:column}
+.alarm-actions button{min-height:48px; border-radius:16px; background:#121C2C; color:#F4F7FB; border-color:#243044}
+.alarm-actions .alarm-go{background:#1A6DFF; color:#fff; border-color:#1A6DFF}
+@media (max-width:520px), (max-height:640px){
+  html,body{background:#071018}
+  .case{padding:0; border-radius:0; background:transparent; box-shadow:none}
+  .crown,.sidebtn{display:none}
+  .face,.alarm-card{width:100vw; height:100vh; height:100dvh; border-radius:0}
+}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="case">
+    <span class="crown" aria-hidden="true"></span>
+    <span class="sidebtn" aria-hidden="true"></span>
+    <main class="face" id="face">
+      <p class="off" id="off">연결 끊김</p>
+      <p class="peer" id="peer"></p>
+      <span class="live" id="live" hidden>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"></path></svg>
+        <span id="bpm">–</span>
+      </span>
+      <div class="top">
+        <b class="num" id="time">--:--</b>
+        <small>심박</small>
+      </div>
+      <img class="char" id="char" alt="" src="/characters/idle.png">
+      <p class="status" id="status">…</p>
+      <div class="slider" id="slider">
+        <div class="track">
+          <i class="usual" id="usual" title="평소"></i>
+          <i class="knob" id="knob"></i>
+        </div>
+        <span class="when" id="when">--:--</span>
+      </div>
+      <div class="dots" id="dots"></div>
+      <div class="dock">
+        <button type="button" id="info" aria-label="설명">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 8h.01" stroke-linecap="round"></path></svg>
+        </button>
+        <button type="button" id="why" aria-label="확인">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" stroke-linejoin="round"></path></svg>
+        </button>
+      </div>
+
+      <section class="sheet" id="detail" aria-label="설명">
+        <h2 id="detailTitle"></h2>
+        <p id="line"></p>
+        <button class="done" id="detailClose" type="button">닫기</button>
+      </section>
+
+      <section class="sheet" id="pick" aria-label="확인">
+        <h2 id="askHead">확인</h2>
+        <p id="askLine"></p>
+        <div class="pgrid" id="pgrid"></div>
+        <button class="pnone" id="pnone" type="button">없어요</button>
+        <button class="done" id="done" type="button">닫기</button>
+      </section>
+
+      <section class="sheet" id="wsheet" aria-label="기타">
+        <h2>기타</h2>
+        <p>한 줄로 남겨 주세요</p>
+        <input id="wnote" type="text" placeholder="예: 어제 늦게 잠" autocomplete="off" enterkeyhint="done">
+        <button class="wmic" id="wmic" type="button" aria-pressed="false">말하기</button>
+        <button class="wsave" id="wsave" type="button">남기기</button>
+        <button class="done" id="wclose" type="button">닫기</button>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+<script>
+"use strict";
+let S = null;
+const $ = (id) => document.getElementById(id);
+// 평소(z=0)가 막대 한가운데. 그보다 높으면 오른쪽, 낮으면 왼쪽.
+const zFrac = (z) => Math.max(0, Math.min(1, (z + 3) / 6));
+
+function setBar(z) {
+  $("usual").style.left = (zFrac(0) * 100) + "%";
+  const knob = $("knob");
+  if (z == null) { knob.hidden = true; return; }
+  knob.hidden = false;
+  knob.style.left = (zFrac(z) * 100) + "%";
+}
+
+function faceName(s) {
+  return characterName(s);
+}
+
+function render() {
+  if (!S) return;
+  const v = verdict(S), n = S.night || {};
+  const hr = n.source === "face" ? n.face_hr : n.night_hr;
+  const ref = n.source === "face" ? n.face_ref : n.ref;
+  const refWord = { early: "최근 안정", adapting: "최근", personal: "평소" }[modeOf(S)] || "평소";
+  if (modeOf(S) !== "personal") $("status").textContent = v.title || v.short;
+  else $("status").innerHTML = hr == null ? v.short : v.short + " · " + Math.round(hr) + "<em>bpm</em>";
+  $("char").src = "/characters/" + faceName(S) + ".png";
+
+  let line = v.body || v.title;
+  if (n.source === "face" && n.face_hr != null) {
+    line = "얼굴 심박 " + Math.round(n.face_hr) + (n.face_ref != null ? ", " + refWord + " " + Math.round(n.face_ref) : "") + ". " + (v.body || "");
+  } else if (n.night_hr != null) {
+    line = "밤 심박 " + Math.round(n.night_hr) + (ref != null ? ", " + refWord + " " + Math.round(ref) : "") + ". ";
+    if (n.agree === "both" || n.agree === "border") line += "얼굴 심박도 높아요. ";
+    if (S.status === "EXPLAINED" && n.explained_by) {
+      const why = OVERLAP_KO[n.explained_by] || n.explained_ko;
+      if (why) line += josa(why, "과", "와") + " 시점이 겹칩니다. ";
+    }
+    line += v.body || "";
+  }
+  $("detailTitle").textContent = v.title || v.short;
+  $("line").textContent = line;
+  setBar(n.z);
+
+  const showDots = !!v.track;
+  $("dots").className = "dots" + (v.tone === "alert" ? " bad" : "");
+  $("dots").innerHTML = showDots
+    ? Array.from({ length: S.streak.k }, (_, i) =>
+        '<span class="' + (i < S.streak.run ? "f" : "") + '"></span>').join("")
+    : "";
+
+  const ask = S.status === "ASK";
+  const why = $("why");
+  why.classList.toggle("ask", ask);
+  why.disabled = S.status !== "ASK" && ((n.night_hr == null && n.source !== "face") || n.z == null);
+  why.setAttribute("aria-label", ask ? "확인" : "기록");
+
+  const trace = openTrace(S.today);
+  if (trace) {
+    $("askHead").textContent = trace.detail;
+    $("askLine").textContent = trace.ask;
+    $("pgrid").innerHTML =
+      '<button type="button" data-trace="' + trace.id + '" data-val="0">아니요</button>' +
+      '<button type="button" data-trace="' + trace.id + '" data-ctx="' + trace.ctx + '" data-val="1">네</button>';
+    $("pnone").hidden = true;
+  } else {
+    $("askHead").textContent = askTitle(S);
+    $("askLine").textContent = modeOf(S) === "early"
+      ? "최근 안정 상태보다 높은 심박이에요"
+      : "겹칠 수 있는 것만 골라 주세요";
+    $("pgrid").innerHTML = causeChipsHtml() +
+      '<button type="button" data-extra="other">기타</button>';
+    $("pnone").hidden = true;
+  }
+}
+
+function readNote(text) {
+  const hits = [];
+  if (/술|맥주|소주|와인|음주|회식|칵테일|치맥|하이볼/.test(text)) hits.push("alcohol");
+  if (/밤샘|새벽|늦잠|늦게 자|잠이 짧|못 잤|수면|밤새|취침/.test(text)) hits.push("sleep");
+  if (/운동|헬스|러닝|조깅|달렸|웨이트|수영/.test(text)) hits.push("exercise");
+  if (/발표|시험|긴장|스트레스|면접|다툼/.test(text)) hits.push("tense");
+  return hits;
+}
+
+let wmic = null;
+function watchMic() {
+  if (!speechReady()) return null;
+  if (wmic) return wmic;
+  wmic = listenKo({
+    ontext(text) {
+      const input = $("wnote");
+      if (input) input.value = text;
+    },
+    onstate(on) {
+      const b = $("wmic");
+      if (!b) return;
+      b.textContent = on ? "듣는 중" : "말하기";
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    },
+  });
+  return wmic;
+}
+
+function openWatchNote() {
+  if (wmic && wmic.listening) wmic.stop();
+  $("wnote").value = "";
+  const btn = $("wmic");
+  btn.hidden = !speechReady();
+  btn.textContent = "말하기";
+  btn.setAttribute("aria-pressed", "false");
+  $("detail").classList.remove("on");
+  $("pick").classList.remove("on");
+  $("wsheet").classList.add("on");
+}
+
+function closeWatchNote() {
+  if (wmic && wmic.listening) wmic.stop();
+  $("wsheet").classList.remove("on");
+  $("pick").classList.add("on");
+}
+
+async function saveWatchNote() {
+  const text = ($("wnote").value || "").trim();
+  if (!text) {
+    $("wnote").focus();
+    return;
+  }
+  if (wmic && wmic.listening) wmic.stop();
+  const hits = readNote(text);
+  setDayNote(S.today, text);
+  const body = { note: text };
+  if (hits.length) hits.forEach((k) => { body[k] = true; });
+  else body.nothing = true;
+  S = await API.post("/api/context", body);
+  $("wnote").value = "";
+  $("wsheet").classList.remove("on");
+  $("pick").classList.remove("on");
+  render();
+}
+
+function onLive(l) {
+  const fresh = l && l.bpm && Date.now() - (l.at || 0) < 15000;
+  $("live").hidden = !fresh;
+  if (!fresh) return;
+  $("bpm").textContent = l.bpm;
+  const el = $("live");
+  el.classList.remove("beat"); void el.offsetWidth; el.classList.add("beat");
+}
+
+$("info").addEventListener("click", () => { $("pick").classList.remove("on"); $("detail").classList.add("on"); });
+$("detailClose").addEventListener("click", () => $("detail").classList.remove("on"));
+$("why").addEventListener("click", () => { if ($("why").disabled) return; $("detail").classList.remove("on"); $("pick").classList.add("on"); });
+$("done").addEventListener("click", () => $("pick").classList.remove("on"));
+$("pick").addEventListener("click", async (e) => {
+  const b = e.target.closest("button");
+  if (!b || b.id === "done") return;
+  if (b.dataset.trace && b.dataset.val === "0") {
+    declineTrace(S.today, b.dataset.trace);
+    render();
+    return;
+  }
+  if (b.dataset.note) {
+    setDayNote(S.today, b.dataset.note);
+    S = await API.post("/api/context", { note: b.dataset.note, nothing: true });
+    render();
+    $("pick").classList.remove("on");
+    return;
+  }
+  if (b.dataset.val === "1" && b.dataset.ctx) {
+    setDayNote(S.today, "");
+    S = await API.post("/api/context", causeBody(b.dataset.ctx));
+    render();
+    $("pick").classList.remove("on");
+    return;
+  }
+  if (b.dataset.ctx) {
+    const key = b.dataset.ctx;
+    setDayNote(S.today, "");
+    S = await API.post("/api/context", causeBody(key));
+    render();
+    $("pick").classList.remove("on");
+    return;
+  }
+  if (b.dataset.extra === "other") {
+    openWatchNote();
+    return;
+  }
+  if (b.dataset.extra === "alcohol" || b.dataset.extra === "tense") {
+    setDayNote(S.today, "");
+    S = await API.post("/api/context", causeBody(b.dataset.extra));
+    render();
+    $("pick").classList.remove("on");
+    return;
+  }
+  if (b.dataset.extra) {
+    const label = (EXTRA_OPTS.find((x) => x.key === b.dataset.extra) || {}).label || "";
+    setDayNote(S.today, label);
+    S = await API.post("/api/context", { nothing: true, note: label });
+    render();
+    $("pick").classList.remove("on");
+  }
+});
+if (!speechReady()) $("wmic").hidden = true;
+$("wmic").addEventListener("click", () => {
+  const m = watchMic();
+  if (!m) return;
+  if (m.listening) m.stop();
+  else m.start($("wnote").value || "");
+});
+$("wnote").addEventListener("input", () => {
+  if (wmic && wmic.listening) wmic.stop();
+});
+$("wnote").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); saveWatchNote(); }
+});
+$("wsave").addEventListener("click", () => saveWatchNote());
+$("wclose").addEventListener("click", closeWatchNote);
+$("pnone").addEventListener("click", async () => {
+  S = await API.post("/api/context", { nothing: true });
+  render();
+  $("pick").classList.remove("on");
+});
+
+function tick() {
+  const d = new Date();
+  const t = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  $("time").textContent = t;
+  $("when").textContent = t;
+}
+tick(); setInterval(tick, 10000);
+API.get("/api/state").then((s) => { if (!S) { adoptServerNote(s); S = s; render(); onLive(s.live); } }).catch(() => {});
+
+Alarm.setActions({ ASK: { label: "확인하기", run: () => $("pick").classList.add("on") } });
+Alarm.setDecorate((n, el) => {
+  if (n.kind !== "ALERT") return;
+  const p = document.createElement("p");
+  p.className = "alarm-flag";
+  p.textContent = "폰의 타임라인에서 설명되지 않은 날을 볼 수 있어요";
+  el.querySelector(".alarm-body").after(p);
+});
+
+let lastPhone = null;
+function onPresence(p) {
+  const n = p.phone || 0;
+  if (lastPhone !== null && n !== lastPhone) {
+    const el = $("peer");
+    el.textContent = n > lastPhone ? "폰과 연결됐어요" : "폰 연결이 끊겼어요";
+    el.classList.add("on");
+    clearTimeout(onPresence._t);
+    onPresence._t = setTimeout(() => el.classList.remove("on"), 2500);
+  }
+  lastPhone = n;
+}
+
+subscribe("watch", {
+  state: (s) => { adoptServerNote(s); S = s; render(); onLive(s.live); },
+  live: onLive,
+  notify: (n) => Alarm.show(n),
+  dismiss: (d) => Alarm.remove(d.id),
+  presence: onPresence,
+  conn: (on) => $("off").classList.toggle("on", !on),
+});
+document.addEventListener("pointerdown", () => Alarm.unlock(), { once: true });
+</script>
+</body>
+</html>

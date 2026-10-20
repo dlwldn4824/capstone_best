@@ -6,6 +6,9 @@ PyYAML>=6.0
 tqdm>=4.66
 pyarrow>=15.0
 
+# Homekit2020 다운로드 (scripts/17_homekit_download.py) — 승인 후에만 필요
+# synapseclient>=4.0
+
 # Exp 1 (src/nesy) — 모델·평가·그림
 scikit-learn>=1.4
 xgboost>=2.0

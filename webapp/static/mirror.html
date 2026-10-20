@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F4F3">
+<title>Vity</title>
+<link rel="stylesheet" href="/app.css">
+<style>
+.app{max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;
+  padding:max(16px, env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom))}
+.top{display:flex; justify-content:space-between; align-items:flex-end; gap:12px; padding:8px 4px 14px}
+.top h1{margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em}
+.top p{margin:0; font-size:13px; color:var(--muted)}
+[hidden]{display:none !important}
+.view{display:none; flex-direction:column; gap:12px}
+.view.on{display:flex}
+.card{background:var(--surface); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px}
+.card h2{margin:0; font-size:17px; font-weight:600}
+.card p{margin:0}
+.sub{font-size:13px; color:var(--muted)}
+.phase{border-radius:16px; padding:16px 18px; display:flex; flex-direction:column; gap:8px; background:var(--calm-soft); color:var(--calm-ink)}
+.phase b{font-size:16px}
+.phase .bar{height:8px; border-radius:99px; background:rgba(0,0,0,.08); overflow:hidden}
+.phase .bar i{display:block; height:100%; background:var(--calm)}
+.routines{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
+.rt{border-radius:14px; border:2px solid var(--line); background:var(--surface); padding:12px 8px; display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; min-height:96px; justify-content:center}
+.rt b{font-size:14px} .rt span{font-size:12px; color:var(--muted)}
+.rt.now{border-color:var(--ink)}
+.rt.done{background:var(--calm-soft); border-color:var(--calm-soft)}
+.btn{display:flex; align-items:center; justify-content:center; gap:8px; min-height:56px; padding:0 18px; border-radius:14px;
+  border:none; background:var(--btn); color:var(--btn-ink); font-size:17px; font-weight:600; text-decoration:none; width:100%}
+.btn.ghost{background:transparent; color:var(--ink); border:1.5px solid var(--line)}
+.btn.small{min-height:44px; font-size:15px; border-radius:12px}
+.row{display:flex; gap:8px; flex-wrap:wrap} .row > *{flex:1 1 0}
+.switch{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px}
+.switch input{appearance:none; width:52px; height:30px; border-radius:99px; background:var(--line); position:relative; flex:none; cursor:pointer}
+.switch input::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:99px; background:#FFFFFF; transition:left .15s}
+.switch input:checked{background:var(--calm)} .switch input:checked::after{left:25px}
+.chips{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px}
+.chip{min-height:56px; border-radius:12px; border:2px solid var(--line); background:var(--surface); font-size:16px; font-weight:600}
+.chip.wide{grid-column:1 / -1}
+.chip[aria-pressed="true"]{border-color:var(--calm); background:var(--calm-soft)}
+.kv{display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:44px; border-bottom:1px solid var(--line); font-size:15px}
+.kv:last-child{border-bottom:none}
+.tag{font-size:12px; font-weight:600; padding:4px 8px; border-radius:6px; white-space:nowrap}
+.tag.same{background:var(--surface2); color:var(--ink2)}
+.tag.explained{background:var(--calm-soft); color:var(--calm-ink)}
+.tag.unexplained{background:var(--left-soft); color:var(--left-ink)}
+.tag.ask{background:var(--left); color:#FFFFFF}
+.tag.low,.tag.building{background:transparent; color:var(--muted); border:1px dashed var(--line)}
+.day h3{margin:6px 4px 0; font-size:14px; color:var(--muted); font-weight:600}
+.rec{display:grid; grid-template-columns:5.2em minmax(0,1fr) auto; gap:10px; align-items:center; min-height:52px; border-bottom:1px solid var(--line)}
+.rec:last-child{border-bottom:none}
+.rec .r{font-size:14px; font-weight:600} .rec .n{font-size:13px; color:var(--muted)}
+.rec select{font-size:12px; border:none; background:transparent; color:var(--muted); padding:0}
+.bars{display:flex; flex-direction:column; gap:10px}
+.bars .b{display:grid; grid-template-columns:6.5em minmax(0,1fr) 3.6em; gap:8px; align-items:center; font-size:13px}
+.bars .t{height:14px; border-radius:6px; background:var(--surface2); overflow:hidden}
+.bars .t i{display:block; height:100%; background:var(--calm)}
+.bars .v{text-align:right; font-family:var(--mono); font-size:12px}
+.sentences{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:8px; font-size:15px; line-height:1.6}
+.tabs{position:fixed; left:0; right:0; bottom:0; background:var(--surface); border-top:1px solid var(--line); display:flex; justify-content:center; padding-bottom:env(safe-area-inset-bottom)}
+.tabs div{display:grid; grid-template-columns:repeat(4,1fr); width:100%; max-width:480px}
+.tabs button{min-height:62px; border:none; background:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:12px; color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--ink); font-weight:600}
+input[type=date], select.f{width:100%; min-height:48px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); padding:0 12px; font-size:16px; color:var(--ink); border-radius:12px}
+label.f{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--ink2); flex:1 1 0}
+code.url{display:block; font-family:var(--mono); font-size:12px; background:var(--surface2); border-radius:8px; padding:10px; word-break:break-all}
+.toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); background:var(--btn); color:var(--btn-ink); padding:10px 16px; border-radius:12px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90vw; z-index:60}
+.toast.on{opacity:1}
+/* 거울 화면 */
+.sheet{position:fixed; inset:0; background:#0E1312; color:#EEF2F0; display:none; flex-direction:column; z-index:20}
+.sheet.on{display:flex}
+.sheet .in{max-width:480px; width:100%; margin:0 auto; flex:1; display:flex; flex-direction:column; gap:14px; padding:max(16px, env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
+.sheet .bar{display:flex; justify-content:space-between; align-items:center; gap:12px}
+.sheet .x{width:44px; height:44px; border-radius:99px; border:none; background:#202927; display:grid; place-items:center; flex:none}
+.cam{position:relative; border-radius:20px; overflow:hidden; background:#1A2220; aspect-ratio:3/4}
+.cam video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1)}
+.cam svg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+.hint{font-size:17px; font-weight:600; text-align:center; min-height:26px}
+.hint2{font-size:13px; color:#A9B6B1; text-align:center; margin:0}
+/* 스캔 인터랙션: 얼굴 가이드 → 측정 영역 3곳 → 훑는 빛 · 실시간 맥파 · 심박 */
+.cam #guide{transition:stroke .3s, stroke-opacity .3s}
+.cam.found #guide{stroke:#4DB8A6; stroke-dasharray:none; stroke-opacity:1}
+.cam.scanning #guide{stroke-opacity:.3}
+.cam #scan{opacity:0; transition:opacity .3s}
+.cam.scanning #scan{opacity:1; animation:sweep 2.4s ease-in-out infinite alternate}
+@keyframes sweep{from{transform:translateY(57px)} to{transform:translateY(373px)}}
+.live{position:absolute; left:14px; top:14px; display:flex; align-items:center; gap:6px; background:rgba(14,19,18,.62); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  border-radius:8px; padding:6px 10px 6px 8px; font-size:13px; color:#EEF2F0; opacity:0; transform:translateY(-6px); transition:opacity .3s, transform .3s}
+.cam.scanning .live{opacity:1; transform:none}
+.live b{font-family:var(--mono); font-size:18px; min-width:2.2em; text-align:right}
+.cam .live svg{position:static; inset:auto; width:18px; height:18px; flex:none}
+.live .heart{animation:beat 0.85s ease-in-out infinite; transform-origin:center}
+@keyframes beat{0%,100%{transform:scale(1)} 15%{transform:scale(1.28)} 30%{transform:scale(.95)} 45%{transform:scale(1.12)}}
+.wave{position:absolute; left:0; right:0; bottom:0; width:100%; height:64px; background:linear-gradient(transparent, rgba(14,19,18,.7)); opacity:0; transition:opacity .3s}
+.cam.scanning .wave{opacity:1}
+.steps{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px}
+.steps li{border-radius:8px; background:#1A2220; color:#7C8A85; font-size:12px; font-weight:600; text-align:center; padding:8px 4px; display:flex; flex-direction:column; align-items:center; gap:4px; transition:background .3s, color .3s}
+.steps li i{width:18px; height:18px; border-radius:99px; border:2px solid currentColor; display:grid; place-items:center; font-style:normal; font-size:11px}
+.steps li.doing{color:#EEF2F0} .steps li.doing i{border-color:#4DB8A6; border-right-color:transparent; animation:spin .9s linear infinite}
+.steps li.ok{background:#16302B; color:#BFE6DE} .steps li.ok i{background:#4DB8A6; border-color:#4DB8A6; color:#0E1312}
+.steps li.ok i::before{content:"✓"}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.cam.scanning #scan, .live .heart, .banner img{animation:none}}
+.sheet .btn{background:#EEF2F0; color:#0E1312}
+.sheet .btn.ghost{background:transparent; color:#EEF2F0; border-color:#3A4643}
+/* 스케줄 배너 — 정한 시각이 되면 위에서 내려와 스캔을 권한다 */
+.banner{position:fixed; left:0; right:0; top:0; z-index:50; display:flex; justify-content:center; padding:max(10px, env(safe-area-inset-top)) 12px 0;
+  transform:translateY(-140%); transition:transform .4s cubic-bezier(.2,.9,.3,1.15); pointer-events:none}
+.banner.on{transform:none}
+.banner .in{pointer-events:auto; width:100%; max-width:456px; background:var(--btn); color:var(--btn-ink); border-radius:16px; padding:12px 12px 12px 14px;
+  display:grid; grid-template-columns:52px minmax(0,1fr); gap:2px 12px; align-items:center; box-shadow:0 14px 36px rgba(10,30,80,.28)}
+.banner img{width:52px; height:52px; object-fit:contain; grid-row:span 2; animation:bob 1.6s ease-in-out infinite}
+.banner b{font-size:16px} .banner .bs{font-size:13px; opacity:.85}
+.banner .acts{grid-column:1 / -1; display:flex; gap:8px; margin-top:10px}
+.banner .acts button{flex:1; min-height:44px; border-radius:10px; border:none; font-size:15px; font-weight:600; background:rgba(127,127,127,.22); color:inherit}
+.banner .acts button.go{background:var(--btn-ink); color:var(--btn)}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.due{border-radius:16px; padding:16px 18px; display:grid; grid-template-columns:48px minmax(0,1fr); gap:4px 12px; align-items:center; background:var(--btn); color:var(--btn-ink)}
+.due img{width:48px; height:48px; object-fit:contain; grid-row:span 2}
+.due b{font-size:16px} .due span{font-size:13px; opacity:.85}
+.due .btn{grid-column:1 / -1; margin-top:8px; background:var(--btn-ink); color:var(--btn); min-height:48px; border-radius:12px}
+.rt time{font-family:var(--mono); font-size:12px; color:var(--muted)}
+.srow{display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:12px; align-items:center; min-height:58px; border-bottom:1px solid var(--line)}
+.srow:last-of-type{border-bottom:none}
+.srow b{font-size:15px} .srow .sub{display:block}
+input[type=time]{min-height:44px; border-radius:10px; border:1.5px solid var(--line); background:var(--surface); padding:0 10px; font-size:16px; color:var(--ink); font-family:var(--mono)}
+.srow .switch{min-height:0}
+/* 아이콘 · 캐릭터 */
+.ih{display:flex; align-items:center; gap:8px}
+.ih svg{color:var(--calm); flex:none}
+.rt .ico{width:36px; height:36px; border-radius:10px; display:grid; place-items:center; background:var(--surface2); color:var(--ink2); margin-bottom:2px}
+.rt.done .ico{background:var(--surface); color:var(--calm)}
+.phase{display:grid; grid-template-columns:minmax(0,1fr) 72px; column-gap:12px; align-items:center}
+.phase > *:not(.pimg){grid-column:1}
+.phase .pimg{grid-column:2; grid-row:1 / span 3; width:72px; height:72px; object-fit:contain; align-self:center}
+.qc{display:flex; gap:12px; align-items:center}
+.qc img{width:56px; height:56px; object-fit:contain; flex:none}
+.chip{display:flex; align-items:center; justify-content:center; gap:8px}
+.chip svg{color:var(--calm); flex:none}
+.rhead{display:flex; justify-content:space-between; align-items:center; gap:12px}
+.rhead img{width:64px; height:64px; object-fit:contain; flex:none}
+.btn svg{flex:none}
+/* 결과 */
+.result{position:fixed; inset:0; z-index:30; display:none; align-items:flex-end; justify-content:center; background:rgba(8,12,11,.5)}
+.result.on{display:flex}
+.result .in{width:100%; max-width:480px; background:var(--surface); border-radius:20px 20px 0 0; padding:24px 18px calc(20px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:14px}
+.result .head{display:flex; gap:14px; align-items:center}
+.result img{width:84px; height:84px; object-fit:contain; flex:none}
+.result h2{margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em}
+.result p{margin:0}
+/* 동의 */
+.consent{position:fixed; inset:0; z-index:40; background:var(--ground); display:none; overflow:auto}
+.consent.on{display:block}
+.consent .in{max-width:480px; margin:0 auto; padding:max(28px, env(safe-area-inset-top)) 20px 32px; display:flex; flex-direction:column; gap:16px}
+.consent h1{margin:0; font-size:26px; font-weight:700; letter-spacing:-.02em}
+.consent ul{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:10px; font-size:15px; line-height:1.6}
+.cam .mesh{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+.cam.meshon #ov, .cam.meshon #scan, .cam.meshon #scanl, .cam.meshon #guide{display:none}
+/* 측정 화면 — 앱과 같은 밝은 화면 · 같은 강조색 (다크 모드는 app.css 변수 그대로) */
+.sheet, .scan{background:var(--ground); color:var(--ink)}
+.sheet .x, .scan .x{background:var(--surface); color:var(--ink); border:1px solid var(--line)}
+.sheet .x svg path{stroke:var(--ink)}
+.cam{background:var(--surface2); box-shadow:0 0 0 1px var(--line)}
+.cam svg .frame{stroke:var(--line)}
+.cam #ring{stroke:var(--calm)}
+.cam #guide{stroke:var(--muted)}
+.cam.found #guide{stroke:var(--calm)}
+.hint{color:var(--ink)} .hint2{color:var(--muted)}
+.sheet .btn, .scan .btn{background:var(--btn); color:var(--btn-ink)}
+.sheet .btn.ghost{background:transparent; color:var(--ink); border-color:var(--line)}
+.steps li{background:var(--surface); color:var(--muted); box-shadow:0 0 0 1px var(--line) inset}
+.steps li.doing{color:var(--ink); box-shadow:0 0 0 1.5px var(--calm) inset}
+.steps li.doing i{border-color:var(--calm); border-right-color:transparent}
+.steps li.ok{background:var(--calm-soft); color:var(--calm-ink); box-shadow:none}
+.steps li.ok i{background:var(--calm); border-color:var(--calm); color:var(--btn-ink)}
+.live{background:rgba(255,255,255,.92); color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.wave{background:linear-gradient(transparent, rgba(255,255,255,.8))}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div><p id="date">&nbsp;</p><h1>Vity</h1></div>
+    <p id="phaseTag"></p>
+  </header>
+
+  <section class="view on" id="v-home" aria-label="오늘"><div class="card"><p class="sub">불러오는 중…</p></div></section>
+
+  <section class="view" id="v-records" aria-label="기록">
+    <div class="card"><h2>기록</h2><p class="sub">평소와 같음 · 설명됨 · 설명 안 됨으로 나눠 보여줘요. 루틴이 잘못 붙었으면 바꿀 수 있어요.</p></div>
+    <div id="recList" style="display:flex; flex-direction:column; gap:12px"></div>
+  </section>
+
+  <section class="view" id="v-report" aria-label="리포트"></section>
+
+  <section class="view" id="v-settings" aria-label="설정">
+    <div class="card">
+      <h2>30초 컨디션 체크 · 인증 그룹</h2>
+      <p class="sub">심박 · HRV · 스트레스 지수, 오늘의 공부 모드, 친구들과 기상 인증은 Vity 체크에서 해요.</p>
+      <a class="btn small ghost" href="/check">Vity 체크 열기</a>
+    </div>
+    <div class="card" id="schedCard">
+      <h2 class="ih"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /> <polyline points="12 6 12 12 16 14" /></svg>내 스케줄</h2>
+      <p class="sub">루틴마다 보통 하는 시각을 정해 두면, 그때 위에서 배너가 내려와 15초 스캔을 권해요. 두 시간 안에 안 하면 조용히 넘어가요.</p>
+      <div id="schedRows"></div>
+      <button class="btn small" id="saveSched" type="button">스케줄 저장</button>
+      <div class="row">
+        <button class="btn small ghost" id="notiBtn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /> <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg><span id="notiTxt">앱 밖 알림 허용</span></button>
+        <a class="btn small ghost" id="icsBtn" href="/api/m/schedule.ics" download="vity-schedule.ics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4" /> <path d="M16 2v4" /> <path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8" /> <path d="M3 10h18" /> <path d="M16 19h6" /> <path d="M19 16v6" /></svg>캘린더에 추가</a>
+      </div>
+      <p class="sub" id="notiNote">캘린더에 넣으면 앱을 닫아 둬도 그 시각에 알림이 오고, 일정의 링크가 바로 스캔을 열어요.</p>
+    </div>
+    <div class="card">
+      <h2 class="ih"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M16 2v4" /> <path d="M3 10h18" /> <path d="M8 2v4" /> <path d="M17 14h-6" /> <path d="M13 18H7" /> <path d="M7 14h.01" /> <path d="M17 18h.01" /></svg>시험기간</h2>
+      <p class="sub">시험 1주 전이 준비 주간이에요. 그때 남긴 기록이 루틴별 '평소' 가 돼요.</p>
+      <div class="row">
+        <label class="f">시험 시작<input type="date" id="examStart"></label>
+        <label class="f">시험 끝<input type="date" id="examEnd"></label>
+      </div>
+      <button class="btn small" id="saveExam" type="button">저장</button>
+    </div>
+    <div class="card">
+      <h2 class="ih"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4" /> <line x1="10" x2="3" y1="4" y2="4" /> <line x1="21" x2="12" y1="12" y2="12" /> <line x1="8" x2="3" y1="12" y2="12" /> <line x1="21" x2="16" y1="20" y2="20" /> <line x1="12" x2="3" y1="20" y2="20" /> <line x1="14" x2="14" y1="2" y2="6" /> <line x1="8" x2="8" y1="10" y2="14" /> <line x1="16" x2="16" y1="18" y2="22" /></svg>평소와 다르다고 보는 정도</h2>
+      <p class="sub">루틴별 평소 값에서 흩어짐(MAD)의 몇 배 이상 벗어나면 '평소와 달라요' 로 봐요. 팀 시험 운용으로 정할 값이에요.</p>
+      <label class="f"><select class="f" id="kSel"><option value="2">2배</option><option value="2.5">2.5배</option><option value="3">3배</option></select></label>
+    </div>
+    <div class="card">
+      <h2 class="ih"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>루틴에 붙이기</h2>
+      <p class="sub">앱이 스스로 카메라를 켤 수는 없어요. 단축어 자동화(알람 끄기 · 집중 모드)나 NFC 스티커가 이 주소를 열게 해 주세요.</p>
+      <div id="urls" style="display:flex; flex-direction:column; gap:8px"></div>
+    </div>
+    <div class="card">
+      <h2 class="ih"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" /> <path d="M8.5 2h7" /> <path d="M7 16h10" /></svg>시연</h2>
+      <p class="sub">발표용. 준비 주간 → 시험 2주 → 회복 주간 기록을 채워요. 지금 기록은 지워져요.</p>
+      <button class="btn small ghost" id="demoBtn" type="button">시연 기록 채우기</button>
+    </div>
+    <div class="card">
+      <h2 class="ih"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18" /> <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /> <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /> <line x1="10" x2="10" y1="11" y2="17" /> <line x1="14" x2="14" y1="11" y2="17" /></svg>기록 지우기</h2>
+      <p class="sub">이 기기에 남은 숫자 기록을 모두 지워요. 영상과 사진은 처음부터 저장하지 않아요.</p>
+      <button class="btn small ghost" id="resetBtn" type="button" style="color:var(--alert)">모든 기록 지우기</button>
+      <div id="resetConfirm" hidden class="row">
+        <button class="btn small" id="resetYes" type="button" style="background:var(--alert); color:#FFFFFF">지우기</button>
+        <button class="btn small ghost" id="resetNo" type="button">취소</button>
+      </div>
+    </div>
+    <p class="sub" id="meshSrc" style="padding:0 4px"></p>
+  </section>
+</div>
+
+<nav class="tabs" aria-label="화면"><div role="tablist">
+  <button role="tab" aria-selected="true" data-tab="home" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>오늘</button>
+  <button role="tab" aria-selected="false" data-tab="records" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h.01" /> <path d="M3 18h.01" /> <path d="M3 6h.01" /> <path d="M8 12h13" /> <path d="M8 18h13" /> <path d="M8 6h13" /></svg>기록</button>
+  <button role="tab" aria-selected="false" data-tab="report" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="M18 17V9" /> <path d="M13 17V5" /> <path d="M8 17v-3" /></svg>리포트</button>
+  <button role="tab" aria-selected="false" data-tab="settings" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /> <circle cx="12" cy="12" r="3" /></svg>설정</button>
+</div></nav>
+
+<!-- 거울 화면 (FR-04): 메시 오버레이 없이 -->
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="거울">
+  <div class="in">
+    <div class="bar">
+      <button class="x" id="sheetClose" type="button" aria-label="닫기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EEF2F0" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      <span id="sheetTitle" style="font-weight:600">아침 거울</span>
+      <span style="width:44px"></span>
+    </div>
+    <div class="cam" id="camBox">
+      <video id="video" playsinline muted></video>
+      <canvas class="mesh" id="meshc" aria-hidden="true"></canvas>
+      <canvas class="wave" id="wave" width="600" height="128" aria-hidden="true"></canvas>
+      <svg viewBox="0 0 300 400" aria-hidden="true">
+        <defs>
+          <clipPath id="faceClip"><ellipse cx="150" cy="185" rx="98" ry="128"></ellipse></clipPath>
+          <linearGradient id="scanG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#9DBBFF" stop-opacity="0"></stop>
+            <stop offset=".8" stop-color="#9DBBFF" stop-opacity=".28"></stop>
+            <stop offset="1" stop-color="#FFFFFF" stop-opacity=".95"></stop>
+          </linearGradient>
+        </defs>
+        <ellipse id="guide" cx="150" cy="185" rx="98" ry="128" fill="none" stroke="#EEF2F0" stroke-opacity=".55" stroke-width="2" stroke-dasharray="6 8"></ellipse>
+        <g id="ov"></g>
+        <g clip-path="url(#faceClip)"><rect id="scan" x="0" y="-60" width="300" height="60" fill="url(#scanG)"></rect></g>
+        <rect x="6" y="6" width="288" height="388" rx="18" fill="none" class="frame" stroke="#D9E1EC" stroke-width="6"></rect>
+        <rect id="ring" x="6" y="6" width="288" height="388" rx="18" fill="none" stroke="#4DB8A6" stroke-width="6" pathLength="100" stroke-dasharray="0 100" stroke-linecap="round"></rect>
+      </svg>
+      <div class="live" aria-live="polite"><svg class="heart" id="heart" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z" fill="#FF6B7A"></path></svg><b id="liveBpm">··</b><span id="liveUnit">찾는 중</span></div>
+    </div>
+    <ol class="steps" id="steps" aria-label="스캔 단계">
+      <li data-s="face"><i></i>얼굴 찾기</li>
+      <li data-s="roi"><i></i>이마 · 볼</li>
+      <li data-s="pulse"><i></i>맥박 신호</li>
+      <li data-s="save"><i></i>안색 · 저장</li>
+    </ol>
+    <p class="hint" id="hint">얼굴을 화면 가운데에 두세요</p>
+    <p class="hint2" id="hint2">영상은 이 기기 안에서 숫자로만 바뀌고 저장되지 않아요.</p>
+    <div style="flex:1"></div>
+    <button class="btn" id="startBtn" type="button">바로 시작</button>
+  </div>
+  <canvas id="canvas" width="320" height="426" hidden></canvas>
+</div>
+
+<!-- 결과 -->
+<div class="result" id="result" role="dialog" aria-modal="true" aria-labelledby="resTitle">
+  <div class="in" id="resIn"></div>
+</div>
+
+<!-- 동의 (FR-16) — 여기서만 무엇을 하는지 분명히 쓴다 -->
+<div class="consent" id="consent" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
+  <div class="in">
+    <img src="/characters/calm.png" alt="" style="width:96px; height:96px; object-fit:contain">
+    <h1 id="consentTitle">시험기간의 몸을 기록해요</h1>
+    <ul>
+      <li>아침 거울 · 공부 시작 · 밤 세안 때 <b>전면 카메라로 15초</b> 얼굴을 봐요.</li>
+      <li>카메라로 <b>얼굴 피부의 혈류 신호를 분석</b>해 심박을, 볼과 이마의 색 차이로 안색을 기록해요.</li>
+      <li>얼굴 영상 · 사진 · 얼굴 메시는 <b>저장하지 않아요.</b> 숫자(심박 · 안색 지표 · 품질)와 고른 이유만 남아요.</li>
+      <li>이 앱은 진단하지 않아요. 평소와 같은지 다른지와, 다를 때 그 이유만 기록해요.</li>
+      <li>설정에서 언제든 모든 기록을 지울 수 있어요.</li>
+    </ul>
+    <p class="sub">생체 · 건강 관련 정보라 별도 동의를 받아요 (개인정보보호법 제23조).</p>
+    <button class="btn" id="consentYes" type="button">동의하고 시작</button>
+  </div>
+</div>
+
+<div class="banner" id="banner" role="alert" aria-live="assertive">
+  <div class="in">
+    <img id="bnImg" src="/characters/calm.png" alt="">
+    <b id="bnTitle">스캔할 시간이에요</b>
+    <span class="bs" id="bnSub">15초면 끝나요</span>
+    <div class="acts"><button type="button" id="bnLater">10분 뒤</button><button type="button" class="go" id="bnGo">지금 스캔</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/rppg2.js"></script>
+<script src="/facemesh.js"></script>
+<script src="/meshdraw.js"></script>
+<script>
+"use strict";
+const ACCENT = () => getComputedStyle(document.documentElement).getPropertyValue("--calm").trim() || "#1A6DFF";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? { cache: "no-store" } :
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("on"), 2400); }
+const DAY = (iso) => { const d = new Date(iso + "T00:00:00"); return (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + "일월화수목금토"[d.getDay()] + "요일"; };
+const CHAR = { same: "calm", building: "idle", low: "idle", ask: "ask", alcohol: "drink", caffeine: "coffee", exercise: "move", sleep: "sleep", none: "left" };
+const ROUTINE_BTN = { morning: "거울 보기", desk: "공부 시작 체크", night: "밤 세안 기록" };
+// Lucide 아이콘 (ISC, lucide-static 0.460.0)
+const ICON = {"house": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" /> <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />", "list": "<path d=\"M3 12h.01\" /> <path d=\"M3 18h.01\" /> <path d=\"M3 6h.01\" /> <path d=\"M8 12h13\" /> <path d=\"M8 18h13\" /> <path d=\"M8 6h13\" />", "chart-column": "<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"M18 17V9\" /> <path d=\"M13 17V5\" /> <path d=\"M8 17v-3\" />", "settings": "<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />", "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"m17.66 17.66 1.41 1.41\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.34 17.66-1.41 1.41\" /> <path d=\"m19.07 4.93-1.41 1.41\" />", "book-open": "<path d=\"M12 7v14\" /> <path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\" />", "moon": "<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\" />", "wine": "<path d=\"M8 22h8\" /> <path d=\"M7 10h10\" /> <path d=\"M12 15v7\" /> <path d=\"M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z\" />", "coffee": "<path d=\"M10 2v2\" /> <path d=\"M14 2v2\" /> <path d=\"M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1\" /> <path d=\"M6 2v2\" />", "dumbbell": "<path d=\"M14.4 14.4 9.6 9.6\" /> <path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\" /> <path d=\"m21.5 21.5-1.4-1.4\" /> <path d=\"M3.9 3.9 2.5 2.5\" /> <path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\" />", "bed-double": "<path d=\"M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8\" /> <path d=\"M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4\" /> <path d=\"M12 4v6\" /> <path d=\"M2 18h20\" />", "ban": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"m4.9 4.9 14.2 14.2\" />", "scan-face": "<path d=\"M3 7V5a2 2 0 0 1 2-2h2\" /> <path d=\"M17 3h2a2 2 0 0 1 2 2v2\" /> <path d=\"M21 17v2a2 2 0 0 1-2 2h-2\" /> <path d=\"M7 21H5a2 2 0 0 1-2-2v-2\" /> <path d=\"M8 14s1.5 2 4 2 4-2 4-2\" /> <path d=\"M9 9h.01\" /> <path d=\"M15 9h.01\" />", "bell": "<path d=\"M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9\" /> <path d=\"M10.3 21a1.94 1.94 0 0 0 3.4 0\" />", "calendar-plus": "<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <path d=\"M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8\" /> <path d=\"M3 10h18\" /> <path d=\"M16 19h6\" /> <path d=\"M19 16v6\" />", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <polyline points=\"12 6 12 12 16 14\" />", "sliders-horizontal": "<line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\" /> <line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\" /> <line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\" /> <line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\" /> <line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\" /> <line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\" /> <line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\" /> <line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\" /> <line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\" />", "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\" /> <path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\" />", "trash-2": "<path d=\"M3 6h18\" /> <path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\" /> <path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\" /> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\" /> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\" />", "flask-conical": "<path d=\"M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2\" /> <path d=\"M8.5 2h7\" /> <path d=\"M7 16h10\" />", "calendar-range": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M16 2v4\" /> <path d=\"M3 10h18\" /> <path d=\"M8 2v4\" /> <path d=\"M17 14h-6\" /> <path d=\"M13 18H7\" /> <path d=\"M7 14h.01\" /> <path d=\"M17 18h.01\" />", "check": "<path d=\"M20 6 9 17l-5-5\" />"};
+const ic = (n, sz = 20) => '<svg width="' + sz + '" height="' + sz + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + "</svg>";
+const RT_ICON = { morning: "sun", desk: "book-open", night: "moon" };
+const REASON_ICON = { alcohol: "wine", caffeine: "coffee", exercise: "dumbbell", sleep: "bed-double", none: "ban" };
+const PHASE_CHAR = { prep: "idle", exam: "coffee", recovery: "calm", none: "idle" };
+const DUE_CHAR = { morning: "calm", desk: "coffee", night: "sleep" };
+const DUE_SUB = { morning: "거울 볼 때 15초만 봐 주세요", desk: "공부 시작 전에 15초만", night: "세안 뒤 15초만 봐 주세요" };
+function untilKo(iso) {
+  const m = Math.round((new Date(iso) - Date.now()) / 60000);
+  if (m < 1) return "곧";
+  return m < 60 ? m + "분 뒤" : Math.floor(m / 60) + "시간 " + (m % 60 ? (m % 60) + "분 " : "") + "뒤";
+}
+const STATUS_KO = { same: "평소와 같음", explained: "설명됨", unexplained: "설명 안 됨", ask: "이유 기다림", low: "다시 필요", building: "기준 쌓는 중" };
+
+let S = null;                  // 서버 상태
+const params = new URLSearchParams(location.search);
+let makeup = false;
+
+// ---------- 탭 ----------
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => go(b.dataset.tab)));
+function go(tab) {
+  document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", x.dataset.tab === tab));
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === "v-" + tab));
+  if (tab === "records") renderRecords();
+  if (tab === "report") renderReport();
+  window.scrollTo(0, 0);
+}
+
+// ---------- 오늘 ----------
+function phaseHtml(s) {
+  const img = '<img class="pimg" src="/characters/' + PHASE_CHAR[s.phase] + '.png" alt="">';
+  return phaseInner(s).replace(/^(<div class="phase"[^>]*>)/, "$1" + img);
+}
+function phaseInner(s) {
+  const p = s.phase, pr = s.prep;
+  if (p === "prep") return '<div class="phase"><b>준비 주간 ' + pr.day + "/" + pr.of + '일</b><span>시험 전 내 평소 상태를 남겨두세요. 시험까지 ' + pr.exam_in + "일.</span>" +
+    '<div class="bar"><i style="width:' + Math.round((pr.day / pr.of) * 100) + '%"></i></div></div>';
+  if (p === "exam") return '<div class="phase" style="background:var(--left-soft); color:var(--left-ink)"><b>시험 주간</b><span>세 루틴에 15초씩, 달라지면 이유 한 번만.</span></div>';
+  if (p === "recovery") return '<div class="phase"><b>회복 주간</b><span>몸이 평소로 돌아오는지 남겨요. 시험기간 리포트가 열렸어요.</span></div>';
+  return '<div class="phase" style="background:var(--surface); color:var(--ink)"><b>시험기간을 정하면 준비 주간부터 시작해요</b><span>정하지 않아도 지난 7일을 평소로 삼아 기록해요.</span></div>';
+}
+
+function renderHome() {
+  const s = S;
+  $("date").textContent = DAY(s.today);
+  $("phaseTag").textContent = { prep: "준비 주간", exam: "시험 주간", recovery: "회복 주간", none: "" }[s.phase];
+  const done = {};
+  for (const r of s.today_records) done[r.routine] = r;
+  const tiles = ["morning", "desk", "night"].map((rt) => {
+    const r = done[rt], bl = s.baselines[rt];
+    const st = r ? STATUS_KO[r.status] : bl.ready ? "아직" : "기준 " + bl.n + "/4";
+    const sc = s.settings.schedule[rt];
+    return '<button type="button" class="rt' + (r ? " done" : "") + ((s.schedule.due || s.now_routine) === rt ? " now" : "") + '" data-open="' + rt + '"><span class="ico">' + ic(RT_ICON[rt], 20) + "</span><b>" +
+      esc(s.labels.routine[rt]) + "</b>" + (sc.on ? "<time>" + sc.at + "</time>" : "") + "<span>" + esc(st) + "</span></button>";
+  }).join("");
+  const sd = s.schedule, parts = [], cur = sd.due || s.now_routine;     // 스케줄에 걸린 루틴이 먼저
+  if (sd.due) parts.push('<div class="due"><img src="/characters/' + DUE_CHAR[sd.due] + '.png" alt=""><b>' + esc(s.labels.routine[sd.due]) + " 시간이에요</b>" +
+    "<span>" + sd.due_since + " 스케줄 · 15초면 끝나요</span>" + '<button class="btn" type="button" data-open="' + sd.due + '">' + ic("scan-face", 20) + '지금 스캔</button></div>');
+  parts.push(phaseHtml(s));
+  if (s.pending) parts.push(questionCard(s.pending, false));
+  const nx = sd.next ? '<p class="sub">다음 스캔 · ' + esc(s.labels.routine[sd.next.routine]) + " " + sd.next.at.slice(11) + " (" + untilKo(sd.next.at) + ")" +
+    ' · <button type="button" data-goto="settings" style="border:none; background:none; padding:0; color:var(--calm); font:inherit">스케줄 바꾸기</button></p>' : "";
+  parts.push('<div class="card"><h2>오늘의 세 루틴</h2><div class="routines">' + tiles + "</div>" + nx +
+    '<label class="switch"><span>화장 · 선크림 했어요<br><span class="sub">켜면 이번 기록의 안색은 빼고 심박만 남겨요</span></span><input type="checkbox" id="makeup"' + (makeup ? " checked" : "") + "></label>" +
+    '<button class="btn" type="button" data-open="' + cur + '">' + ic("scan-face", 22) + ROUTINE_BTN[cur] + "</button></div>");
+  if (s.report_ready) parts.push('<div class="card"><h2>시험기간 리포트가 열렸어요</h2><button class="btn small" type="button" data-goto="report">리포트 보기</button></div>');
+  $("v-home").innerHTML = parts.join("");
+  $("makeup").addEventListener("change", (e) => { makeup = e.target.checked; });
+}
+
+function questionCard(r, inSheet) {
+  const L = S.labels;
+  return (inSheet ? "" : '<div class="card"><div class="qc"><img src="/characters/ask.png" alt=""><h2>' + esc(r.routine_ko) + " · " + esc(r.question) + "</h2></div>") +
+    '<div class="chips" data-rid="' + r.id + '">' +
+    ["alcohol", "caffeine", "exercise", "sleep"].map((k) => '<button class="chip" type="button" data-reason="' + k + '">' + ic(REASON_ICON[k], 20) + L.reason[k] + "</button>").join("") +
+    '<button class="chip wide" type="button" data-reason="none">' + ic("ban", 20) + '해당 없음</button></div>' +
+    '<div class="chips" id="caf' + r.id + '" hidden data-rid="' + r.id + '">' +
+    Object.entries(L.caffeine).map(([k, v]) => '<button class="chip" type="button" data-reason="caffeine" data-sub="' + k + '">' + v + "</button>").join("") + "</div>" +
+    (inSheet ? "" : "</div>");
+}
+
+// ---------- 결과 (FR-10 · FR-11) ----------
+function showResult(r, q) {
+  const L = S.labels;
+  let img = CHAR[r.status] || "calm", title = "", body = "", extra = "";
+  if (r.status === "low") {
+    title = "다시 볼까요?";
+    body = { light: "조금 더 밝은 곳에서 다시 볼까요? 화면 밝기를 올려도 좋아요.", move: "고개를 가만히 두고 말하지 말아 주세요.",
+      signal: "신호가 약했어요. 정면에서 다시 볼까요?", face: "얼굴이 잘 보이지 않았어요." }[q.why] || "다시 볼까요?";
+    extra = '<div class="row"><button class="btn" type="button" id="retry">다시 보기</button>' +
+      (retries >= 1 ? '<button class="btn ghost" type="button" id="skip">이번엔 건너뛰기</button>' : "") + "</div>";
+  } else if (r.status === "building") {
+    title = "기록했어요";
+    body = r.routine_ko + "의 평소를 알아가는 중이에요 (" + Math.min(r.ref_n + 1, 4) + "/4).";
+    extra = '<button class="btn" type="button" id="closeRes">확인</button>';
+  } else if (r.status === "same") {
+    title = "평소와 같아요";
+    body = "기록했어요.";
+    extra = '<button class="btn" type="button" id="closeRes">확인</button>';
+  } else {
+    img = "ask"; title = "평소와 달라요";
+    body = esc(r.question);
+    extra = questionCard(r, true);
+  }
+  $("resIn").innerHTML = '<div class="head"><img src="/characters/' + img + '.png" alt=""><div><h2 id="resTitle">' + title + '</h2><p class="sub">' +
+    esc(r.routine_ko) + "</p></div></div><p>" + body + "</p>" + extra;
+  $("result").classList.add("on");
+  if ($("closeRes")) $("closeRes").onclick = closeResult;
+  if ($("retry")) $("retry").onclick = () => { closeResult(); openMirror(r.routine, true); };
+  if ($("skip")) $("skip").onclick = closeResult;
+}
+function closeResult() { $("result").classList.remove("on"); refresh(); }
+
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest("button");
+  if (!t) return;
+  try {
+    if (t.dataset.open) return openMirror(t.dataset.open, false);
+    if (t.dataset.goto) return go(t.dataset.goto);
+    if (t.dataset.reason) {
+      const box = t.closest("[data-rid]"), rid = +box.dataset.rid;
+      if (t.dataset.reason === "caffeine" && !t.dataset.sub) { const c = document.getElementById("caf" + rid); c.hidden = false; box.hidden = true; return; }
+      const r = await api("/api/m/answer", { id: rid, reason: t.dataset.reason, sub: t.dataset.sub || null });
+      $("result").classList.remove("on");
+      toast(r.reason === "none" ? "이유 없는 변화로 따로 보관했어요" : "이유 '" + r.reason_ko + (r.reason_sub_ko ? " · " + r.reason_sub_ko : "") + "' 로 기록했어요");
+      return refresh();
+    }
+  } catch (err) { toast(err.message); }
+});
+
+// ---------- 거울 (FR-04 ~ FR-08) ----------
+const SECS = 15;
+let cam = { stream: null, raf: 0, frames: [], running: false, t0: 0, readySince: 0, routine: "morning", lastT: -1, mesh: true };
+let retries = 0;
+
+function ring(f) { $("ring").setAttribute("stroke-dasharray", Math.max(0, Math.min(100, f * 100)) + " 100"); }
+
+// ---------- 스캔 인터랙션 ----------
+// 화면에 그리는 것은 측정 영역 3곳 · 훑는 빛 · 실시간 맥파뿐 (얼굴 메시 점은 그리지 않는다).
+// 실시간 맥파는 최근 4초를 POS 로 투영한 미리보기이고, 저장되는 심박은 끝난 뒤 15초 전체로 다시 계산한다.
+const FIXED_POLYS = {
+  forehead: [[0.42, 0.22], [0.58, 0.22], [0.58, 0.29], [0.42, 0.29]],
+  cheekL: [[0.31, 0.47], [0.42, 0.47], [0.42, 0.56], [0.31, 0.56]],
+  cheekR: [[0.58, 0.47], [0.69, 0.47], [0.69, 0.56], [0.58, 0.56]],
+};
+const live = { bpm: null, at: 0, pulse: 0 };
+
+function stepSet(name, st) { const li = document.querySelector('#steps [data-s="' + name + '"]'); if (li) li.className = st || ""; }
+function stepsReset() { ["face", "roi", "pulse", "save"].forEach((s) => stepSet(s, "")); stepSet("face", "doing"); }
+
+// 정규화 좌표(원본 영상) → 화면(300×400, object-fit:cover, 좌우 반전)
+function toView(nx, ny) {
+  const v = $("video"), vw = v.videoWidth || 640, vh = v.videoHeight || 480;
+  const sc = Math.max(300 / vw, 400 / vh), dw = vw * sc, dh = vh * sc;
+  return [300 - ((300 - dw) / 2 + nx * dw), (400 - dh) / 2 + ny * dh];
+}
+
+// 얼굴 메시를 그대로 보여준다 (메시를 못 불러오면 예전처럼 고정 영역 상자)
+function paintFace(f, now) {
+  const lm = cam.mesh && f && f.face ? FACE.lastLandmarks() : null;
+  $("camBox").classList.toggle("meshon", !!lm);
+  if (lm) { $("ov").innerHTML = ""; MESH.draw($("meshc"), $("video"), { lm, tess: FACE.tessellation(), polys: FACE.lastPolys(), scanning: cam.running, pulse: live.pulse, t: now }); }
+  else { MESH.clear($("meshc")); drawRois(f); }
+}
+function drawRois(f) {
+  const g = $("ov");
+  if (!f || !f.face) { g.innerHTML = ""; return; }
+  const polys = cam.mesh ? FACE.lastPolys() : FIXED_POLYS;
+  if (!polys) return;
+  const op = cam.running ? 0.14 + 0.3 * live.pulse : 0.1;
+  g.innerHTML = Object.values(polys).map((p) => '<polygon points="' + p.map(([x, y]) => toView(x, y).map((n) => n.toFixed(1)).join(",")).join(" ") +
+    '" fill="' + ACCENT() + '" fill-opacity="' + op.toFixed(2) + '" stroke="#FFFFFF" stroke-opacity=".9" stroke-width="1.6" stroke-linejoin="round"></polygon>').join("");
+}
+
+// 최근 4초 POS 투영 (창 안 평균으로 나눈 뒤 S1 = G−B, S2 = G+B−2R, h = S1 + σ1/σ2 · S2)
+function liveWave() {
+  const fr = cam.frames.filter((f) => f.face);
+  if (fr.length < 24) return null;
+  const tEnd = fr[fr.length - 1].t, w = fr.filter((f) => f.t > tEnd - 4000), n = w.length;
+  const cn = w.map((f, i) => {
+    let r = 0, g = 0, b = 0, k = 0;
+    for (let j = 0; j < n; j++) if (Math.abs(w[j].t - f.t) <= 800) { r += w[j].rgb[0]; g += w[j].rgb[1]; b += w[j].rgb[2]; k++; }
+    return [f.rgb[0] / (r / k) - 1, f.rgb[1] / (g / k) - 1, f.rgb[2] / (b / k) - 1];
+  });
+  const s1 = cn.map((c) => c[1] - c[2]), s2 = cn.map((c) => c[1] + c[2] - 2 * c[0]);
+  const sd = (v) => { const m = v.reduce((a, x) => a + x, 0) / v.length; return Math.sqrt(v.reduce((a, x) => a + (x - m) ** 2, 0) / v.length) || 1e-9; };
+  const al = sd(s1) / sd(s2);
+  let h = s1.map((x, i) => x + al * s2[i]);
+  h = h.map((x, i) => (h[Math.max(0, i - 1)] + x + h[Math.min(n - 1, i + 1)]) / 3);
+  const m = h.reduce((a, x) => a + x, 0) / n, s = sd(h);
+  return { t: w.map((f) => f.t), x: h.map((x) => (x - m) / s), tEnd };
+}
+
+function drawWave(wv) {
+  const c = $("wave"), ctx = c.getContext("2d"), W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+  if (!wv) return;
+  const px = (t) => W - ((wv.tEnd - t) / 4000) * W, py = (x) => H * 0.55 - Math.max(-2.5, Math.min(2.5, x)) * H * 0.16;
+  ctx.lineWidth = 4; ctx.lineJoin = "round"; ctx.strokeStyle = ACCENT(); ctx.shadowColor = ACCENT(); ctx.shadowBlur = 12;
+  ctx.beginPath();
+  wv.t.forEach((t, i) => (i ? ctx.lineTo(px(t), py(wv.x[i])) : ctx.moveTo(px(t), py(wv.x[i]))));
+  ctx.stroke();
+  const last = wv.x[wv.x.length - 1];
+  ctx.shadowBlur = 0; ctx.fillStyle = ACCENT();
+  ctx.beginPath(); ctx.arc(W - 6, py(last), 7, 0, Math.PI * 2); ctx.fill();
+  live.pulse = Math.max(0, Math.min(1, (last + 1.5) / 3));
+}
+
+function liveEstimate(now) {
+  if (now - live.at < 1000) return;
+  live.at = now;
+  const faced = cam.frames.filter((f) => f.face);
+  const est = faced.length > 60 ? RPPG2.estimate(faced.map((f) => ({ t: f.t, rgb: f.rgb }))) : null;
+  if (est && est.snr >= FACE.Q.snrMin) {
+    live.bpm = est.bpm;
+    $("liveBpm").textContent = Math.round(est.bpm); $("liveUnit").textContent = "bpm";
+    $("heart").style.animationDuration = (60 / est.bpm).toFixed(2) + "s";
+    stepSet("pulse", "ok");
+  } else {
+    $("liveBpm").textContent = "··"; $("liveUnit").textContent = (now - cam.t0) / 1000 < 8 ? "맥박 모으는 중" : "신호 찾는 중";
+    stepSet("pulse", "doing");
+  }
+}
+
+async function openMirror(routine, isRetry) {
+  retries = isRetry ? retries + 1 : 0;
+  cam.routine = routine; cam.frames = []; cam.running = false; cam.readySince = 0;
+  $("sheetTitle").textContent = S.labels.routine[routine];
+  $("sheet").classList.add("on"); ring(0);
+  hideBanner();
+  $("camBox").className = "cam"; $("ov").innerHTML = ""; drawWave(null); stepsReset();
+  Object.assign(live, { bpm: null, at: 0, pulse: 0 }); $("liveBpm").textContent = "··"; $("liveUnit").textContent = "맥박 모으는 중";
+  $("hint").textContent = "얼굴을 화면 가운데에 두세요"; $("startBtn").disabled = false; $("startBtn").textContent = "바로 시작";
+  if (!navigator.mediaDevices || !window.isSecureContext) { $("hint").textContent = "카메라는 https 주소에서 열 수 있어요"; $("startBtn").disabled = true; return; }
+  try {
+    cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio: false });
+    const v = $("video"); v.srcObject = cam.stream; await v.play();
+    try { $("hint2").textContent = "얼굴 메시 준비 중…"; const src = await FACE.init(); cam.mesh = true; $("meshSrc").textContent = "얼굴 메시: MediaPipe Face Landmarker (" + src + ")"; }
+    catch (e) { cam.mesh = false; $("meshSrc").textContent = "얼굴 메시를 불러오지 못해 고정 영역으로 기록해요"; }
+    $("hint2").textContent = "영상은 이 기기 안에서 숫자로만 바뀌고 저장되지 않아요.";
+    const c = $("canvas"); c.width = 320; c.height = Math.round(320 * v.videoHeight / v.videoWidth) || 240;
+    cam.raf = requestAnimationFrame(loop);
+  } catch (err) {
+    $("hint").textContent = { NotAllowedError: "카메라 권한을 허용해 주세요", NotFoundError: "카메라를 찾지 못했어요" }[err.name] || err.message;
+    $("startBtn").disabled = true;
+  }
+}
+
+// 메시를 못 불러온 경우: 화면 가운데 고정 영역 (이전 방식)
+function sampleFixed(video, canvas, t) {
+  const W = canvas.width, H = canvas.height, ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(video, 0, 0, W, H);
+  const box = (x, y, w, h) => { const d = ctx.getImageData(x * W, y * H, w * W, h * H).data; let r = 0, g = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; } const n = d.length / 4; return [r / n, g / n, b / n]; };
+  const fh = box(0.42, 0.22, 0.16, 0.07), l = box(0.31, 0.47, 0.11, 0.09), r = box(0.58, 0.47, 0.11, 0.09);
+  const ck = [0, 1, 2].map((k) => (l[k] + r[k]) / 2), rgb = [0, 1, 2].map((k) => (fh[k] + l[k] + r[k]) / 3);
+  return { t, face: true, fh, ck, rgb, lum: 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2], nose: [0, 0], blink: 0, talk: 0, skip: false };
+}
+
+function loop() {
+  if (!$("sheet").classList.contains("on") || !cam.stream) return;
+  const v = $("video"), now = performance.now();
+  if (v.readyState >= 2 && v.currentTime !== cam.lastT) {
+    cam.lastT = v.currentTime;
+    let f;
+    try { f = cam.mesh ? FACE.sample(v, $("canvas"), now) : sampleFixed(v, $("canvas"), now); } catch (e) { f = { t: now, face: false }; }
+    paintFace(f, now);
+    if (cam.running) {
+      cam.frames.push(f);
+      drawWave(liveWave());
+      if (!f.face) $("hint2").textContent = "얼굴이 화면 밖으로 나갔어요";
+      else if (f.skip) $("hint2").textContent = "눈 뜨고 말하지 말아 주세요";
+      else $("hint2").textContent = "이마 · 양 볼의 미세한 색 변화로 맥박을 읽고 있어요";
+    } else {
+      const ok = f.face && f.lum >= FACE.Q.lumLo && f.lum <= FACE.Q.lumHi && !f.skip;
+      cam.readySince = ok ? (cam.readySince || now) : 0;
+      $("camBox").classList.toggle("found", !!f.face);
+      stepSet("face", f.face ? "ok" : "doing"); stepSet("roi", f.face ? "doing" : "");
+      $("hint").textContent = !f.face ? "얼굴을 화면 가운데에 두세요" : f.lum < FACE.Q.lumLo ? "조금 더 밝은 곳이 좋아요" : f.lum > FACE.Q.lumHi ? "빛이 너무 세요" : "좋아요, 그대로 있어 주세요";
+      if (ok && now - cam.readySince > 600) start();
+    }
+  }
+  if (cam.running) {
+    const el = (now - cam.t0) / 1000;
+    ring(el / SECS);
+    $("hint").textContent = Math.max(0, Math.ceil(SECS - el)) + "초";
+    liveEstimate(now);
+    if (el >= SECS) return finish();
+  }
+  cam.raf = requestAnimationFrame(loop);
+}
+
+function start() {
+  if (cam.running || !cam.stream) return;
+  cam.running = true; cam.frames = []; cam.t0 = performance.now();
+  $("startBtn").disabled = true; $("startBtn").textContent = "그대로 있어 주세요";
+  $("camBox").classList.add("found", "scanning");
+  stepSet("face", "ok"); stepSet("roi", "ok"); stepSet("pulse", "doing");
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+async function finish() {
+  cam.running = false;
+  cancelAnimationFrame(cam.raf);
+  const frames = cam.frames;
+  $("camBox").classList.remove("scanning"); ring(1);
+  stepSet("save", "doing"); $("hint").textContent = "분석하는 중"; $("hint2").textContent = "15초 전체로 심박 · 안색을 다시 계산해요";
+  await new Promise((r) => setTimeout(r, 450));
+  stepSet("save", "ok");
+  await new Promise((r) => setTimeout(r, 250));
+  stopCam();
+  $("sheet").classList.remove("on");
+  const faced = frames.filter((f) => f.face);
+  const est = faced.length > 60 ? RPPG2.estimate(faced.map((f) => ({ t: f.t, rgb: f.rgb }))) : null;
+  const comp = RPPG2.complexion(faced);
+  const q = FACE.quality(frames, est);
+  const trig = params.get("t") || (params.get("routine") ? "shortcut" : "app");
+  try {
+    const r = await api("/api/m/record", {
+      bpm: est ? Math.round(est.bpm * 10) / 10 : null, snr: est ? Math.round(est.snr * 100) / 100 : null,
+      bright: q.bright ?? null, motion: q.motion ?? null, quality_ok: q.ok,
+      a_rel: comp && !makeup ? Math.round(comp.a_rel * 100) / 100 : null, a_cheek: comp && !makeup ? Math.round(comp.a_cheek * 100) / 100 : null,
+      makeup, routine: cam.routine, trigger: trig, retry: retries });
+    if (navigator.vibrate) navigator.vibrate(q.ok ? [40, 60, 40] : 200);
+    showResult(r, q);
+  } catch (err) { toast(err.message); }
+}
+
+function stopCam() { cancelAnimationFrame(cam.raf); if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop()); cam.stream = null; }
+$("startBtn").addEventListener("click", start);
+$("sheetClose").addEventListener("click", () => { cam.running = false; stopCam(); $("sheet").classList.remove("on"); });
+
+// ---------- 기록 (FR-13) ----------
+async function renderRecords() {
+  const recs = await api("/api/m/records");
+  const by = {};
+  for (const r of recs) (by[r.day] = by[r.day] || []).push(r);
+  $("recList").innerHTML = Object.entries(by).map(([day, rs]) => '<div class="card day"><h3>' + DAY(day) + "</h3>" +
+    rs.slice().reverse().map((r) => '<div class="rec"><div><select data-rid="' + r.id + '" aria-label="루틴 바꾸기">' +
+      ["morning", "desk", "night"].map((k) => '<option value="' + k + '"' + (k === r.routine ? " selected" : "") + ">" + S.labels.routine[k] + "</option>").join("") +
+      '</select><div class="n">' + r.at.slice(11, 16) + "</div></div>" +
+      '<div><div class="r">' + (r.bpm != null && r.quality_ok ? r.bpm + " bpm" : "–") +
+      (r.delta != null ? ' <span class="n">(' + (r.delta > 0 ? "+" : "") + r.delta + ")</span>" : "") + "</div>" +
+      '<div class="n">' + (r.reason_ko ? esc(r.reason_ko + (r.reason_sub_ko ? " · " + r.reason_sub_ko : "")) : "") +
+      (r.makeup ? " · 화장" : r.a_judgement === "diff" ? " · 볼 붉은기 " + (r.a_delta > 0 ? "높음" : "낮음") : "") + "</div></div>" +
+      '<span class="tag ' + r.status + '">' + STATUS_KO[r.status] + "</span></div>").join("") + "</div>").join("") ||
+    '<div class="card"><div class="rhead"><p class="sub">아직 기록이 없어요. 오늘 탭에서 15초 스캔을 해 보세요.</p><img src="/characters/idle.png" alt=""></div></div>';
+  $("recList").querySelectorAll("select[data-rid]").forEach((sel) => sel.addEventListener("change", async () => {
+    try { await api("/api/m/routine", { id: +sel.dataset.rid, routine: sel.value }); toast("루틴을 바꾸고 다시 비교했어요"); renderRecords(); refresh(); } catch (e) { toast(e.message); }
+  }));
+}
+
+// ---------- 리포트 (FR-14) ----------
+async function renderReport() {
+  const rp = await api("/api/m/report");
+  if (!rp.ready) { $("v-report").innerHTML = '<div class="card"><div class="rhead"><div><h2>시험기간 리포트</h2><p class="sub">' + esc(rp.reason) + '</p></div><img src="/characters/idle.png" alt=""></div></div>'; return; }
+  const sm = rp.summary, mx = Math.max(1, ...sm.by_reason.map((b) => Math.abs(b.median_delta || 0)));
+  $("v-report").innerHTML =
+    '<div class="card"><div class="rhead"><div><h2>시험기간 리포트</h2><p class="sub">' + rp.period[0] + " ~ " + rp.period[1] + " · 기록 정리이고 진단이 아니에요</p></div><img src=\"/characters/calm.png\" alt=\"\"></div>" +
+    '<div class="row" style="text-align:center">' +
+    [["기록", sm.records], ["이유 붙음", sm.with_reason], ["설명 안 됨", sm.unexplained]].map(([k, v]) =>
+      '<div><div style="font-size:30px; font-weight:700" class="num">' + v + '</div><div class="sub">' + k + "</div></div>").join("") + "</div></div>" +
+    '<div class="card"><h2>정리</h2><ul class="sentences">' + rp.sentences.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul></div>" +
+    (sm.by_reason.length ? '<div class="card"><h2>이유별로 평소보다 달랐던 크기</h2><div class="bars">' + sm.by_reason.map((b) =>
+      '<div class="b"><span>' + esc(b.reason_ko) + '<br><span class="sub">' + esc(b.routine_ko) + "</span></span>" +
+      '<div class="t"><i style="width:' + Math.round((Math.abs(b.median_delta || 0) / mx) * 100) + '%"></i></div><span class="v">' +
+      (b.median_delta > 0 ? "+" : "") + b.median_delta + "</span></div>").join("") + '</div><p class="sub">루틴별 평소 값 대비 심박 차이(bpm)의 중앙값이에요.</p></div>' : "") +
+    (sm.unexplained_days.length ? '<div class="card"><h2>이유 없이 달랐던 기록</h2>' + sm.unexplained_days.map((u) =>
+      '<div class="kv"><span>' + DAY(u.day) + " · " + esc(u.routine_ko) + "</span><span class=\"num\">" + (u.delta > 0 ? "+" : "") + u.delta + " bpm</span></div>").join("") + "</div>" : "");
+}
+
+// ---------- 설정 ----------
+function renderSettings() {
+  const s = S.settings;
+  $("examStart").value = s.exam_start || ""; $("examEnd").value = s.exam_end || "";
+  $("kSel").value = String(s.k);
+  if (!schedDirty) $("schedRows").innerHTML = ["morning", "desk", "night"].map((rt) => {
+    const x = s.schedule[rt];
+    return '<div class="srow"><b>' + S.labels.routine[rt] + "</b>" +
+      '<input type="time" data-sched="' + rt + '" value="' + x.at + '" aria-label="' + S.labels.routine[rt] + ' 시각">' +
+      '<label class="switch"><input type="checkbox" data-schedon="' + rt + '"' + (x.on ? " checked" : "") + ' aria-label="' + S.labels.routine[rt] + ' 알림"></label></div>';
+  }).join("");
+  notiLabel();
+  $("urls").innerHTML = ["morning", "desk", "night"].map((rt) => {
+    const u = location.origin + "/?routine=" + rt + "&go=1";
+    return '<div><b style="font-size:14px">' + S.labels.routine[rt] + '</b><span class="sub"> — ' +
+      { morning: "알람 끌 때", desk: "공부 집중 모드 켤 때 · 거치대 NFC", night: "세면대 옆 NFC 스티커" }[rt] + '</span><code class="url">' + esc(u) + "</code></div>";
+  }).join("");
+}
+$("saveExam").addEventListener("click", async () => {
+  if (!$("examStart").value || !$("examEnd").value || $("examEnd").value < $("examStart").value) return toast("시험 시작과 끝을 맞게 골라주세요");
+  S = await api("/api/m/settings", { exam_start: $("examStart").value, exam_end: $("examEnd").value }); render(); toast("시험기간을 저장했어요");
+});
+$("kSel").addEventListener("change", async () => { S = await api("/api/m/settings", { k: +$("kSel").value }); toast("다음 기록부터 " + $("kSel").value + "배로 봐요"); });
+$("demoBtn").addEventListener("click", async () => { S = await api("/api/m/demo", {}); render(); toast("시연 기록을 채웠어요"); go("home"); });
+$("resetBtn").addEventListener("click", () => { $("resetConfirm").hidden = false; });
+$("resetNo").addEventListener("click", () => { $("resetConfirm").hidden = true; });
+$("resetYes").addEventListener("click", async () => { S = await api("/api/m/reset", {}); $("resetConfirm").hidden = true; render(); toast("모든 기록을 지웠어요"); });
+$("consentYes").addEventListener("click", async () => { S = await api("/api/m/settings", { consent: true }); $("consent").classList.remove("on"); render(); maybeAutoOpen(); });
+
+// ---------- 내 스케줄 · 배너 · 알림 ----------
+let schedDirty = false;
+$("schedRows").addEventListener("input", () => { schedDirty = true; });
+$("saveSched").addEventListener("click", async () => {
+  const sc = {};
+  for (const rt of ["morning", "desk", "night"]) {
+    sc[rt] = { at: document.querySelector('[data-sched="' + rt + '"]').value, on: document.querySelector('[data-schedon="' + rt + '"]').checked };
+    if (!sc[rt].at) return toast(S.labels.routine[rt] + " 시각을 골라 주세요");
+  }
+  try {
+    S = await api("/api/m/settings", { schedule: sc }); schedDirty = false; snooze = {}; saveSnooze(); render(); checkDue(); armTimer();
+    toast("스케줄을 저장했어요" + (S.schedule.next ? " · 다음 " + S.labels.routine[S.schedule.next.routine] + " " + S.schedule.next.at.slice(11) : ""));
+  } catch (e) { toast(e.message); }
+});
+
+function notiLabel() {
+  const b = $("notiBtn"), t = $("notiTxt");
+  if (!("Notification" in window)) { b.disabled = true; t.textContent = "이 브라우저는 앱 밖 알림 없음"; return; }
+  t.textContent = { granted: "앱 밖 알림 켜짐", denied: "알림이 막혀 있어요 (브라우저 설정)" }[Notification.permission] || "앱 밖 알림 허용";
+  b.disabled = Notification.permission !== "default";
+}
+$("notiBtn").addEventListener("click", async () => { try { await Notification.requestPermission(); } catch (e) { /* 무시 */ } notiLabel(); });
+
+// 미루기 · 이미 띄운 배너는 이 기기에만 기억한다 (없어도 동작)
+let snooze = {}, shown = {};
+try { snooze = JSON.parse(localStorage.getItem("vity.snooze") || "{}"); shown = JSON.parse(localStorage.getItem("vity.shown") || "{}"); } catch (e) { /* 사생활 모드 */ }
+function saveSnooze() { try { localStorage.setItem("vity.snooze", JSON.stringify(snooze)); localStorage.setItem("vity.shown", JSON.stringify(shown)); } catch (e) { /* 무시 */ } }
+
+let bannerFor = null;
+function showBanner(rt) {
+  bannerFor = rt;
+  $("bnImg").src = "/characters/" + DUE_CHAR[rt] + ".png";
+  $("bnTitle").textContent = S.labels.routine[rt] + " 시간이에요";
+  $("bnSub").textContent = S.schedule.due_since + " 스케줄 · " + DUE_SUB[rt];
+  $("banner").classList.add("on");
+  if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) navigator.vibrate([20, 40, 20]);
+}
+function hideBanner() { $("banner").classList.remove("on"); bannerFor = null; }
+$("bnGo").addEventListener("click", () => { const rt = bannerFor; hideBanner(); if (rt) openMirror(rt, false); });
+$("bnLater").addEventListener("click", () => {
+  if (bannerFor) { snooze[bannerFor] = Date.now() + 10 * 60000; saveSnooze(); }
+  hideBanner(); toast("10분 뒤에 다시 알려줄게요");
+});
+
+function checkDue() {
+  if (!S || !S.settings.consent) return;
+  const rt = S.schedule.due, key = S.today + ":" + rt;
+  if (!rt) { if (bannerFor) hideBanner(); return; }
+  if ($("sheet").classList.contains("on") || $("result").classList.contains("on")) return;
+  if ((snooze[rt] || 0) > Date.now() || bannerFor === rt) return;
+  showBanner(rt);
+  if (document.hidden && "Notification" in window && Notification.permission === "granted" && !shown[key]) {
+    shown[key] = 1; saveSnooze();
+    try {
+      const n = new Notification("Vity · " + S.labels.routine[rt] + " 시간이에요", { body: "15초 스캔으로 오늘을 남겨요", tag: "vity-" + rt, icon: "/characters/" + DUE_CHAR[rt] + ".png" });
+      n.onclick = () => { window.focus(); n.close(); hideBanner(); openMirror(rt, false); };
+    } catch (e) { /* 일부 브라우저는 서비스 워커로만 */ }
+  }
+}
+
+// 다음 스케줄 시각에 맞춰 깨우고, 그 사이에는 1분마다 확인 (미루기 만료 포함)
+let schedTimer = 0;
+function armTimer() {
+  clearTimeout(schedTimer);
+  const nx = S && S.schedule.next ? new Date(S.schedule.next.at) - Date.now() + 1500 : 60000;
+  schedTimer = setTimeout(tick, Math.max(5000, Math.min(nx, 60000)));
+}
+async function tick() {
+  try { if (!$("sheet").classList.contains("on")) await refresh(); checkDue(); } catch (e) { /* 다음에 */ }
+  armTimer();
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+
+function render() { renderHome(); renderSettings(); }
+async function refresh() { S = await api("/api/m/state"); render(); }
+
+// FR-01 — 단축어 · NFC 가 ?routine=…&go=1 로 열면 바로 거울
+function maybeAutoOpen() {
+  const rt = params.get("routine");
+  if (params.get("go") === "1" && ["morning", "desk", "night"].includes(rt)) openMirror(rt, false);
+}
+
+(async () => {
+  try {
+    await refresh();
+    if (!S.settings.consent) $("consent").classList.add("on"); else maybeAutoOpen();
+    if (["records", "report", "settings"].includes(params.get("tab"))) go(params.get("tab"));   // 바로가기 · 위젯용
+    if (params.get("go") !== "1") setTimeout(checkDue, 600);       // 열자마자 내려오면 놓치기 쉬워 잠깐 뒤에
+    armTimer();
+  } catch (e) { toast(e.message); }
+})();
+</script>
+</body>
+</html>

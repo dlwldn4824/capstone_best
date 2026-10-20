@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F8FC">
+<title>Vity 체크</title>
+<link rel="stylesheet" href="/app.css">
+<style>
+.app{max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;
+  padding:max(16px, env(safe-area-inset-top)) 16px calc(92px + env(safe-area-inset-bottom))}
+[hidden]{display:none !important}
+body{word-break:keep-all; overflow-wrap:break-word}   /* 한국어는 낱말 단위로 줄바꿈 */
+.top{display:flex; justify-content:space-between; align-items:flex-end; gap:12px; padding:8px 4px 14px}
+.top h1{margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em}
+.top p{margin:0; font-size:13px; color:var(--muted)}
+.view{display:none; flex-direction:column; gap:12px} .view.on{display:flex}
+.card{background:var(--surface); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px}
+.card h2{margin:0; font-size:17px; font-weight:600}
+.card p{margin:0}
+.ih{display:flex; align-items:center; gap:8px} .ih svg{color:var(--calm); flex:none}
+.sub{font-size:13px; color:var(--muted); line-height:1.5}
+.btn{display:flex; align-items:center; justify-content:center; gap:8px; min-height:56px; padding:0 18px; border-radius:14px; border:none;
+  background:var(--btn); color:var(--btn-ink); font-size:17px; font-weight:600; width:100%; text-decoration:none}
+.btn:disabled{opacity:.5}
+.btn.ghost{background:transparent; color:var(--ink); border:1.5px solid var(--line)}
+.btn.small{min-height:44px; font-size:15px; border-radius:12px}
+.row{display:flex; gap:8px} .row > *{flex:1 1 0}
+.tag{font-size:12px; font-weight:600; padding:3px 8px; border-radius:6px; white-space:nowrap; background:var(--surface2); color:var(--ink2)}
+.tag.good{background:var(--calm-soft); color:var(--calm-ink)} .tag.warn{background:var(--alert-soft); color:var(--alert-ink)}
+.tag.ref{background:transparent; color:var(--muted); border:1px dashed var(--line)}
+.num{font-variant-numeric:tabular-nums}
+
+/* 홈 */
+.hero{display:grid; grid-template-columns:120px minmax(0,1fr); gap:16px; align-items:center}
+.ringbox{position:relative; width:120px; height:120px}
+.ringbox svg{position:absolute; inset:0}
+.ringbox .c{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center}
+.ringbox b{font-size:34px; font-weight:800; letter-spacing:-.03em; line-height:1}
+.ringbox span{font-size:12px; color:var(--muted)}
+.hero h2{font-size:20px !important; letter-spacing:-.02em}
+.hero img.ch{width:76px; height:76px; object-fit:contain}
+.heroR{display:flex; flex-direction:column; gap:6px}
+.mini{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.mini div{background:var(--surface2); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:2px}
+.mini b{font-size:20px; font-weight:700} .mini span{font-size:12px; color:var(--muted)}
+.week{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; align-items:end; height:110px}
+.week div{display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; font-size:11px; color:var(--muted)}
+.week i{display:block; width:100%; max-width:26px; border-radius:6px 6px 3px 3px; background:var(--calm)}
+.week i.none{background:var(--surface2); height:6px !important}
+.week .today{color:var(--ink); font-weight:700}
+.empty{display:flex; gap:14px; align-items:center} .empty img{width:84px; height:84px; object-fit:contain}
+
+/* 질문 · 결과 시트 */
+.sheetbg{position:fixed; inset:0; z-index:30; display:none; align-items:flex-end; justify-content:center; background:rgba(8,12,20,.45)}
+.sheetbg.on{display:flex}
+.sheetbg .in{width:100%; max-width:480px; max-height:92vh; overflow:auto; background:var(--ground); border-radius:20px 20px 0 0;
+  padding:20px 16px calc(20px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:12px}
+.q h3{margin:0 0 8px; font-size:15px; font-weight:600}
+.step{display:flex; align-items:center; gap:12px}
+.step button{width:48px; height:48px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); font-size:22px; font-weight:600}
+.step b{flex:1; text-align:center; font-size:26px; font-weight:800}
+.opts{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+.opts.five{grid-template-columns:repeat(5,1fr)}
+.opt{min-height:52px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); font-size:15px; font-weight:600; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; color:var(--ink)}
+.opt small{font-size:11px; color:var(--muted); font-weight:500}
+.opt[aria-pressed="true"]{border-color:var(--calm); background:var(--calm-soft); color:var(--calm-ink)}
+.opt[aria-pressed="true"] svg{color:var(--calm)}
+
+/* 결과 */
+.rhead{display:grid; grid-template-columns:120px minmax(0,1fr) 64px; gap:12px; align-items:center}
+.rhead img{width:64px; height:64px; object-fit:contain}
+.parts{display:flex; flex-direction:column; gap:10px}
+.parts .p{display:grid; grid-template-columns:6.2em minmax(0,1fr) 2.6em; gap:10px; align-items:center; font-size:14px}
+.parts .p small{color:var(--muted); font-size:12px}
+.parts .t{height:10px; border-radius:5px; background:var(--surface2); overflow:hidden} .parts .t i{display:block; height:100%; background:var(--calm); border-radius:5px}
+.parts .v{text-align:right; font-weight:700}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.m{background:var(--surface); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:6px; min-height:116px}
+.m .h{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink2); font-weight:600}
+.m .h svg{color:var(--calm)}
+.m b{font-size:28px; font-weight:800; letter-spacing:-.03em; line-height:1.1}
+.m b small{font-size:13px; color:var(--muted); font-weight:600; margin-left:3px}
+.m .d{font-size:12px; color:var(--muted)}
+.gauge{height:8px; border-radius:4px; background:linear-gradient(90deg, #4DB8A6 0 30%, #9CC56B 30% 60%, #E3A64B 60% 80%, #E2614D 80% 100%); position:relative; margin-top:2px}
+.gauge i{position:absolute; top:-4px; width:4px; height:16px; border-radius:2px; background:var(--ink); transform:translateX(-2px)}
+.tip{display:grid; grid-template-columns:40px minmax(0,1fr); gap:12px; align-items:start}
+.tip .ic{width:40px; height:40px; border-radius:12px; display:grid; place-items:center; background:var(--calm-soft); color:var(--calm-ink)}
+.tip b{display:block; font-size:15px} .tip p{font-size:14px; color:var(--ink2); line-height:1.55; margin-top:2px !important}
+.tip .btn{margin-top:10px}
+.cmp{display:grid; grid-template-columns:auto 1fr 1fr; gap:6px 12px; align-items:center; font-size:15px}
+.cmp .k{color:var(--muted); font-size:13px} .cmp .a{font-weight:800}
+.note{font-size:12px; color:var(--muted); line-height:1.6; padding:0 4px}
+
+/* 기록 */
+.rec{display:grid; grid-template-columns:3.4em minmax(0,1fr) auto; gap:10px; align-items:center; min-height:56px; border-bottom:1px solid var(--line)}
+.rec:last-child{border-bottom:none}
+.rec .s{font-size:22px; font-weight:800} .rec .n{font-size:13px; color:var(--muted)}
+.day h3{margin:4px 4px 0; font-size:14px; color:var(--muted); font-weight:600}
+
+/* 내 정보 */
+label.f{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--ink2); flex:1 1 0}
+input.f{width:100%; min-height:48px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); padding:0 12px; font-size:16px; color:var(--ink)}
+.kv{display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px}
+.kv:last-child{border-bottom:none} .kv span:last-child{color:var(--ink2); text-align:right}
+
+/* 탭 */
+.tabs{position:fixed; left:0; right:0; bottom:0; background:var(--surface); border-top:1px solid var(--line); display:flex; justify-content:center; padding-bottom:env(safe-area-inset-bottom); z-index:10}
+.tabs div{display:grid; grid-template-columns:repeat(4,1fr); width:100%; max-width:480px}
+.tabs button{min-height:62px; border:none; background:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:12px; color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--ink); font-weight:600}
+.toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); background:var(--btn); color:var(--btn-ink); padding:10px 16px; border-radius:10px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90vw; z-index:60}
+.toast.on{opacity:1}
+
+/* 인증 그룹 · 공부 모드 */
+.chips2{display:flex; flex-wrap:wrap; gap:6px}
+.chips2 span{font-size:12px; font-weight:600; border-radius:6px; padding:4px 8px; background:var(--calm-soft); color:var(--calm-ink)}
+.chips2 span.plain{background:var(--surface2); color:var(--ink2)}
+.mem{display:grid; grid-template-columns:40px minmax(0,1fr) auto; gap:12px; align-items:center; min-height:60px; border-bottom:1px solid var(--line)}
+.mem:last-child{border-bottom:none}
+.av{width:40px; height:40px; border-radius:99px; display:grid; place-items:center; font-size:13px; font-weight:700; background:var(--surface2); color:var(--ink2)}
+.av.on{background:var(--calm); color:var(--btn-ink)}
+.mem b{font-size:15px; font-weight:600} .mem .n{font-size:12px; color:var(--muted)}
+.ckin{display:flex; align-items:center; gap:8px; border-radius:12px; padding:10px 12px; font-size:13px; font-weight:600}
+.ckin.ok{background:var(--calm-soft); color:var(--calm-ink)} .ckin.no{background:var(--surface2); color:var(--ink2)}
+.study{border:1.5px solid var(--calm)}
+.study .k{font-size:12px; font-weight:700; color:var(--calm)}
+.code{font-size:20px; font-weight:800; letter-spacing:.12em}
+input.t{min-height:48px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); padding:0 10px; font-size:16px; color:var(--ink); width:100%; box-sizing:border-box}
+.timer{position:fixed; inset:0; z-index:46; background:var(--ground); display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:24px}
+.timer.on{display:flex}
+.timer .tt{font-size:72px; font-weight:800; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.timer .ph{font-size:20px; font-weight:700}
+.timer .btn{max-width:360px}
+/* 홈 — 파란 히어로 + 겹치는 패널 (heare 참고) */
+body.home .top{display:none}
+.band{position:relative; margin:-16px -16px 0; padding:max(20px, env(safe-area-inset-top)) 20px 70px; background:var(--calm); color:#FFFFFF; overflow:hidden; min-height:300px; box-sizing:border-box}
+.bandTop{display:flex; justify-content:space-between; align-items:center; gap:8px; position:relative; z-index:2}
+.bandTop .d{font-size:13px; opacity:.9}
+.bandBig{position:relative; z-index:2; margin:14px 0 0; font-size:28px; font-weight:700; line-height:1.36; max-width:62%; letter-spacing:-.02em}
+.bandBig em{font-style:normal; color:#FFE27A}
+.bandSmall{position:relative; z-index:2; margin:10px 0 0; font-size:15px; line-height:1.5; opacity:.92; max-width:60%}
+.bandChar{position:absolute; right:-4px; bottom:30px; width:168px; height:168px; object-fit:contain; z-index:1; animation:bob 3s ease-in-out infinite}
+.hill{position:absolute; left:-15%; right:-15%; bottom:-130px; height:210px; border-radius:50%; background:rgba(255,255,255,.18)}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.panel{position:relative; z-index:3; margin:-40px 0 0; background:var(--surface); border-radius:22px; padding:16px; display:flex; flex-direction:column; gap:12px; box-shadow:0 -6px 20px rgba(21,32,51,.06)}
+.seg{display:grid; grid-template-columns:repeat(3,1fr); background:var(--surface2); border-radius:12px; padding:4px; gap:4px}
+.seg button{min-height:40px; border:none; border-radius:9px; background:transparent; font-size:14px; font-weight:600; color:var(--muted)}
+.seg button[aria-selected="true"]{background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.mc{background:var(--surface2); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:4px; min-height:104px}
+.mc .mh{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink2); font-weight:600}
+.mc .mh svg{color:var(--calm)}
+.mc b{font-size:23px; font-weight:800; letter-spacing:-.02em; line-height:1.2}
+.mc b small{font-size:12px; color:var(--muted); font-weight:600; margin-left:2px}
+.mc .s{font-size:12px; color:var(--muted)}
+.mc .gauge{margin:2px 0}
+.kv2{display:flex; justify-content:space-between; padding:10px 2px; border-bottom:1px solid var(--line); font-size:14px}
+.kv2:last-child{border-bottom:none} .kv2 b{font-weight:700}
+.gcard{display:grid; grid-template-columns:52px minmax(0,1fr); gap:12px; align-items:center; border:none; text-align:left; color:inherit; font:inherit; cursor:pointer}
+.gcard img{width:52px; height:52px; object-fit:contain; background:var(--calm-soft); border-radius:14px}
+/* 도움말 ? */
+.qm{width:22px; height:22px; border-radius:99px; border:1.5px solid var(--line); background:var(--surface); color:var(--muted); font-size:12px; font-weight:700; display:inline-grid; place-items:center; padding:0; margin-left:auto; flex:none; line-height:1}
+.qm.light{border-color:rgba(255,255,255,.55); background:transparent; color:#FFFFFF}
+.tipPop{position:fixed; z-index:80; width:264px; background:var(--ink); color:var(--surface); border-radius:12px; padding:12px 14px; font-size:13px; line-height:1.6; box-shadow:0 10px 28px rgba(0,0,0,.22)}
+.tipPop b{display:block; margin-bottom:4px; font-size:14px}
+/* 그룹 목록 · 만들기 단계 */
+.ptitle2 h2{margin:6px 4px 0; font-size:24px; font-weight:700; letter-spacing:-.02em} .ptitle2 p{margin:6px 4px 0}
+.glist{display:grid; grid-template-columns:56px minmax(0,1fr) auto; gap:12px; align-items:center; width:100%; text-align:left; background:var(--surface); border:none; border-radius:16px; padding:14px; color:inherit; font:inherit; cursor:pointer}
+.glist img{width:56px; height:56px; object-fit:contain; background:var(--calm-soft); border-radius:14px}
+.glist b{font-size:16px} .glist .n{display:block; font-size:12px; color:var(--muted); margin-top:2px}
+.glist > svg{color:var(--muted)}
+.gadd{min-height:96px; border:2px dashed var(--line); border-radius:16px; background:transparent; color:var(--calm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; font-size:15px; font-weight:600; cursor:pointer}
+.gadd:disabled{color:var(--muted); cursor:default}
+.wzhead{display:flex; align-items:center; gap:10px}
+.wzhead .back2{width:40px; height:40px; border-radius:99px; border:1px solid var(--line); background:var(--surface); display:grid; place-items:center; color:var(--ink)}
+.wzbar{height:6px; border-radius:3px; background:var(--surface2); overflow:hidden; flex:1} .wzbar i{display:block; height:100%; background:var(--calm); border-radius:3px}
+.pick{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+.pick button{border:1.5px solid var(--line); background:var(--surface); border-radius:12px; padding:8px 4px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:12px; font-weight:600; color:var(--ink)}
+.pick button img{width:52px; height:52px; object-fit:contain}
+.pick button[aria-pressed="true"], .pchips button[aria-pressed="true"]{border-color:var(--calm); background:var(--calm-soft); color:var(--calm-ink)}
+.pchips{display:flex; flex-wrap:wrap; gap:8px}
+.pchips button{min-height:42px; padding:0 12px; border-radius:10px; border:1.5px solid var(--line); background:var(--surface); font-size:14px; font-weight:600; color:var(--ink)}
+.donebox{display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; padding:8px 0}
+.donebox .ok{width:72px; height:72px; border-radius:99px; background:var(--calm); color:#FFFFFF; display:grid; place-items:center}
+.donebox img{width:120px; height:110px; object-fit:contain}
+/* 온보딩 — 캐릭터 컷씬 */
+.onb{position:fixed; inset:0; z-index:60; background:var(--calm); color:#FFFFFF; display:none; overflow:hidden}
+.onb.on{display:block} .onb.dark{background:#152033}
+.onb .in{max-width:480px; height:100%; margin:0 auto; position:relative; display:flex; flex-direction:column; padding:max(20px, env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom)); box-sizing:border-box; gap:14px; z-index:2}
+.dots{display:flex; gap:6px; justify-content:center} .dots i{width:6px; height:6px; border-radius:99px; background:rgba(255,255,255,.4); transition:width .2s} .dots i.on{width:18px; background:#FFFFFF}
+.onb h1{margin:10px 0 0; font-size:27px; line-height:1.35; font-weight:700; letter-spacing:-.02em}
+.onb p{margin:0; font-size:15px; line-height:1.6; opacity:.94}
+.onb .ohill{position:absolute; left:-25%; right:-25%; bottom:-150px; height:330px; border-radius:50%; background:#EAF2FF; z-index:0}
+.onb.dark .ohill{background:#24304A}
+.onb .ochar.small + .ohill, .onb .ohill.small{bottom:-210px}
+.onb .ochar{position:absolute; left:50%; bottom:-24px; transform:translateX(-50%); width:300px; height:290px; object-fit:contain; pointer-events:none; animation:rise .6s ease-out; z-index:1}
+.onb .ochar.small{width:190px; height:190px; bottom:20px}
+@keyframes rise{from{transform:translate(-50%, 40px); opacity:0}}
+.onb .obtn{min-height:56px; border-radius:14px; border:none; background:#FFFFFF; color:#152033; font-size:17px; font-weight:700; width:100%}
+.onb .oghost{min-height:48px; border-radius:12px; border:1.5px solid rgba(255,255,255,.55); background:transparent; color:#FFFFFF; font-size:15px; font-weight:600; width:100%}
+.onb input{min-height:52px; border-radius:12px; border:none; padding:0 14px; font-size:17px; width:100%; box-sizing:border-box; color:#152033; background:#FFFFFF}
+.onb .back{width:40px; height:40px; border:none; background:rgba(255,255,255,.16); color:#FFFFFF; border-radius:99px; display:grid; place-items:center}
+.onb ul{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px; font-size:14px; line-height:1.6}
+.onb .bubble{align-self:flex-start; background:#FFFFFF; color:#152033; border-radius:16px 16px 16px 4px; padding:10px 14px; font-weight:700; margin-top:6px}
+.onb .ochoice{display:flex; flex-direction:column; gap:8px}
+/* 스캔 */
+.scan{position:fixed; inset:0; background:#0E1312; color:#EEF2F0; display:none; flex-direction:column; z-index:40}
+.scan.on{display:flex}
+.scan .in{max-width:480px; width:100%; margin:0 auto; flex:1; display:flex; flex-direction:column; gap:14px; padding:max(16px, env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
+.scan .bar{display:flex; justify-content:space-between; align-items:center; gap:12px; font-weight:600}
+.scan .x{width:44px; height:44px; border-radius:99px; border:none; background:#202927; color:#EEF2F0; display:grid; place-items:center}
+.cam{position:relative; border-radius:20px; overflow:hidden; background:#1A2220; aspect-ratio:3/4}
+.cam video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1)}
+.cam > svg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+.cam #guide{transition:stroke .3s} .cam.found #guide{stroke:#4DB8A6; stroke-dasharray:none; stroke-opacity:1}
+.cam #scanl{opacity:0} .cam.scanning #scanl{opacity:1; animation:sweep 2.4s ease-in-out infinite alternate}
+@keyframes sweep{from{transform:translateY(57px)} to{transform:translateY(373px)}}
+.live{position:absolute; left:12px; top:12px; display:flex; align-items:center; gap:6px; background:rgba(14,19,18,.65); border-radius:8px; padding:6px 10px 6px 8px; font-size:12px; opacity:0; transition:opacity .3s}
+.cam.scanning .live{opacity:1}
+.live b{font-size:18px; font-weight:800; min-width:2em; text-align:right}
+.live .heart{animation:beat .85s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)} 15%{transform:scale(1.25)} 30%{transform:scale(.95)} 45%{transform:scale(1.1)}}
+.wave{position:absolute; left:0; right:0; bottom:0; width:100%; height:64px; background:linear-gradient(transparent, rgba(14,19,18,.7)); opacity:0}
+.cam.scanning .wave{opacity:1}
+.steps{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px}
+.steps li{border-radius:8px; background:#1A2220; color:#7C8A85; font-size:12px; font-weight:600; text-align:center; padding:8px 4px; transition:background .3s, color .3s}
+.steps li.doing{color:#EEF2F0} .steps li.ok{background:#16302B; color:#BFE6DE}
+.steps li.ok::before{content:"✓ "}
+.hint{font-size:18px; font-weight:700; text-align:center; min-height:26px; margin:0}
+.hint2{font-size:13px; color:#A9B6B1; text-align:center; margin:0}
+.scan .btn{background:#EEF2F0; color:#0E1312}
+
+/* 호흡 */
+.breath{position:fixed; inset:0; z-index:45; background:var(--ground); display:none; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:24px}
+.breath.on{display:flex}
+.bcircle{width:240px; height:240px; border-radius:50%; background:var(--calm-soft); display:grid; place-items:center; transition:transform .1s linear}
+.bcircle img{width:110px; height:110px; object-fit:contain}
+.breath h2{margin:0; font-size:28px; font-weight:800}
+.breath p{margin:0; color:var(--muted)}
+.breath .btn{max-width:360px}
+
+.consent{position:fixed; inset:0; z-index:50; background:var(--ground); display:none; overflow:auto}
+.consent.on{display:block}
+.consent .in{max-width:480px; margin:0 auto; padding:max(28px, env(safe-area-inset-top)) 20px 32px; display:flex; flex-direction:column; gap:14px}
+.consent img{width:96px; height:96px; object-fit:contain}
+.consent h1{margin:0; font-size:26px; font-weight:700}
+.consent ul{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px; font-size:15px; line-height:1.6}
+.cam .mesh{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+.cam.meshon #ov, .cam.meshon #scan, .cam.meshon #scanl, .cam.meshon #guide{display:none}
+/* 측정 화면 — 앱과 같은 밝은 화면 · 같은 강조색 (다크 모드는 app.css 변수 그대로) */
+.sheet, .scan{background:var(--ground); color:var(--ink)}
+.sheet .x, .scan .x{background:var(--surface); color:var(--ink); border:1px solid var(--line)}
+.sheet .x svg path{stroke:var(--ink)}
+.cam{background:var(--surface2); box-shadow:0 0 0 1px var(--line)}
+.cam svg .frame{stroke:var(--line)}
+.cam #ring{stroke:var(--calm)}
+.cam #guide{stroke:var(--muted)}
+.cam.found #guide{stroke:var(--calm)}
+.hint{color:var(--ink)} .hint2{color:var(--muted)}
+.sheet .btn, .scan .btn{background:var(--btn); color:var(--btn-ink)}
+.sheet .btn.ghost{background:transparent; color:var(--ink); border-color:var(--line)}
+.steps li{background:var(--surface); color:var(--muted); box-shadow:0 0 0 1px var(--line) inset}
+.steps li.doing{color:var(--ink); box-shadow:0 0 0 1.5px var(--calm) inset}
+.steps li.doing i{border-color:var(--calm); border-right-color:transparent}
+.steps li.ok{background:var(--calm-soft); color:var(--calm-ink); box-shadow:none}
+.steps li.ok i{background:var(--calm); border-color:var(--calm); color:var(--btn-ink)}
+.live{background:rgba(255,255,255,.92); color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.wave{background:linear-gradient(transparent, rgba(255,255,255,.8))}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top"><div><p id="date">&nbsp;</p><h1>Vity 체크</h1></div><p>30초 컨디션 측정</p></header>
+
+  <section class="view on" id="v-home"></section>
+  <section class="view" id="v-group"></section>
+  <section class="view" id="v-log"><div class="card"><h2 class="ih" data-ic="history">기록</h2><p class="sub">측정할 때마다 남아요. 평소 값은 최근 14일, 신호가 괜찮았던 측정 3번 이상으로 잡아요.</p></div><div id="logList" style="display:flex; flex-direction:column; gap:12px"></div></section>
+  <section class="view" id="v-me">
+    <div class="card">
+      <h2 class="ih" data-ic="user">내 정보</h2>
+      <div class="row"><label class="f">키 (cm)<input class="f" id="pH" type="number" inputmode="decimal" min="120" max="220"></label><label class="f">몸무게 (kg)<input class="f" id="pW" type="number" inputmode="decimal" min="30" max="200"></label></div>
+      <label class="f">태어난 해<input class="f" id="pY" type="number" inputmode="numeric" min="1950" max="2012"></label>
+      <p class="sub" id="bmiTxt"></p>
+      <button class="btn small" id="saveMe" type="button">저장</button>
+    </div>
+    <div class="card">
+      <h2 class="ih" data-ic="clipboard-check">재는 것</h2>
+      <div class="kv"><span>심박</span><span>얼굴 피부색의 미세한 주기 변화 (rPPG)</span></div>
+      <div class="kv"><span>HRV · 스트레스</span><span>박동 간격의 흔들림 (RMSSD · Baevsky 지수)</span></div>
+      <div class="kv"><span>리듬</span><span>박동 간격이 갑자기 크게 바뀌는 비율</span></div>
+      <div class="kv"><span>호흡 (참고)</span><span>맥파가 숨에 따라 출렁이는 주기</span></div>
+      <div class="kv"><span>BMI</span><span>입력한 키 · 몸무게</span></div>
+    </div>
+    <div class="card">
+      <h2 class="ih" data-ic="shield-check">일부러 재지 않는 것</h2>
+      <div class="kv"><span>혈압</span><span>개인별 커프 보정 없이는 카메라로 검증된 방법이 없어요</span></div>
+      <div class="kv"><span>산소포화도</span><span>적색 · 적외선 두 빛이 필요해요. 폰 카메라 RGB 로는 부정확해요</span></div>
+      <div class="kv"><span>체온</span><span>열화상 카메라가 필요해요</span></div>
+      <div class="kv"><span>피부나이</span><span>검증할 공개 기준이 없어요</span></div>
+    </div>
+    <div class="card">
+      <h2 class="ih" data-ic="info">얼마나 맞나요</h2>
+      <p class="sub">공개 데이터 MCD-rPPG 100명 · 30초 창 1,001개, 손끝 맥박 센서와 비교 (신호 좋은 창 기준)</p>
+      <div class="kv"><span>심박</span><span>평균 오차 0.3 bpm</span></div>
+      <div class="kv"><span>RMSSD</span><span>오차 중앙값 7.5 ms · 상관 0.56</span></div>
+      <div class="kv"><span>스트레스 지수</span><span>상관 0.72 · 같은 구간 58%</span></div>
+      <div class="kv"><span>호흡</span><span>정답 없음 · 참고로만 보여줘요</span></div>
+      <p class="sub">의료기기가 아니에요. 진단이 아니라 내 컨디션을 비교해 보는 용도예요.</p>
+    </div>
+    <div class="card">
+      <h2 class="ih" data-ic="sunrise">아침 · 공부 · 밤 루틴 기록</h2>
+      <p class="sub">세 루틴마다 15초씩 재고, 평소와 다르면 이유를 한 번 묻는 거울 기록이에요. 시험기간 리포트도 거기서 볼 수 있어요.</p>
+      <a class="btn small ghost" href="/">거울 기록 열기</a>
+    </div>
+    <div class="card">
+      <h2 class="ih" data-ic="refresh-cw">시연 · 지우기</h2>
+      <div class="row"><button class="btn small ghost" id="demoBtn" type="button">시연 기록 채우기</button><button class="btn small ghost" id="resetBtn" type="button">기록 지우기</button></div>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs"><div role="tablist">
+  <button role="tab" aria-selected="true" data-tab="home" type="button" data-ic="heart-pulse">오늘</button>
+  <button role="tab" aria-selected="false" data-tab="group" type="button" data-ic="users">그룹</button>
+  <button role="tab" aria-selected="false" data-tab="log" type="button" data-ic="history">기록</button>
+  <button role="tab" aria-selected="false" data-tab="me" type="button" data-ic="user">내 정보</button>
+</div></nav>
+
+<!-- 측정 전 세 가지 -->
+<div class="sheetbg" id="pre"><div class="in">
+  <h2 style="margin:0; font-size:22px">측정 전에 세 가지만</h2>
+  <p class="sub">점수의 '생활' 부분과 추천에 써요.</p>
+  <div class="card q"><h3>어젯밤 잔 시간</h3><div class="step"><button type="button" id="slMinus">−</button><b id="slVal">7</b><button type="button" id="slPlus">+</button></div></div>
+  <div class="card q"><h3>오늘 마신 커피 · 에너지드링크</h3><div class="opts" id="cafOpts"></div></div>
+  <div class="card q"><h3>지금 기분</h3><div class="opts five" id="moodOpts"></div></div>
+  <button class="btn" id="preGo" type="button"></button>
+  <button class="btn ghost small" id="preCancel" type="button">취소</button>
+</div></div>
+
+<!-- 결과 -->
+<div class="sheetbg" id="res"><div class="in" id="resIn"></div></div>
+
+<!-- 스캔 -->
+<div class="scan" id="scan"><div class="in">
+  <div class="bar"><button class="x" id="scanX" type="button" aria-label="닫기" data-ic="x"></button><span id="scanTitle">30초 측정</span><span style="width:44px"></span></div>
+  <div class="cam" id="camBox">
+    <video id="video" playsinline muted></video>
+      <canvas class="mesh" id="meshc" aria-hidden="true"></canvas>
+    <canvas class="wave" id="wave" width="600" height="128"></canvas>
+    <svg viewBox="0 0 300 400" aria-hidden="true">
+      <defs><clipPath id="fc"><ellipse cx="150" cy="185" rx="98" ry="128"></ellipse></clipPath>
+        <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DBBFF" stop-opacity="0"></stop><stop offset=".8" stop-color="#9DBBFF" stop-opacity=".28"></stop><stop offset="1" stop-color="#FFFFFF" stop-opacity=".95"></stop></linearGradient></defs>
+      <ellipse id="guide" cx="150" cy="185" rx="98" ry="128" fill="none" stroke="#EEF2F0" stroke-opacity=".55" stroke-width="2" stroke-dasharray="6 8"></ellipse>
+      <g id="ov"></g>
+      <g clip-path="url(#fc)"><rect id="scanl" x="0" y="-60" width="300" height="60" fill="url(#sg)"></rect></g>
+      <rect x="6" y="6" width="288" height="388" rx="18" fill="none" class="frame" stroke="#D9E1EC" stroke-width="6"></rect>
+      <rect id="ring" x="6" y="6" width="288" height="388" rx="18" fill="none" stroke="#4DB8A6" stroke-width="6" pathLength="100" stroke-dasharray="0 100" stroke-linecap="round"></rect>
+    </svg>
+    <div class="live"><svg class="heart" width="16" height="16" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z" fill="#FF6B7A"></path></svg><b id="liveBpm">··</b><span id="liveUnit">모으는 중</span></div>
+  </div>
+  <ol class="steps"><li data-s="face">얼굴</li><li data-s="pulse">맥박</li><li data-s="hrv">박동 간격</li><li data-s="save">분석</li></ol>
+  <p class="hint" id="hint">얼굴을 화면 가운데에 두세요</p>
+  <p class="hint2" id="hint2">영상은 이 기기 안에서 숫자로만 바뀌고 저장되지 않아요.</p>
+  <div style="flex:1"></div>
+  <button class="btn" id="startBtn" type="button">바로 시작</button>
+</div><canvas id="canvas" width="320" height="426" hidden></canvas></div>
+
+<!-- 1분 호흡 -->
+<div class="breath" id="breath">
+  <div class="bcircle" id="bcircle"><img src="/characters/calm.png" alt=""></div>
+  <h2 id="bTxt">준비</h2>
+  <p id="bSub">4초 들이쉬고 6초 내쉬기, 여섯 번</p>
+  <button class="btn" id="bAgain" type="button" hidden>다시 재서 비교하기</button>
+  <button class="btn ghost small" id="bStop" type="button">그만하기</button>
+</div>
+
+<!-- 공부 타이머 -->
+<div class="timer" id="timer" role="dialog" aria-label="공부 타이머">
+  <img src="/characters/coffee.png" alt="" style="width:96px; height:96px; object-fit:contain">
+  <span class="ph" id="tmPh">집중</span>
+  <span class="tt" id="tmT">25:00</span>
+  <span class="sub" id="tmSub">1번째 · 25분 집중 · 5분 휴식</span>
+  <button class="btn" type="button" id="tmPause">일시정지</button>
+  <button class="btn ghost small" type="button" id="tmStop">그만하기</button>
+</div>
+
+<div class="onb" id="onb" role="dialog" aria-modal="true" aria-label="시작하기"></div>
+<div class="tipPop" id="tipPop" role="tooltip" hidden></div>
+<div class="toast" id="toast"></div>
+
+<script src="/rppg2.js"></script>
+<script src="/vitals.js"></script>
+<script src="/facemesh.js"></script>
+<script src="/meshdraw.js"></script>
+<script>
+"use strict";
+const ACCENT = () => getComputedStyle(document.documentElement).getPropertyValue("--calm").trim() || "#1A6DFF";
+// Lucide 아이콘 (ISC, lucide-static 0.460.0)
+const ICON = {"activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />", "angry": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M16 16s-1.5-2-4-2-4 2-4 2\" /> <path d=\"M7.5 8 10 9\" /> <path d=\"m14 9 2.5-1\" /> <path d=\"M9 10h.01\" /> <path d=\"M15 10h.01\" />", "audio-waveform": "<path d=\"M2 13a2 2 0 0 0 2-2V7a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0V4a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0v-4a2 2 0 0 1 2-2\" />", "brain": "<path d=\"M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z\" /> <path d=\"M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z\" /> <path d=\"M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4\" /> <path d=\"M17.599 6.5a3 3 0 0 0 .399-1.375\" /> <path d=\"M6.003 5.125A3 3 0 0 0 6.401 6.5\" /> <path d=\"M3.477 10.896a4 4 0 0 1 .585-.396\" /> <path d=\"M19.938 10.5a4 4 0 0 1 .585.396\" /> <path d=\"M6 18a4 4 0 0 1-1.967-.516\" /> <path d=\"M19.967 17.484A4 4 0 0 1 18 18\" />", "clipboard-check": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\" /> <path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\" /> <path d=\"m9 14 2 2 4-4\" />", "coffee": "<path d=\"M10 2v2\" /> <path d=\"M14 2v2\" /> <path d=\"M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1\" /> <path d=\"M6 2v2\" />", "frown": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M16 16s-1.5-2-4-2-4 2-4 2\" /> <line x1=\"9\" x2=\"9.01\" y1=\"9\" y2=\"9\" /> <line x1=\"15\" x2=\"15.01\" y1=\"9\" y2=\"9\" />", "heart": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" />", "heart-pulse": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" /> <path d=\"M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27\" />", "history": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /> <path d=\"M3 3v5h5\" /> <path d=\"M12 7v5l4 2\" />", "info": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />", "laugh": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M18 13a6 6 0 0 1-6 5 6 6 0 0 1-6-5h12Z\" /> <line x1=\"9\" x2=\"9.01\" y1=\"9\" y2=\"9\" /> <line x1=\"15\" x2=\"15.01\" y1=\"9\" y2=\"9\" />", "meh": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <line x1=\"8\" x2=\"16\" y1=\"15\" y2=\"15\" /> <line x1=\"9\" x2=\"9.01\" y1=\"9\" y2=\"9\" /> <line x1=\"15\" x2=\"15.01\" y1=\"9\" y2=\"9\" />", "moon": "<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\" />", "refresh-cw": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\" /> <path d=\"M21 3v5h-5\" /> <path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\" /> <path d=\"M8 16H3v5\" />", "scan-face": "<path d=\"M3 7V5a2 2 0 0 1 2-2h2\" /> <path d=\"M17 3h2a2 2 0 0 1 2 2v2\" /> <path d=\"M21 17v2a2 2 0 0 1-2 2h-2\" /> <path d=\"M7 21H5a2 2 0 0 1-2-2v-2\" /> <path d=\"M8 14s1.5 2 4 2 4-2 4-2\" /> <path d=\"M9 9h.01\" /> <path d=\"M15 9h.01\" />", "shield-check": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" /> <path d=\"m9 12 2 2 4-4\" />", "smile": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M8 14s1.5 2 4 2 4-2 4-2\" /> <line x1=\"9\" x2=\"9.01\" y1=\"9\" y2=\"9\" /> <line x1=\"15\" x2=\"15.01\" y1=\"9\" y2=\"9\" />", "triangle-alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\" /> <path d=\"M12 9v4\" /> <path d=\"M12 17h.01\" />", "user": "<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\" /> <circle cx=\"12\" cy=\"7\" r=\"4\" />", "weight": "<circle cx=\"12\" cy=\"5\" r=\"3\" /> <path d=\"M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z\" />", "wind": "<path d=\"M12.8 19.6A2 2 0 1 0 14 16H2\" /> <path d=\"M17.5 8a2.5 2.5 0 1 1 2 4H2\" /> <path d=\"M9.8 4.4A2 2 0 1 1 11 8H2\" />", "x": "<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />", "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <path d=\"M22 21v-2a4 4 0 0 0-3-3.87\" /> <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" />", "timer": "<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\" /> <line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\" /> <circle cx=\"12\" cy=\"14\" r=\"8\" />", "copy": "<rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\" /> <path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\" />", "log-out": "<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\" /> <polyline points=\"16 17 21 12 16 7\" /> <line x1=\"21\" x2=\"9\" y1=\"12\" y2=\"12\" />", "check": "<path d=\"M20 6 9 17l-5-5\" />", "play": "<polygon points=\"6 3 20 12 6 21 6 3\" />", "pause": "<rect x=\"14\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\" /> <rect x=\"6\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\" />", "book-open": "<path d=\"M12 7v14\" /> <path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\" />", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <polyline points=\"12 6 12 12 16 14\" />", "plus": "<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />", "share-2": "<circle cx=\"18\" cy=\"5\" r=\"3\" /> <circle cx=\"6\" cy=\"12\" r=\"3\" /> <circle cx=\"18\" cy=\"19\" r=\"3\" /> <line x1=\"8.59\" x2=\"15.42\" y1=\"13.51\" y2=\"17.49\" /> <line x1=\"15.41\" x2=\"8.59\" y1=\"6.51\" y2=\"10.49\" />", "chevron-left": "<path d=\"m15 18-6-6 6-6\" />", "chevron-right": "<path d=\"m9 18 6-6-6-6\" />", "alarm-clock": "<circle cx=\"12\" cy=\"13\" r=\"8\" /> <path d=\"M12 9v4l2 2\" /> <path d=\"M5 3 2 6\" /> <path d=\"m22 6-3-3\" /> <path d=\"M6.38 18.7 4 21\" /> <path d=\"M17.64 18.67 20 21\" />", "circle-check": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"m9 12 2 2 4-4\" />", "watch": "<circle cx=\"12\" cy=\"12\" r=\"6\" /> <polyline points=\"12 10 12 12 13 13\" /> <path d=\"m16.13 7.66-.81-4.05a2 2 0 0 0-2-1.61h-2.68a2 2 0 0 0-2 1.61l-.78 4.05\" /> <path d=\"m7.88 16.36.8 4a2 2 0 0 0 2 1.61h2.72a2 2 0 0 0 2-1.61l.81-4.05\" />", "sunrise": "<path d=\"M12 2v8\" /> <path d=\"m4.93 10.93 1.41 1.41\" /> <path d=\"M2 18h2\" /> <path d=\"M20 18h2\" /> <path d=\"m19.07 10.93-1.41 1.41\" /> <path d=\"M22 22H2\" /> <path d=\"m8 6 4-4 4 4\" /> <path d=\"M16 18a4 4 0 0 0-8 0\" />"};
+const ic = (n, s = 20) => ICON[n] ? '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + "</svg>" : "";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+async function api(p, body) {
+  const r = await fetch(p, body === undefined ? { cache: "no-store" } : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); return j;
+}
+function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("on"), 2400); }
+const DAY = (iso) => { const d = new Date(iso + "T00:00:00"); return (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + "일월화수목금토"[d.getDay()] + "요일"; };
+const sign = (v) => (v > 0 ? "+" : "") + v;
+const charFor = (s) => (s == null ? "idle" : s >= 75 ? "calm" : s >= 55 ? "idle" : "sleep");
+const CONF = { high: ["신호 좋음", "good"], mid: ["신호 보통", ""], low: ["신호 약함", "warn"] };
+let S = null, LAST = null, G = null, GS = [], gSel = null;   // GS: 내 그룹 전부(급한 순) · G: 가장 급한 그룹
+// 도움말 (?) — 숫자마다 무엇을 어떻게 재는지
+const TIPS = {
+  score: ["컨디션 점수", "스트레스(100 − 지수) 35% + HRV 20% + 심박 15% + 생활(수면 · 커피 · 기분) 30%. 신호가 약한 항목은 빼고 다시 나눠요. 진단이 아니라 내 평소와 비교하는 숫자예요."],
+  hr: ["심박", "얼굴 피부색이 맥박마다 아주 조금 바뀌는 주기(rPPG)로 재요. 손끝 맥박 센서와 비교한 오차는 신호가 좋을 때 0.3 bpm 정도예요."],
+  stress: ["스트레스 지수", "박동 간격이 얼마나 빠르고 고르게 몰려 있는지(Baevsky 지수)를 0–100 으로 바꾼 값이에요. 긴장하면 올라가고, 커피 · 운동 직후에도 올라가요. 30 / 60 / 80 으로 편안 · 보통 · 높음 · 매우 높음."],
+  hrv: ["HRV (RMSSD)", "이웃한 박동 간격 차이의 크기예요. 편할 때는 숨 따라 간격이 출렁여서 커지고, 피곤하거나 긴장하면 작아져요. 사람마다 달라서 내 평소와 비교해 보세요."],
+  rr: ["호흡", "맥파가 숨 따라 출렁이는 주기로 추정해요. 공개 데이터로 정확도를 확인하지 못해서 참고로만 보여 드리고 점수에는 넣지 않아요."],
+  rhythm: ["리듬", "신호가 좋을 때만, 박동 간격이 갑자기 크게 바뀌는 비율을 봐요. '불규칙'이 며칠 반복되면 학교 보건실이나 병원에서 심전도로 확인해 보세요."],
+  bmi: ["BMI", "입력한 키 · 몸무게로 계산해요. 대한비만학회 기준 18.5 · 23 · 25."],
+  study: ["오늘의 공부 모드", "점수 · 긴장도 · 잔 시간 · 지금 시각으로 골라요. 75점 이상이고 긴장이 낮으면 50분 집중, 55점 미만 · 긴장 70 이상 · 잠 5시간 미만이면 15분씩 가볍게, 그 밖엔 25분 + 5분."],
+  signal: ["신호 등급", "맥박 신호가 잡음보다 얼마나 큰지(SNR)예요. 약하면 HRV · 스트레스는 보류하고 다시 재기를 권해요. 인증도 맥박이 잡혀야 돼요."],
+  checkin: ["인증", "그룹의 인증 시간대 안에서 30초 측정을 하고 맥박이 잡히면 인증돼요. 그룹엔 인증 시각과 연속 일수만 보여요."],
+};
+const tipBtn = (k, light) => '<button type="button" class="qm' + (light ? " light" : "") + '" data-tip="' + k + '" aria-label="' + TIPS[k][0] + ' 설명">?</button>';
+function showTip(btn) {
+  const t = TIPS[btn.dataset.tip], pop = $("tipPop");
+  if (!pop.hidden && pop.dataset.k === btn.dataset.tip) { pop.hidden = true; return; }
+  pop.innerHTML = "<b>" + t[0] + "</b>" + t[1]; pop.dataset.k = btn.dataset.tip; pop.hidden = false;
+  const r = btn.getBoundingClientRect(), w = 264, h = pop.offsetHeight;
+  pop.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2)) + "px";
+  pop.style.top = (r.bottom + 8 + h > innerHeight ? Math.max(12, r.top - h - 8) : r.bottom + 8) + "px";
+}
+// 이 기기 사람 — 그룹에서 쓰는 아이디와 이름만 (건강 수치와 묶이지 않는다)
+const ME = (() => {
+  let mid = "", nick = "";
+  try { mid = localStorage.getItem("vity.mid") || ""; nick = localStorage.getItem("vity.nick") || ""; } catch (e) { /* 사생활 모드 */ }
+  if (!mid) { mid = "m" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); try { localStorage.setItem("vity.mid", mid); } catch (e) { /* 무시 */ } }
+  return { mid, nick, save(n) { this.nick = n; try { localStorage.setItem("vity.nick", n); } catch (e) { /* 무시 */ } } };
+})();
+
+document.querySelectorAll("[data-ic]").forEach((el) => { el.innerHTML = ic(el.dataset.ic, el.tagName === "BUTTON" && el.closest(".tabs") ? 22 : 20) + (el.dataset.ic === "x" ? "" : el.innerHTML); });
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => go(b.dataset.tab)));
+function go(tab) {
+  document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", x.dataset.tab === tab));
+  document.body.classList.toggle("home", tab === "home");
+  if (tab === "group" && !WZ) gView = G ? gView : "list";
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === "v-" + tab));
+  if (tab === "log") renderLog();
+  if (tab === "group") renderGroup();
+  window.scrollTo(0, 0);
+}
+
+function ring(score, size = 120) {
+  const r = size / 2 - 9, c = 2 * Math.PI * r, f = score == null ? 0 : score / 100;
+  return '<div class="ringbox" style="width:' + size + "px; height:" + size + 'px"><svg viewBox="0 0 ' + size + " " + size + '"><circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="var(--surface2)" stroke-width="10"></circle>' +
+    '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="var(--calm)" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + (c * f).toFixed(1) + " " + c.toFixed(1) + '" transform="rotate(-90 ' + size / 2 + " " + size / 2 + ')"></circle></svg>' +
+    '<div class="c"><b class="num">' + (score ?? "–") + "</b><span>컨디션</span></div></div>";
+}
+
+// ---------- 오늘 ----------
+let homeTab = "today";
+function cardM(icn, name, val, unit, sub, tip, gauge) {
+  return '<div class="mc"><div class="mh">' + ic(icn, 16) + name + (tip ? tipBtn(tip) : "") + '</div><b class="num">' + val + (unit ? "<small>" + unit + "</small>" : "") + "</b>" +
+    (gauge != null ? '<div class="gauge"><i style="left:' + gauge + '%"></i></div>' : "") + (sub ? '<span class="s">' + sub + "</span>" : "") + "</div>";
+}
+function renderHome() {
+  $("date").textContent = DAY(S.today);
+  const L = S.last, b = S.baseline, todayL = L && L.day === S.today ? L : null;
+  const nick = ME.nick || (G && G.my_nick) || "";
+  const groupOpen = G && G.phase === "open" && !G.me_done;
+  const openN = GS.filter((g) => g.phase === "open" && !g.me_done).length;
+  const ch = groupOpen ? (G.icon || "coffee") : todayL ? charFor(todayL.score) : "calm";
+  let big, small;
+  if (groupOpen) { big = "인증 마감까지<br><em>" + fmtMin(G.left_min) + "</em>"; small = "남았어요 · " + esc(G.name) + " · " + G.done + "/" + G.total + "명 인증" + (openN > 1 ? " · 외 " + (openN - 1) + "개 그룹" : ""); }
+  else if (todayL) { big = "오늘 컨디션은<br><em>" + todayL.score + "점</em>이에요"; small = (todayL.vs.score != null ? "평소보다 " + sign(Math.round(todayL.vs.score)) + "점 · " : "") + todayL.at.slice(11, 16) + " 측정"; }
+  else { big = "오늘은 아직<br><em>측정 전</em>이에요"; small = "밝은 곳에서 30초면 돼요"; }
+  if (G && G.my_streak) small += " · " + G.my_streak + "일 연속 인증";
+  const band = '<div class="band"><div class="bandTop"><span class="d">' + DAY(S.today) + " · Vity 체크</span>" + tipBtn("score", true) + "</div>" +
+    '<p class="bandBig">' + big + '</p><p class="bandSmall">' + small + "</p>" +
+    '<img class="bandChar" src="/characters/' + ch + '.png" alt=""><span class="hill"></span></div>';
+
+  const tabs = '<div class="seg" role="tablist">' + [["today", "오늘"], ["week", "이번 주"], ["base", "내 평소"]].map(([k, t]) =>
+    '<button type="button" role="tab" aria-selected="' + (homeTab === k) + '" data-htab="' + k + '">' + t + "</button>").join("") + "</div>";
+  let body = "";
+  if (homeTab === "today") {
+    body = L ? '<div class="grid2">' +
+      cardM("heart-pulse", "심박", Math.round(L.hr), "bpm", L.vs.hr != null ? "평소 " + sign(L.vs.hr) : "", "hr") +
+      cardM("brain", "스트레스", L.stress == null ? "–" : Math.round(L.stress), "", esc(L.zone || "보류"), "stress", L.stress) +
+      cardM("audio-waveform", "HRV", L.rmssd ?? "–", L.rmssd != null ? "ms" : "", L.vs.rmssd != null ? "평소 " + sign(L.vs.rmssd) : "", "hrv") +
+      cardM("book-open", "공부 모드", L.study ? esc(L.study.title) : "–", "", L.study ? L.study.focus + "분 + " + L.study.rest + "분" : "", "study") + "</div>" +
+      (todayL ? "" : '<p class="sub">마지막 측정 ' + DAY(L.day) + " " + L.at.slice(11, 16) + "</p>")
+      : '<p class="sub">아직 측정이 없어요. 아래 버튼으로 첫 측정을 해 보세요.</p>';
+  } else if (homeTab === "week") {
+    const sc = S.week.filter((d) => d.score != null);
+    body = '<div class="week">' + S.week.map((d, i) => {
+      const h = d.score == null ? 0 : Math.max(8, (d.score / 100) * 84);
+      return '<div class="' + (i === 6 ? "today" : "") + '"><span class="num">' + (d.score == null ? "" : Math.round(d.score)) + '</span><i class="' + (d.score == null ? "none" : "") + '" style="height:' + h + 'px"></i>' + "일월화수목금토"[new Date(d.day + "T00:00:00").getDay()] + "</div>";
+    }).join("") + '</div><p class="sub">측정한 날 ' + sc.length + "일" + (sc.length ? " · 평균 " + Math.round(sc.reduce((a, d) => a + d.score, 0) / sc.length) + "점" : "") + (G ? " · 인증 " + G.my_streak + "일 연속" : "") + "</p>";
+  } else {
+    body = b.n >= 3 ? '<div><div class="kv2"><span>심박</span><b>' + (b.hr ?? "–") + ' bpm</b></div><div class="kv2"><span>HRV</span><b>' + (b.rmssd ?? "–") + ' ms</b></div><div class="kv2"><span>스트레스</span><b>' + (b.stress ?? "–") +
+      '</b></div><div class="kv2"><span>컨디션</span><b>' + (b.score ?? "–") + '점</b></div></div><p class="sub">최근 14일 · 신호 괜찮았던 측정 ' + b.n + "번의 중앙값이에요. 결과의 '평소보다'는 이 값과 비교해요.</p>"
+      : '<p class="sub">3번 넘게 재면 내 평소를 잡아 드려요. 지금 ' + b.n + "번.</p>";
+  }
+  const cta = '<button class="btn" type="button" data-act="scan">' + ic("scan-face", 22) + (groupOpen ? "30초 측정하고 인증" : "30초 측정") + "</button>" +
+    (L ? '<button class="btn ghost small" type="button" data-act="last">지난 결과 보기</button>' : "");
+  const parts = [band, '<div class="panel">' + tabs + body + cta + "</div>"];
+  const leftOf = (g) => (g.me_done ? "나 인증 완료" : g.phase === "open" ? "마감까지 " + fmtMin(g.left_min) : g.phase === "before" ? fmtMin(g.left_min) + " 뒤 시작" : "오늘 인증 끝");
+  if (G) {
+    const left = G.phase === "open" ? "마감까지 " + fmtMin(G.left_min) : G.phase === "before" ? fmtMin(G.left_min) + " 뒤 시작" : "오늘 인증 끝";
+    parts.push('<button class="card gcard" type="button" data-gopen="' + G.code + '"><img src="/characters/' + (G.icon || "calm") + '.png" alt=""><span style="display:flex; flex-direction:column; gap:8px; min-width:0">' +
+      '<span style="display:flex; justify-content:space-between; align-items:center; gap:8px"><b style="font-size:16px">' + esc(G.name) + '</b><span class="tag ' + (G.me_done ? "good" : G.phase === "open" ? "warn" : "") + '">' + (G.me_done ? "나 인증 완료" : left) + "</span></span>" +
+      '<span style="display:flex; gap:4px; align-items:center">' + G.members.map((m) => '<span class="av' + (m.at ? " on" : "") + '" style="width:28px; height:28px; font-size:10px">' + esc(m.nick.slice(0, 2)) + "</span>").join("") +
+      '<span class="sub" style="margin-left:auto">' + G.done + "/" + G.total + "</span></span></span></button>");
+    if (GS.length > 1) parts.push('<div class="card" style="gap:4px; padding:8px 14px">' + GS.slice(1).map((g) =>
+      '<button class="glist" type="button" data-gopen="' + g.code + '" style="padding:8px 0; grid-template-columns:40px minmax(0,1fr) auto"><img src="/characters/' + (g.icon || "calm") + '.png" alt="" style="width:40px; height:40px; border-radius:10px">' +
+      "<span><b style=\"font-size:14px\">" + esc(g.name) + '</b><span class="n">' + g.start + "–" + g.end + " · " + g.done + "/" + g.total + '</span></span><span class="tag ' + (g.me_done ? "good" : g.phase === "open" ? "warn" : "") + '">' + leftOf(g) + "</span></button>").join("") + "</div>");
+  } else {
+    parts.push('<button class="card gcard" type="button" data-act="group"><img src="/characters/sleep.png" alt=""><span><b style="font-size:16px">친구들과 기상 인증 하기</b><br><span class="sub">그룹을 만들거나 초대 코드로 들어가요</span></span></button>');
+  }
+  if (todayL && todayL.study) parts.push(studyCard(todayL.study, false));
+  parts.push('<div class="card"><h2 class="ih">' + ic("info") + '잘 재려면</h2><p class="sub">밝은 곳에서 얼굴 정면 · 30초 동안 말하지 않기 · 방금 뛰었다면 3분 쉬고 재기. 시험 직전, 공부 시작 전, 자기 전에 재 보면 차이가 잘 보여요.</p></div>');
+  $("v-home").innerHTML = parts.join("");
+}
+
+// ---------- 측정 전 질문 ----------
+let PRE = { sleep_h: 7, caffeine: 0, mood: 3 }, NEXT = { kind: "normal", pair: null };
+try { Object.assign(PRE, JSON.parse(localStorage.getItem("vity.check.pre") || "{}")); } catch (e) { /* 없음 */ }
+const MOODS = [["angry", "힘듦"], ["frown", "별로"], ["meh", "보통"], ["smile", "좋음"], ["laugh", "아주 좋음"]];
+function renderPre() {
+  $("slVal").textContent = PRE.sleep_h + "시간";
+  $("cafOpts").innerHTML = [0, 1, 2, 3].map((n) => '<button class="opt" type="button" data-caf="' + n + '" aria-pressed="' + (PRE.caffeine === n) + '">' + (n === 3 ? "3+" : n) + "<small>잔</small></button>").join("");
+  $("moodOpts").innerHTML = MOODS.map(([icn, t], i) => '<button class="opt" type="button" data-mood="' + (i + 1) + '" aria-pressed="' + (PRE.mood === i + 1) + '">' + ic(icn, 22) + "<small>" + t + "</small></button>").join("");
+  $("preGo").innerHTML = ic("scan-face", 22) + "30초 측정 시작";
+}
+function openPre() { renderPre(); $("pre").classList.add("on"); }
+$("slMinus").onclick = () => { PRE.sleep_h = Math.max(0, PRE.sleep_h - 0.5); renderPre(); };
+$("slPlus").onclick = () => { PRE.sleep_h = Math.min(12, PRE.sleep_h + 0.5); renderPre(); };
+$("pre").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.caf) { PRE.caffeine = +b.dataset.caf; renderPre(); }
+  if (b.dataset.mood) { PRE.mood = +b.dataset.mood; renderPre(); }
+});
+$("preCancel").onclick = () => $("pre").classList.remove("on");
+$("preGo").onclick = () => { try { localStorage.setItem("vity.check.pre", JSON.stringify(PRE)); } catch (e) { /* 무시 */ } $("pre").classList.remove("on"); openScan(); };
+
+// ---------- 스캔 ----------
+const SECS = 30;
+let cam = { stream: null, raf: 0, frames: [], running: false, t0: 0, readySince: 0, lastT: -1, mesh: true };
+const live = { at: 0, pulse: 0 };
+function ringP(f) { $("ring").setAttribute("stroke-dasharray", Math.max(0, Math.min(100, f * 100)) + " 100"); }
+function stepSet(n, st) { const li = document.querySelector('.steps [data-s="' + n + '"]'); if (li) li.className = st || ""; }
+function toView(nx, ny) {
+  const v = $("video"), vw = v.videoWidth || 640, vh = v.videoHeight || 480, sc = Math.max(300 / vw, 400 / vh), dw = vw * sc, dh = vh * sc;
+  return [300 - ((300 - dw) / 2 + nx * dw), (400 - dh) / 2 + ny * dh];
+}
+const FIXED = { fh: [[0.42, 0.22], [0.58, 0.22], [0.58, 0.29], [0.42, 0.29]], l: [[0.31, 0.47], [0.42, 0.47], [0.42, 0.56], [0.31, 0.56]], r: [[0.58, 0.47], [0.69, 0.47], [0.69, 0.56], [0.58, 0.56]] };
+// 얼굴 메시를 그대로 보여준다 (메시를 못 불러오면 예전처럼 고정 영역 상자)
+function paintFace(f, now) {
+  const lm = cam.mesh && f && f.face ? FACE.lastLandmarks() : null;
+  $("camBox").classList.toggle("meshon", !!lm);
+  if (lm) { $("ov").innerHTML = ""; MESH.draw($("meshc"), $("video"), { lm, tess: FACE.tessellation(), polys: FACE.lastPolys(), scanning: cam.running, pulse: live.pulse, t: now }); }
+  else { MESH.clear($("meshc")); drawRois(f); }
+}
+function drawRois(f) {
+  const g = $("ov"); if (!f || !f.face) { g.innerHTML = ""; return; }
+  const polys = cam.mesh ? FACE.lastPolys() : FIXED; if (!polys) return;
+  const op = cam.running ? 0.14 + 0.3 * live.pulse : 0.1;
+  g.innerHTML = Object.values(polys).map((p) => '<polygon points="' + p.map(([x, y]) => toView(x, y).map((n) => n.toFixed(1)).join(",")).join(" ") + '" fill="' + ACCENT() + '" fill-opacity="' + op.toFixed(2) + '" stroke="#FFFFFF" stroke-width="1.6"></polygon>').join("");
+}
+function liveWave() {
+  const fr = cam.frames.filter((f) => f.face); if (fr.length < 24) return null;
+  const tEnd = fr[fr.length - 1].t, w = fr.filter((f) => f.t > tEnd - 4000), n = w.length;
+  const cn = w.map((f) => { let r = 0, g = 0, b = 0, k = 0; for (const q of w) if (Math.abs(q.t - f.t) <= 800) { r += q.rgb[0]; g += q.rgb[1]; b += q.rgb[2]; k++; } return [f.rgb[0] / (r / k) - 1, f.rgb[1] / (g / k) - 1, f.rgb[2] / (b / k) - 1]; });
+  const s1 = cn.map((c) => c[1] - c[2]), s2 = cn.map((c) => c[1] + c[2] - 2 * c[0]);
+  const sd = (v) => { const m = v.reduce((a, x) => a + x, 0) / v.length; return Math.sqrt(v.reduce((a, x) => a + (x - m) ** 2, 0) / v.length) || 1e-9; };
+  const al = sd(s1) / sd(s2); let h = s1.map((x, i) => x + al * s2[i]);
+  h = h.map((x, i) => (h[Math.max(0, i - 1)] + x + h[Math.min(n - 1, i + 1)]) / 3);
+  const m = h.reduce((a, x) => a + x, 0) / n, s = sd(h);
+  return { t: w.map((f) => f.t), x: h.map((x) => (x - m) / s), tEnd };
+}
+function drawWave(wv) {
+  const c = $("wave"), ctx = c.getContext("2d"), W = c.width, H = c.height; ctx.clearRect(0, 0, W, H); if (!wv) return;
+  const px = (t) => W - ((wv.tEnd - t) / 4000) * W, py = (x) => H * 0.55 - Math.max(-2.5, Math.min(2.5, x)) * H * 0.16;
+  ctx.lineWidth = 4; ctx.strokeStyle = ACCENT(); ctx.beginPath(); wv.t.forEach((t, i) => (i ? ctx.lineTo(px(t), py(wv.x[i])) : ctx.moveTo(px(t), py(wv.x[i])))); ctx.stroke();
+  live.pulse = Math.max(0, Math.min(1, (wv.x[wv.x.length - 1] + 1.5) / 3));
+}
+function liveEst(now) {
+  if (now - live.at < 1000) return; live.at = now;
+  const fr = cam.frames.filter((f) => f.face), el = (now - cam.t0) / 1000;
+  const e = fr.length > 60 ? RPPG2.estimate(fr.map((f) => ({ t: f.t, rgb: f.rgb }))) : null;
+  if (e && e.snr >= 0) { $("liveBpm").textContent = Math.round(e.bpm); $("liveUnit").textContent = "bpm"; document.querySelector(".live .heart").style.animationDuration = (60 / e.bpm).toFixed(2) + "s"; stepSet("pulse", "ok"); }
+  else { $("liveBpm").textContent = "··"; $("liveUnit").textContent = el < 8 ? "모으는 중" : "신호 찾는 중"; stepSet("pulse", "doing"); }
+  stepSet("hrv", el >= 15 ? (e && e.snr >= 0 ? "ok" : "doing") : el >= 8 ? "doing" : "");
+}
+function sampleFixed(video, canvas, t) {
+  const W = canvas.width, H = canvas.height, ctx = canvas.getContext("2d", { willReadFrequently: true }); ctx.drawImage(video, 0, 0, W, H);
+  const box = (x, y, w, h) => { const d = ctx.getImageData(x * W, y * H, w * W, h * H).data; let r = 0, g = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; } const n = d.length / 4; return [r / n, g / n, b / n]; };
+  const a = box(0.42, 0.22, 0.16, 0.07), l = box(0.31, 0.47, 0.11, 0.09), r = box(0.58, 0.47, 0.11, 0.09), rgb = [0, 1, 2].map((k) => (a[k] + l[k] + r[k]) / 3);
+  return { t, face: true, rgb, lum: 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2], nose: [0, 0], skip: false };
+}
+
+async function openScan() {
+  cam.frames = []; cam.running = false; cam.readySince = 0;
+  $("scanTitle").textContent = NEXT.kind === "after_breath" ? "호흡 뒤 다시 재기" : "30초 측정";
+  $("scan").classList.add("on"); ringP(0); $("camBox").className = "cam"; $("ov").innerHTML = ""; drawWave(null);
+  ["face", "pulse", "hrv", "save"].forEach((s) => stepSet(s, "")); stepSet("face", "doing");
+  $("hint").textContent = "얼굴을 화면 가운데에 두세요"; $("startBtn").disabled = false; $("startBtn").textContent = "바로 시작";
+  if (!navigator.mediaDevices || !window.isSecureContext) { $("hint").textContent = "카메라는 https 주소에서 열 수 있어요"; $("startBtn").disabled = true; return; }
+  try {
+    cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio: false });
+    const v = $("video"); v.srcObject = cam.stream; await v.play();
+    try { $("hint2").textContent = "얼굴 메시 준비 중…"; await FACE.init(); cam.mesh = true; } catch (e) { cam.mesh = false; }
+    $("hint2").textContent = "영상은 이 기기 안에서 숫자로만 바뀌고 저장되지 않아요.";
+    const c = $("canvas"); c.width = 320; c.height = Math.round(320 * v.videoHeight / v.videoWidth) || 240;
+    cam.raf = requestAnimationFrame(loop);
+  } catch (err) { $("hint").textContent = { NotAllowedError: "카메라 권한을 허용해 주세요", NotFoundError: "카메라를 찾지 못했어요" }[err.name] || err.message; $("startBtn").disabled = true; }
+}
+function loop() {
+  if (!$("scan").classList.contains("on") || !cam.stream) return;
+  const v = $("video"), now = performance.now();
+  if (v.readyState >= 2 && v.currentTime !== cam.lastT) {
+    cam.lastT = v.currentTime;
+    let f; try { f = cam.mesh ? FACE.sample(v, $("canvas"), now) : sampleFixed(v, $("canvas"), now); } catch (e) { f = { t: now, face: false }; }
+    paintFace(f, now);
+    if (cam.running) { cam.frames.push(f); drawWave(liveWave()); $("hint2").textContent = !f.face ? "얼굴이 화면 밖으로 나갔어요" : f.skip ? "눈 뜨고 말하지 말아 주세요" : "그대로 편하게 숨 쉬세요"; }
+    else {
+      const ok = f.face && f.lum >= FACE.Q.lumLo && f.lum <= FACE.Q.lumHi && !f.skip;
+      cam.readySince = ok ? (cam.readySince || now) : 0;
+      $("camBox").classList.toggle("found", !!f.face); stepSet("face", f.face ? "ok" : "doing");
+      $("hint").textContent = !f.face ? "얼굴을 화면 가운데에 두세요" : f.lum < FACE.Q.lumLo ? "조금 더 밝은 곳이 좋아요" : f.lum > FACE.Q.lumHi ? "빛이 너무 세요" : "좋아요, 그대로 있어 주세요";
+      if (ok && now - cam.readySince > 600) start();
+    }
+  }
+  if (cam.running) { const el = (now - cam.t0) / 1000; ringP(el / SECS); $("hint").textContent = Math.max(0, Math.ceil(SECS - el)) + "초"; liveEst(now); if (el >= SECS) return finish(); }
+  cam.raf = requestAnimationFrame(loop);
+}
+function start() {
+  if (cam.running || !cam.stream) return;
+  cam.running = true; cam.frames = []; cam.t0 = performance.now(); live.at = 0;
+  $("startBtn").disabled = true; $("startBtn").textContent = "그대로 있어 주세요"; $("camBox").classList.add("found", "scanning"); stepSet("face", "ok");
+}
+function stopCam() { cancelAnimationFrame(cam.raf); if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop()); cam.stream = null; }
+$("startBtn").onclick = start;
+$("scanX").onclick = () => { cam.running = false; stopCam(); $("scan").classList.remove("on"); };
+
+async function finish() {
+  cam.running = false; cancelAnimationFrame(cam.raf);
+  const frames = cam.frames; $("camBox").classList.remove("scanning"); ringP(1);
+  stepSet("save", "doing"); $("hint").textContent = "분석하는 중"; $("hint2").textContent = "30초 전체로 박동을 하나씩 찾고 있어요";
+  await new Promise((r) => setTimeout(r, 60));
+  const faced = frames.filter((f) => f.face);
+  const m = faced.length > 120 ? VITALS.analyze(faced.map((f) => ({ t: f.t, rgb: f.rgb }))) : null;
+  const q = FACE.quality(frames, m ? { snr: m.snr } : null);
+  stepSet("save", "ok"); stopCam(); $("scan").classList.remove("on");
+  if (!m || q.why === "face" || q.why === "light" || q.why === "move") {
+    return showRetry({ face: "얼굴이 잘 보이지 않았어요.", light: "조금 더 밝은 곳에서 다시 재 주세요.", move: "고개를 가만히 두고 말하지 말아 주세요." }[q.why] || "신호를 충분히 못 모았어요.");
+  }
+  const metrics = Object.fromEntries(Object.entries(m).filter(([k]) => !k.startsWith("_")));
+  try {
+    const r = await api("/api/c/scan", { metrics, ...PRE, kind: NEXT.kind, pair: NEXT.pair, member: ME.mid });
+    NEXT = { kind: "normal", pair: null }; LAST = r; await refresh(); showResult(r);
+  } catch (e) { toast(e.message); }
+}
+function showRetry(msg) {
+  $("resIn").innerHTML = '<div class="empty"><img src="/characters/idle.png" alt=""><div><h2 style="margin:0">다시 재 볼까요?</h2><p class="sub">' + esc(msg) + '</p></div></div><button class="btn" type="button" data-act="scan">다시 재기</button><button class="btn ghost small" type="button" data-act="close">닫기</button>';
+  $("res").classList.add("on");
+}
+
+// ---------- 결과 ----------
+const PART = [["stress", "스트레스", 35], ["hrv", "HRV", 20], ["hr", "심박", 15], ["life", "생활", 30]];
+const TIPK = { "심박": "hr", "스트레스 지수": "stress", "HRV (RMSSD)": "hrv", "호흡": "rr", "리듬": "rhythm", "BMI": "bmi" };
+function metric(icn, name, val, unit, extra, d) {
+  return '<div class="m"><div class="h">' + ic(icn, 16) + name + (TIPK[name] ? tipBtn(TIPK[name]) : "") + "</div><b class=\"num\">" + val + (unit ? "<small>" + unit + "</small>" : "") + "</b>" + (extra || "") + (d ? '<div class="d">' + d + "</div>" : "") + "</div>";
+}
+function showResult(r) {
+  const cf = CONF[r.signal] || CONF.mid, hc = CONF[r.hrv_conf] || CONF.low, bmi = S.profile.bmi;
+  const vs = (k, u) => (r.vs[k] != null ? "평소보다 " + sign(r.vs[k]) + (u || "") : "");
+  let html = "";
+  for (const c of r.checkins || []) {
+    const okc = c.status === "ok" || c.status === "already", g = esc(c.group);
+    const msg = { ok: g + " 인증 완료 " + c.at + (c.streak ? " · " + c.streak + "일 연속" : ""),
+      already: g + " 오늘 " + c.at + "에 이미 인증했어요", before: g + eunNeun(c.group) + " " + c.start + "부터 인증해요", closed: g + " 오늘 인증 시간(" + c.window + ")은 끝났어요",
+      no_pulse: g + " 맥박이 잡히지 않아 인증되지 않았어요. 밝은 곳에서 다시 재 주세요", not_counted: g + " 호흡 뒤 측정은 인증에 쓰지 않아요" }[c.status];
+    html += '<div class="ckin ' + (okc ? "ok" : "no") + '" style="margin-bottom:-4px">' + ic(okc ? "check" : "info", 18) + msg + "</div>";
+  }
+  if ((r.checkins || []).some((c) => c.status === "ok")) html += '<p class="sub" style="padding:0 4px">그룹엔 인증 시각과 연속 일수만 보여요.</p>';
+  html += '<div class="card"><div class="rhead">' + ring(r.score) + "<div><h2 style=\"font-size:18px; word-break:keep-all\">" + (r.score >= 75 ? "컨디션 좋아요" : r.score >= 55 ? "무난한 편이에요" : r.score != null ? "오늘은 쉬어 가요" : "점수 보류") +
+    '</h2><p class="sub">' + (r.vs.score != null ? "평소보다 " + sign(Math.round(r.vs.score)) + "점 · " : "") + '<span class="tag ' + cf[1] + '">' + cf[0] + "</span> " + tipBtn("signal") + '</p></div><img src="/characters/' + charFor(r.score) + '.png" alt=""></div>' +
+    '<div class="parts">' + PART.map(([k, n, w]) => { const v = r.parts[k]; return '<div class="p"><span>' + n + " <small>" + w + '%</small></span><div class="t"><i style="width:' + (v ?? 0) + '%"></i></div><span class="v num">' + (v ?? "–") + "</span></div>"; }).join("") +
+    '</div><p class="sub">점수 = 스트레스(100 − 지수) 35% + HRV 20% + 심박(55–85 bpm) 15% + 생활(수면 · 카페인 · 기분) 30%. 신호가 약한 항목은 빼고 나머지로 다시 나눠요.</p></div>';
+  if (r.before) {
+    const b = r.before, row = (k, n, u, better) => { const d = r[k] != null && b[k] != null ? Math.round((r[k] - b[k]) * 10) / 10 : null; return '<span class="k">' + n + '</span><span class="num">' + (b[k] ?? "–") + " → <b class=\"a\">" + (r[k] ?? "–") + "</b> " + u + "</span><span class=\"tag " + (d == null ? "" : (better(d) ? "good" : "warn")) + '" style="justify-self:end">' + (d == null ? "–" : sign(d)) + "</span>"; };
+    html += '<div class="card"><h2 class="ih">' + ic("wind") + '1분 호흡 전 → 후</h2><div class="cmp">' + row("stress", "스트레스", "", (d) => d < 0) + row("hr", "심박", "bpm", (d) => d < 0) + row("rmssd", "HRV", "ms", (d) => d > 0) + row("score", "컨디션", "점", (d) => d > 0) + "</div></div>";
+  }
+  html += '<div class="grid">' +
+    metric("heart-pulse", "심박", Math.round(r.hr), "bpm", "", vs("hr", " bpm") || "편히 앉은 상태 기준 60–100") +
+    metric("brain", "스트레스 지수", r.stress == null ? "–" : Math.round(r.stress), "", r.stress != null ? '<div class="gauge"><i style="left:' + r.stress + '%"></i></div>' : "", r.stress != null ? esc(r.zone) + (r.vs.stress != null ? " · " + vs("stress") : "") : "박동 간격 신호가 약해 보류") +
+    metric("audio-waveform", "HRV (RMSSD)", r.rmssd ?? "–", r.rmssd != null ? "ms" : "", "", r.rmssd != null ? "SDNN " + r.sdnn + " ms · " + (vs("rmssd", " ms") || "높을수록 회복 잘 된 편") : '<span class="tag ' + hc[1] + '">' + hc[0] + "</span>") +
+    metric("wind", "호흡", r.rr ?? "–", r.rr != null ? "회/분" : "", '<span class="tag ref" style="align-self:flex-start">참고값</span>', "안정 시 12–20") +
+    metric("activity", "리듬", r.irregular == null ? "보류" : r.irregular ? "불규칙" : "고름", "", "", r.irregular == null ? "신호 좋을 때만 판단해요" : r.irregular ? "한 번 더 재 보세요" : "박동 간격이 고르게 잡혔어요") +
+    metric("weight", "BMI", bmi ? bmi.bmi : "–", "", "", bmi ? bmi.zone + " (키 · 몸무게 입력값)" : '<button type="button" data-act="me" style="border:none; background:none; padding:0; color:var(--calm); font:inherit">내 정보에서 입력</button>') + "</div>";
+  if (r.study) html += studyCard(r.study, true);
+  html += '<div class="card"><h2 class="ih">' + ic("clipboard-check") + "지금 해 볼 것</h2>" + r.tips.map((t) => {
+    const icn = { breath: "wind", retry: "refresh-cw" }[t.action] || { sleep: "moon", caffeine: "coffee", mood: "heart", recovery: "moon", late: "moon", good: "brain", irregular: "triangle-alert", hr_high: "heart-pulse" }[t.id] || "info";
+    return '<div class="tip"><span class="ic">' + ic(icn) + "</span><div><b>" + esc(t.title) + "</b><p>" + esc(t.body) + "</p>" +
+      (t.action === "breath" ? '<button class="btn small" type="button" data-act="breath" data-id="' + r.id + '">' + ic("wind", 18) + "1분 호흡 시작</button>" : t.action === "retry" ? '<button class="btn small ghost" type="button" data-act="scan">' + ic("refresh-cw", 18) + "다시 재기</button>" : "") + "</div></div>";
+  }).join("") + "</div>";
+  html += '<p class="note">의료기기가 아니에요. 공개 데이터에서 손끝 맥박 센서와 비교한 오차는 심박 0.3 bpm, HRV 7.5 ms 수준이고(신호 좋을 때), 호흡은 검증이 약해 참고로만 보여 드려요.</p>' +
+    '<button class="btn ghost" type="button" data-act="close">닫기</button>';
+  $("resIn").innerHTML = html; $("res").classList.add("on"); $("resIn").scrollTop = 0;
+}
+
+// ---------- 1분 호흡 (4초 들숨 · 6초 날숨 × 6) ----------
+let br = { raf: 0, t0: 0, pair: null };
+function startBreath(pair) {
+  br.pair = pair; $("res").classList.remove("on"); $("breath").classList.add("on"); $("bAgain").hidden = true; $("bStop").textContent = "그만하기";
+  br.t0 = performance.now() + 1500; $("bTxt").textContent = "준비"; $("bSub").textContent = "4초 들이쉬고 6초 내쉬기, 여섯 번";
+  const tick = () => {
+    const el = (performance.now() - br.t0) / 1000;
+    if (el < 0) { br.raf = requestAnimationFrame(tick); return; }
+    if (el >= 60) { $("bcircle").style.transform = "scale(1)"; $("bTxt").textContent = "잘했어요"; $("bSub").textContent = "이제 다시 재서 전후를 비교해 볼까요?"; $("bAgain").hidden = false; $("bStop").textContent = "닫기"; return; }
+    const c = el % 10, inhale = c < 4, k = inhale ? c / 4 : 1 - (c - 4) / 6;
+    $("bcircle").style.transform = "scale(" + (0.72 + 0.38 * (0.5 - 0.5 * Math.cos(Math.PI * k))).toFixed(3) + ")";
+    $("bTxt").textContent = inhale ? "들이쉬고" : "내쉬고"; $("bSub").textContent = Math.floor(el / 10) + 1 + " / 6 · " + Math.ceil(inhale ? 4 - c : 10 - c) + "초";
+    br.raf = requestAnimationFrame(tick);
+  };
+  br.raf = requestAnimationFrame(tick);
+}
+$("bStop").onclick = () => { cancelAnimationFrame(br.raf); $("breath").classList.remove("on"); };
+$("bAgain").onclick = () => { $("breath").classList.remove("on"); NEXT = { kind: "after_breath", pair: br.pair }; openScan(); };
+
+// ---------- 공부 모드 ----------
+const fmtMin = (m) => (m == null ? "" : m >= 60 ? Math.floor(m / 60) + "시간 " + (m % 60 ? (m % 60) + "분" : "") : m + "분");
+function studyCard(st, inResult) {
+  return '<div class="card study"><span class="k" style="display:flex; align-items:center; gap:6px">오늘의 공부 모드 · ' + esc(st.why) + tipBtn("study") + '</span><h2 style="font-size:18px">' + esc(st.title) + " · " + st.focus + "분 집중 + " + st.rest + "분 휴식</h2>" +
+    '<p class="sub" style="color:var(--ink2)">' + esc(st.body) + "</p>" +
+    '<button class="btn' + (inResult ? " small" : "") + '" type="button" data-act="timer" data-f="' + st.focus + '" data-r="' + st.rest + '">' + ic("timer", 20) + "공부 타이머 시작</button></div>";
+}
+let TM = { raf: 0, f: 25, r: 5, t0: 0, paused: 0, pausedAt: 0 };
+function startTimer(f, r) {
+  Object.assign(TM, { f, r, t0: performance.now(), paused: 0, pausedAt: 0 });
+  $("res").classList.remove("on"); $("timer").classList.add("on"); $("tmPause").textContent = "일시정지";
+  const tick = () => {
+    if (!$("timer").classList.contains("on")) return;
+    const now = TM.pausedAt || performance.now(), el = (now - TM.t0 - TM.paused) / 1000, cyc = (f + r) * 60;
+    const k = Math.floor(el / cyc), c = el - k * cyc, focus = c < f * 60, left = focus ? f * 60 - c : cyc - c;
+    $("tmPh").textContent = focus ? "집중" : "휴식"; $("tmT").textContent = String(Math.floor(left / 60)).padStart(2, "0") + ":" + String(Math.floor(left % 60)).padStart(2, "0");
+    $("tmSub").textContent = (k + 1) + "번째 · " + f + "분 집중 · " + r + "분 휴식";
+    if (TM.lastFocus !== undefined && TM.lastFocus !== focus && navigator.vibrate) navigator.vibrate([60, 80, 60]);
+    TM.lastFocus = focus;
+    TM.raf = requestAnimationFrame(tick);
+  };
+  TM.lastFocus = undefined; TM.raf = requestAnimationFrame(tick);
+}
+$("tmPause").onclick = () => {
+  if (TM.pausedAt) { TM.paused += performance.now() - TM.pausedAt; TM.pausedAt = 0; $("tmPause").textContent = "일시정지"; }
+  else { TM.pausedAt = performance.now(); $("tmPause").textContent = "다시 시작"; }
+};
+$("tmStop").onclick = () => { cancelAnimationFrame(TM.raf); $("timer").classList.remove("on"); };
+
+// ---------- 인증 그룹 ----------
+let leaving = false, gView = "list", WZ = null;
+const GICON = [["sleep", "기상"], ["coffee", "공부"], ["move", "운동"], ["calm", "기본"]];
+const PRESET_T = [["기상", "07:00", "09:00"], ["공부 시작", "19:00", "21:00"], ["점심 전", "11:00", "13:00"]];
+const PRESET_R = ["벌금 1,000원 (앱 밖에서)", "지각하면 커피 사기", "규칙 없음"];
+function renderGroup() {
+  const v = $("v-group");
+  if (WZ) return renderWizard(v);
+  if (gView === "detail" && GS.some((g) => g.code === gSel)) return renderGroupDetail(v);
+  let h = '<div class="ptitle2"><h2>그룹</h2><p class="sub">기상 · 공부 시작 인증을 친구들과 해요. 사진 대신 30초 측정에서 맥박이 잡혀야 인증돼요.</p></div>';
+  const full = GS.length >= 5;
+  h += GS.map((g) => '<button class="glist" type="button" data-gopen="' + g.code + '"><img src="/characters/' + (g.icon || "calm") + '.png" alt=""><span><b>' + esc(g.name) + '</b><span class="n">매일 ' + g.start + "–" + g.end + " · " + g.total + "명 · " +
+    (g.me_done ? "나 인증 완료" : g.phase === "open" ? "지금 인증 시간 · " + g.done + "/" + g.total : "오늘 " + g.done + "/" + g.total) + "</span></span>" + ic("chevron-right") + "</button>").join("");
+  h += '<button class="gadd" type="button" data-gnew="1"' + (full ? " disabled" : "") + ">" + ic("plus", 28) + "<span>" + (full ? "그룹은 5개까지 들어갈 수 있어요" : "새 그룹 만들기") + "</span></button>";
+  if (!full) h += '<div class="card"><h2 class="ih">' + ic("users") + '초대 코드로 들어가기</h2><div class="row"><label class="f">초대 코드<input class="f" id="gCode" maxlength="6" autocapitalize="characters" placeholder="K7Q2MX"></label>' +
+    '<label class="f">내 이름<input class="f" id="gNick1" maxlength="12" value="' + esc(ME.nick) + '"></label></div><button class="btn small" type="button" id="gJoin">들어가기</button></div>';
+  h += '<p class="sub" style="padding:0 4px">' + ic("shield-check", 14) + " 그룹엔 이름 · 인증 시각 · 연속 일수만 보여요. 점수 · 심박 · 얼굴은 공유되지 않아요.</p>";
+  v.innerHTML = h;
+  if ($("gJoin")) $("gJoin").onclick = () => groupCall("/api/c/group/join", { code: $("gCode").value, nick: $("gNick1").value });
+}
+function renderGroupDetail(v) {
+  const G = GS.find((g) => g.code === gSel);
+  const left = G.phase === "open" ? "마감까지 " + fmtMin(G.left_min) : G.phase === "before" ? fmtMin(G.left_min) + " 뒤 시작" : "오늘 인증 시간 끝";
+  v.innerHTML = '<div class="wzhead"><button class="back2" type="button" data-glist="1" aria-label="그룹 목록">' + ic("chevron-left") + '</button><b style="font-size:16px">그룹</b></div>' +
+    '<div class="card"><div style="display:flex; gap:12px; align-items:center"><img src="/characters/' + (G.icon || "calm") + '.png" alt="" style="width:64px; height:64px; object-fit:contain; background:var(--calm-soft); border-radius:16px">' +
+    '<div style="flex:1; min-width:0"><p class="sub">' + G.total + "명" + (G.owner_me ? " · 내가 방장" : "") + '</p><h2 style="font-size:18px; word-break:keep-all">' + esc(G.name) + "</h2></div>" +
+    '<span class="tag ' + (G.phase === "open" ? "warn" : "") + '">' + left + "</span></div>" +
+    '<div class="chips2"><span>매일 ' + G.start + "–" + G.end + "</span><span>맥박이 잡혀야 인증</span>" + (G.rule ? '<span class="plain">' + esc(G.rule) + "</span>" : "") + tipBtn("checkin") + "</div>" +
+    "<div>" + G.members.map((m) => '<div class="mem"><span class="av' + (m.at ? " on" : "") + '">' + esc(m.nick.slice(0, 2)) + "</span><span><b>" + esc(m.nick) + (m.me ? " · 나" : "") + (m.owner ? " · 방장" : "") +
+      '</b><br><span class="n">' + (m.streak ? m.streak + "일 연속" : "연속 없음") + "</span></span>" + '<span class="tag ' + (m.at ? "good" : "") + '">' + (m.at || "미인증") + "</span></div>").join("") + "</div>" +
+    (G.me_done ? '<div class="ckin ok">' + ic("check", 18) + "오늘 인증했어요</div>" : G.phase === "open" ? '<button class="btn" type="button" data-act="scan">' + ic("scan-face", 22) + "지금 인증하기 · 30초</button>" :
+      '<p class="sub">인증은 ' + G.start + "–" + G.end + " 사이에 30초 측정을 하면 돼요.</p>") + "</div>" +
+    '<div class="card"><div style="display:flex; justify-content:space-between; align-items:center"><span class="sub">초대 코드</span><button class="btn small ghost" type="button" data-gshare="' + G.code + '" style="width:auto; padding:0 14px">' + ic("share-2", 18) + "공유</button></div>" +
+    '<span class="code">' + G.code + "</span></div>" +
+    '<div class="card">' + (leaving ? '<p>정말 나갈까요? 내 인증 기록도 이 그룹에서 지워져요.</p><div class="row"><button class="btn small" type="button" id="gLeaveYes" style="background:var(--alert)">나가기</button><button class="btn small ghost" type="button" id="gLeaveNo">취소</button></div>' :
+      '<button class="btn small ghost" type="button" id="gLeave">' + ic("log-out", 18) + "그룹 나가기</button>") + "</div>";
+  if ($("gLeave")) $("gLeave").onclick = () => { leaving = true; renderGroup(); };
+  if ($("gLeaveNo")) $("gLeaveNo").onclick = () => { leaving = false; renderGroup(); };
+  if ($("gLeaveYes")) $("gLeaveYes").onclick = async () => { leaving = false; gView = "list"; await groupCall("/api/c/group/leave", { code: G.code }); toast("'" + G.name + "' 에서 나왔어요"); };
+}
+async function shareCode(code) {
+  const G = GS.find((g) => g.code === code) || (WZ && WZ.created);
+  if (!G) return;
+  const text = "Vity 인증 그룹 '" + G.name + "' 초대 코드: " + G.code + " (" + location.origin + "/check)";
+  try { if (navigator.share) { await navigator.share({ title: "Vity 인증 그룹", text }); return; } await navigator.clipboard.writeText(text); toast("초대 문구를 복사했어요"); }
+  catch (e) { if (e.name !== "AbortError") toast("코드: " + G.code); }
+}
+function renderWizard(v) {
+  const w = WZ, pct = Math.min(100, (w.step / 3) * 100);
+  let h = '<div class="wzhead">' + (w.step <= 3 ? '<button class="back2" type="button" data-wz="back" aria-label="뒤로">' + ic("chevron-left") + "</button>" : "") +
+    (w.step <= 3 ? '<div class="wzbar"><i style="width:' + pct + '%"></i></div><span class="sub">' + w.step + " / 3</span>" : "") + "</div>";
+  if (w.step === 1) {
+    h += '<div class="card"><h2 style="font-size:20px">어떤 그룹인가요?</h2><label class="f">그룹 이름<input class="f" id="wzName" maxlength="20" placeholder="중간고사 기상 인증방" value="' + esc(w.name) + '"></label>' +
+      '<span class="sub">그룹 캐릭터</span><div class="pick">' + GICON.map(([k, t]) => '<button type="button" data-wzicon="' + k + '" aria-pressed="' + (w.icon === k) + '"><img src="/characters/' + k + '.png" alt="">' + t + "</button>").join("") + "</div>" +
+      '<button class="btn" type="button" data-wz="next">다음</button></div>';
+  } else if (w.step === 2) {
+    h += '<div class="card"><h2 style="font-size:20px">언제 인증할까요?</h2><p class="sub">이 시간 안에 30초 측정을 하면 인증돼요. 1시간 이상으로 정해 주세요.</p><div class="pchips">' +
+      PRESET_T.map(([t, a, b2]) => '<button type="button" data-wzt="' + a + "-" + b2 + '" aria-pressed="' + (w.start === a && w.end === b2) + '">' + t + " " + a + "–" + b2 + "</button>").join("") + "</div>" +
+      '<div class="row"><label class="f">시작<input class="t" type="time" id="wzStart" value="' + w.start + '"></label><label class="f">끝<input class="t" type="time" id="wzEnd" value="' + w.end + '"></label></div>' +
+      '<button class="btn" type="button" data-wz="next">다음</button></div>';
+  } else if (w.step === 3) {
+    h += '<div class="card"><h2 style="font-size:20px">규칙이 있나요?</h2><p class="sub">벌금 같은 약속은 메모로만 남겨요. 돈은 앱 밖에서 주고받아요.</p><div class="pchips">' +
+      PRESET_R.map((r) => '<button type="button" data-wzr="' + esc(r) + '" aria-pressed="' + (w.rule === (r === "규칙 없음" ? "" : r)) + '">' + esc(r) + "</button>").join("") + "</div>" +
+      '<label class="f">규칙 메모<input class="f" id="wzRule" maxlength="40" value="' + esc(w.rule) + '"></label>' +
+      '<label class="f">내 이름<input class="f" id="wzNick" maxlength="12" value="' + esc(ME.nick) + '"></label>' +
+      '<button class="btn" type="button" data-wz="make">그룹 만들기</button></div>';
+  } else {
+    h += '<div class="card"><div class="donebox"><div class="ok">' + ic("check", 36) + '</div><h2 style="font-size:22px">등록 완료!</h2><p class="sub">친구에게 초대 코드를 보내 주세요.</p></div>' +
+      '<div><div class="kv2"><span>그룹</span><b>' + esc(w.created.name) + '</b></div><div class="kv2"><span>인증 시간</span><b>매일 ' + w.created.start + "–" + w.created.end + '</b></div><div class="kv2"><span>규칙</span><b>' + esc(w.created.rule || "없음") +
+      '</b></div><div class="kv2"><span>초대 코드</span><b class="code" style="font-size:18px">' + w.created.code + "</b></div></div>" +
+      '<button class="btn" type="button" data-gshare="' + w.created.code + '">' + ic("share-2", 20) + '초대 코드 공유</button><button class="btn ghost small" type="button" data-wz="done">그룹 보기</button></div>';
+  }
+  v.innerHTML = h;
+  const bind = (id, k) => { const el = $(id); if (el) el.oninput = () => { WZ[k] = el.value; }; };
+  bind("wzName", "name"); bind("wzStart", "start"); bind("wzEnd", "end"); bind("wzRule", "rule");
+}
+async function wizard(act, b) {
+  const w = WZ;
+  if (act === "back") { if (w.step === 1) { WZ = null; } else w.step--; return renderGroup(); }
+  if (act === "next") {
+    if (w.step === 1 && !w.name.trim()) return toast("그룹 이름을 적어 주세요");
+    if (w.step === 2) { const [h1, m1] = w.start.split(":").map(Number), [h2, m2] = w.end.split(":").map(Number); if (h2 * 60 + m2 - (h1 * 60 + m1) < 60) return toast("인증 시간대는 1시간 이상이어야 해요"); }
+    w.step++; return renderGroup();
+  }
+  if (act === "make") {
+    const nick = ($("wzNick").value || "").trim();
+    if (!nick) return toast("내 이름을 적어 주세요");
+    ME.save(nick);
+    try { const r = await api("/api/c/group/create", { member: ME.mid, nick, name: w.name, start: w.start, end: w.end, rule: w.rule, icon: w.icon }); setGroups(r.groups); w.created = r.group; w.step = 4; renderGroup(); renderHome(); }
+    catch (e) { toast(e.message); }
+    return;
+  }
+  if (act === "done") { gSel = WZ.created.code; WZ = null; gView = "detail"; renderGroup(); }
+}
+// 받침 있으면 '은', 없으면 '는'
+const eunNeun = (w) => { const c = (w || "").charCodeAt((w || "").length - 1); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? "은" : "는"; };
+function setGroups(list) { GS = list || []; G = GS[0] || null; }
+async function groupCall(path, body) {
+  try {
+    if (body.nick !== undefined) { if (!body.nick.trim()) return toast("내 이름을 적어 주세요"); ME.save(body.nick.trim()); }
+    const r = await api(path, { ...body, member: ME.mid }); setGroups(r.groups);
+    if (r.group && path.endsWith("/join")) { gSel = r.group.code; gView = "detail"; toast("'" + r.group.name + "' 에 들어왔어요"); }
+    renderGroup(); renderHome(); return r.group;
+  } catch (e) { toast(e.message); }
+}
+
+// ---------- 온보딩 (캐릭터 컷씬 5단계) ----------
+let OB = { step: 0, after: null };
+function renderOnb() {
+  const s = OB.step, o = $("onb");
+  o.classList.toggle("dark", s === 2);
+  const dots = '<div class="dots">' + [0, 1, 2, 3, 4].map((i) => '<i class="' + (i === s ? "on" : "") + '"></i>').join("") + "</div>";
+  const back = s ? '<button class="back" type="button" data-ob="back" aria-label="뒤로">' + ic("chevron-left") + "</button>" : '<span style="width:40px; height:40px"></span>';
+  let body = "", ch = "calm", small = false;
+  if (s === 0) body = "<h1>만나서 반가워요!</h1><p>저는 Vity예요. 시험기간 동안 매일 30초씩, 당신의 컨디션을 같이 지켜볼게요.</p>" +
+    '<button class="obtn" type="button" data-ob="next">시작하기</button>';
+  else if (s === 1) { body = "<h1>이름을 알려 줄래요?</h1><p>그룹 친구들에게 이 이름으로 보여요.</p>" +
+    '<input id="obNick" maxlength="12" placeholder="예: 하린" value="' + esc(ME.nick) + '" aria-label="내 이름"><button class="obtn" type="button" data-ob="nick">좋아요</button>'; ch = "ask"; small = true; }
+  else if (s === 2) { body = '<span class="bubble">' + esc(ME.nick) + "님, 30초만 저를 봐 주세요</span><h1>얼굴로 맥박을 읽어요</h1>" +
+    "<p>카메라가 이마와 볼 피부색의 아주 작은 변화를 읽어 심박 · 박동 간격 · 긴장도를 계산해요. 밝은 곳에서, 말하지 않고 30초면 돼요.</p>" +
+    '<button class="obtn" type="button" data-ob="next">알겠어요</button>'; ch = "coffee"; }
+  else if (s === 3) { body = "<h1>같이 할 친구가 있나요?</h1><p>스터디 친구들과 기상 · 공부 시작 인증을 하면 매일 재기가 쉬워져요. 그룹엔 인증 시각만 보여요.</p>" +
+    '<div class="ochoice"><input id="obCode" maxlength="6" placeholder="초대 코드 6자리" autocapitalize="characters" aria-label="초대 코드">' +
+    '<button class="obtn" type="button" data-ob="join">코드로 참여</button><button class="oghost" type="button" data-ob="make">새 그룹 만들게요</button>' +
+    '<button class="oghost" type="button" data-ob="solo">혼자 할게요</button></div>'; ch = "sleep"; small = true; }
+  else { body = "<h1>마지막으로 약속할게요</h1><ul><li>영상 · 사진은 저장하지 않아요. 계산한 숫자만 남아요.</li><li>그룹엔 이름 · 인증 시각 · 연속 일수만 보여요.</li>" +
+    "<li>의료기기가 아니에요. 진단하지 않고 내 평소와 비교해요.</li><li>생체 정보라 따로 동의를 받아요 (개인정보보호법 제23조).</li></ul>" +
+    '<button class="obtn" type="button" data-ob="agree">동의하고 시작</button>'; ch = "calm"; small = true; }
+  o.innerHTML = '<div class="in"><div style="display:flex; align-items:center; gap:10px">' + back + '<div style="flex:1">' + dots + '</div><span style="width:40px"></span></div>' + body +
+    '</div><span class="ohill' + (small ? " small" : "") + '"></span><img class="ochar' + (small ? " small" : "") + '" src="/characters/' + ch + '.png" alt="">';
+}
+async function onb(act) {
+  if (act === "back") OB.step = Math.max(0, OB.step - 1);
+  else if (act === "next") OB.step++;
+  else if (act === "nick") { const v = ($("obNick").value || "").trim(); if (!v) return toast("이름을 적어 주세요"); ME.save(v); OB.step++; }
+  else if (act === "join") {
+    const code = ($("obCode").value || "").trim();
+    if (code.length !== 6) return toast("초대 코드 6자리를 넣어 주세요");
+    try { const r = await api("/api/c/group/join", { member: ME.mid, nick: ME.nick || "나", code }); setGroups(r.groups); toast("'" + r.group.name + "' 에 들어왔어요"); OB.step++; } catch (e) { return toast(e.message); }
+  }
+  else if (act === "make") { OB.after = "make"; OB.step++; }
+  else if (act === "solo") OB.step++;
+  else if (act === "agree") {
+    S = await api("/api/c/profile", { consent: true, member: ME.mid }); $("onb").classList.remove("on"); render();
+    if (OB.after === "make") { go("group"); WZ = { step: 1, name: "", icon: "sleep", start: "07:00", end: "09:00", rule: "" }; renderGroup(); }
+    return;
+  }
+  renderOnb();
+}
+
+// ---------- 기록 ----------
+async function renderLog() {
+  const hs = await api("/api/c/history?member=" + encodeURIComponent(ME.mid)), by = {};
+  for (const h of hs) (by[h.day] = by[h.day] || []).push(h);
+  $("logList").innerHTML = Object.entries(by).map(([d, rs]) => '<div class="card day"><h3>' + DAY(d) + "</h3>" + rs.map((h) =>
+    '<button class="rec" type="button" data-rid="' + h.id + '" style="border:none; border-bottom:1px solid var(--line); background:none; text-align:left; width:100%; padding:0; color:inherit">' +
+    '<span class="s num">' + (h.score ?? "–") + '</span><span><span style="font-weight:600">' + h.at.slice(11, 16) + (h.kind === "after_breath" ? " · 호흡 뒤" : "") + '</span><br><span class="n">심박 ' + Math.round(h.hr) + " · HRV " + (h.rmssd ?? "–") + " · 스트레스 " + (h.stress == null ? "–" : Math.round(h.stress)) + "</span></span>" +
+    '<span class="tag ' + (h.stress == null ? "" : h.stress >= 60 ? "warn" : h.stress < 30 ? "good" : "") + '">' + (VITALS.stressZone(h.stress) || "보류") + "</span></button>").join("") + "</div>").join("") ||
+    '<div class="card"><div class="empty"><img src="/characters/idle.png" alt=""><p class="sub">아직 기록이 없어요.</p></div></div>';
+}
+
+// ---------- 내 정보 ----------
+function renderMe() {
+  const p = S.profile; $("pH").value = p.height ?? ""; $("pW").value = p.weight ?? ""; $("pY").value = p.birth_year ?? "";
+  $("bmiTxt").textContent = p.bmi ? "BMI " + p.bmi.bmi + " · " + p.bmi.zone + " (대한비만학회 기준)" : "키와 몸무게를 넣으면 BMI 를 함께 보여 드려요.";
+}
+$("saveMe").onclick = async () => {
+  const n = (id) => ($(id).value === "" ? null : +$(id).value);
+  try { S = await api("/api/c/profile", { height: n("pH"), weight: n("pW"), birth_year: n("pY"), member: ME.mid }); render(); toast("저장했어요"); } catch (e) { toast(e.message); }
+};
+$("demoBtn").onclick = async () => { if (!ME.nick) ME.save("하린"); gView = "list"; WZ = null; await api("/api/c/demo", { member: ME.mid, nick: ME.nick }); await refresh(); toast("2주치 시연 기록 · 인증 그룹을 채웠어요"); go("home"); };
+$("resetBtn").onclick = async () => { S = await api("/api/c/reset", { member: ME.mid }); render(); toast("기록을 지웠어요"); };
+
+
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("button");
+  if (b && b.dataset.tip) { e.stopPropagation(); return showTip(b); }
+  $("tipPop").hidden = true;
+  if (!b) return;
+  if (b.dataset.ob) return onb(b.dataset.ob);
+  if (b.dataset.htab) { homeTab = b.dataset.htab; return renderHome(); }
+  if (b.dataset.gopen) { gSel = b.dataset.gopen; gView = "detail"; leaving = false; if (!$("v-group").classList.contains("on")) go("group"); return renderGroup(); }
+  if (b.dataset.glist) { gView = "list"; return renderGroup(); }
+  if (b.dataset.gnew) { WZ = { step: 1, name: "", icon: "sleep", start: "07:00", end: "09:00", rule: "" }; return renderGroup(); }
+  if (b.dataset.gshare) return shareCode(b.dataset.gshare);
+  if (b.dataset.wz) return wizard(b.dataset.wz, b);
+  if (b.dataset.wzicon) { WZ.icon = b.dataset.wzicon; return renderGroup(); }
+  if (b.dataset.wzt) { [WZ.start, WZ.end] = b.dataset.wzt.split("-"); return renderGroup(); }
+  if (b.dataset.wzr) { WZ.rule = b.dataset.wzr === "규칙 없음" ? "" : b.dataset.wzr; return renderGroup(); }
+  const a = b.dataset.act;
+  if (a === "scan") { $("res").classList.remove("on"); NEXT.kind === "after_breath" ? openScan() : openPre(); }
+  else if (a === "close") $("res").classList.remove("on");
+  else if (a === "last" && S.last) showResult(S.last);
+  else if (a === "breath") startBreath(+b.dataset.id);
+  else if (a === "me") { $("res").classList.remove("on"); go("me"); }
+  else if (a === "group") go("group");
+  else if (a === "timer") startTimer(+b.dataset.f, +b.dataset.r);
+  else if (b.dataset.rid) { try { showResult(await api("/api/c/result?id=" + b.dataset.rid + "&member=" + encodeURIComponent(ME.mid))); } catch (err) { toast(err.message); } }
+});
+
+function render() { renderHome(); renderMe(); }
+async function refresh() {
+  const [st, g] = await Promise.all([api("/api/c/state?member=" + encodeURIComponent(ME.mid)), api("/api/c/groups?member=" + encodeURIComponent(ME.mid)).catch(() => ({ groups: GS }))]);
+  S = st; setGroups(g.groups); render();
+  if ($("v-group").classList.contains("on")) renderGroup();
+}
+(async () => {
+  document.body.classList.add("home");
+  try { await refresh(); if (!S.profile.consent) { OB.step = 0; renderOnb(); $("onb").classList.add("on"); } } catch (e) { toast(e.message); }
+})();
+</script>
+</body>
+</html>
