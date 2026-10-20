@@ -1,3 +1,4 @@
+> **2026-10-20 현재 중심 앱은 `/check` (Vity 체크)** — 화면별 상태 · 캡처는 [`docs/STATUS.md`](../docs/STATUS.md), 설계 · 검증은 [`docs/CHECK_DESIGN.md`](../docs/CHECK_DESIGN.md).
 > **2026-10-19 기획 변경:** `/` 는 이제 워치 없는 **거울 기록**(전면 카메라 심박 · 안색 · 루틴별 베이스라인 · 시험기간 리포트)이다.
 > 설계와 검증은 [`docs/MIRROR_DESIGN.md`](../docs/MIRROR_DESIGN.md). 아래 워치 버전은 `/v1` · `/watch` 에 남아 있다.
 > 얼굴 메시를 처음 한 번 받아두려면 `python webapp/fetch_vendor.py`.

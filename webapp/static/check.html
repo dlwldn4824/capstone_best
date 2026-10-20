@@ -10,6 +10,7 @@
 .app{max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;
   padding:max(16px, env(safe-area-inset-top)) 16px calc(92px + env(safe-area-inset-bottom))}
 [hidden]{display:none !important}
+body{word-break:keep-all; overflow-wrap:break-word}   /* 한국어는 낱말 단위로 줄바꿈 */
 .top{display:flex; justify-content:space-between; align-items:flex-end; gap:12px; padding:8px 4px 14px}
 .top h1{margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em}
 .top p{margin:0; font-size:13px; color:var(--muted)}
@@ -473,7 +474,7 @@ function renderHome() {
   const openN = GS.filter((g) => g.phase === "open" && !g.me_done).length;
   const ch = groupOpen ? (G.icon || "coffee") : todayL ? charFor(todayL.score) : "calm";
   let big, small;
-  if (groupOpen) { big = "인증 마감까지<br><em>" + fmtMin(G.left_min) + "</em> 남았어요"; small = esc(G.name) + " · " + G.done + "/" + G.total + "명 인증" + (openN > 1 ? " · 외 " + (openN - 1) + "개 그룹" : ""); }
+  if (groupOpen) { big = "인증 마감까지<br><em>" + fmtMin(G.left_min) + "</em>"; small = "남았어요 · " + esc(G.name) + " · " + G.done + "/" + G.total + "명 인증" + (openN > 1 ? " · 외 " + (openN - 1) + "개 그룹" : ""); }
   else if (todayL) { big = "오늘 컨디션은<br><em>" + todayL.score + "점</em>이에요"; small = (todayL.vs.score != null ? "평소보다 " + sign(Math.round(todayL.vs.score)) + "점 · " : "") + todayL.at.slice(11, 16) + " 측정"; }
   else { big = "오늘은 아직<br><em>측정 전</em>이에요"; small = "밝은 곳에서 30초면 돼요"; }
   if (G && G.my_streak) small += " · " + G.my_streak + "일 연속 인증";
@@ -686,7 +687,7 @@ function showResult(r) {
     html += '<div class="ckin ' + (okc ? "ok" : "no") + '" style="margin-bottom:-4px">' + ic(okc ? "check" : "info", 18) + msg + "</div>";
   }
   if ((r.checkins || []).some((c) => c.status === "ok")) html += '<p class="sub" style="padding:0 4px">그룹엔 인증 시각과 연속 일수만 보여요.</p>';
-  html += '<div class="card"><div class="rhead">' + ring(r.score) + "<div><h2 style=\"font-size:20px\">" + (r.score >= 75 ? "컨디션 좋아요" : r.score >= 55 ? "무난한 편이에요" : r.score != null ? "오늘은 쉬어 가요" : "점수 보류") +
+  html += '<div class="card"><div class="rhead">' + ring(r.score) + "<div><h2 style=\"font-size:18px; word-break:keep-all\">" + (r.score >= 75 ? "컨디션 좋아요" : r.score >= 55 ? "무난한 편이에요" : r.score != null ? "오늘은 쉬어 가요" : "점수 보류") +
     '</h2><p class="sub">' + (r.vs.score != null ? "평소보다 " + sign(Math.round(r.vs.score)) + "점 · " : "") + '<span class="tag ' + cf[1] + '">' + cf[0] + "</span> " + tipBtn("signal") + '</p></div><img src="/characters/' + charFor(r.score) + '.png" alt=""></div>' +
     '<div class="parts">' + PART.map(([k, n, w]) => { const v = r.parts[k]; return '<div class="p"><span>' + n + " <small>" + w + '%</small></span><div class="t"><i style="width:' + (v ?? 0) + '%"></i></div><span class="v num">' + (v ?? "–") + "</span></div>"; }).join("") +
     '</div><p class="sub">점수 = 스트레스(100 − 지수) 35% + HRV 20% + 심박(55–85 bpm) 15% + 생활(수면 · 카페인 · 기분) 30%. 신호가 약한 항목은 빼고 나머지로 다시 나눠요.</p></div>';
@@ -785,7 +786,7 @@ function renderGroupDetail(v) {
   const left = G.phase === "open" ? "마감까지 " + fmtMin(G.left_min) : G.phase === "before" ? fmtMin(G.left_min) + " 뒤 시작" : "오늘 인증 시간 끝";
   v.innerHTML = '<div class="wzhead"><button class="back2" type="button" data-glist="1" aria-label="그룹 목록">' + ic("chevron-left") + '</button><b style="font-size:16px">그룹</b></div>' +
     '<div class="card"><div style="display:flex; gap:12px; align-items:center"><img src="/characters/' + (G.icon || "calm") + '.png" alt="" style="width:64px; height:64px; object-fit:contain; background:var(--calm-soft); border-radius:16px">' +
-    '<div style="flex:1; min-width:0"><p class="sub">' + G.total + "명" + (G.owner_me ? " · 내가 방장" : "") + '</p><h2 style="font-size:20px">' + esc(G.name) + "</h2></div>" +
+    '<div style="flex:1; min-width:0"><p class="sub">' + G.total + "명" + (G.owner_me ? " · 내가 방장" : "") + '</p><h2 style="font-size:18px; word-break:keep-all">' + esc(G.name) + "</h2></div>" +
     '<span class="tag ' + (G.phase === "open" ? "warn" : "") + '">' + left + "</span></div>" +
     '<div class="chips2"><span>매일 ' + G.start + "–" + G.end + "</span><span>맥박이 잡혀야 인증</span>" + (G.rule ? '<span class="plain">' + esc(G.rule) + "</span>" : "") + tipBtn("checkin") + "</div>" +
     "<div>" + G.members.map((m) => '<div class="mem"><span class="av' + (m.at ? " on" : "") + '">' + esc(m.nick.slice(0, 2)) + "</span><span><b>" + esc(m.nick) + (m.me ? " · 나" : "") + (m.owner ? " · 방장" : "") +
