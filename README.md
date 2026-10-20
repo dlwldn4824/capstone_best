@@ -2,7 +2,8 @@
 
 ```bash
 python webapp/server.py        # http://localhost:8000/check  (폰 카메라는 --https)
-python -m pytest -q            # 139개
+python -m pytest -q            # 142개
+python -m pytest -q && npm --prefix webapp/face test   # 연구 · 서버(pytest) + /face · vitals.js 대응(vitest) 한 번에
 ```
 
 ## 폴더
