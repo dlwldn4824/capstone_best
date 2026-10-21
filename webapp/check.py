@@ -477,12 +477,13 @@ def seed_demo(con, at=None, seed=7, mid=None):
             hr = rnd.gauss(80 if exam else 71, 3)
             rm = max(12, rnd.gauss(24 if exam else 38, 5))
             st = max(5, min(95, rnd.gauss(62 if exam else 33, 8)))
-            m = {"hr": round(hr, 1), "snr": 4.2, "signal": "high", "rmssd": round(rm, 1), "sdnn": round(rm * 0.95, 1), "pnn50": round(rm / 4, 1),
-                 "si": None, "stress": round(st, 1), "hrv_conf": "high", "irregular": False, "rr": round(rnd.gauss(16, 1.5), 1), "rr_conf": "mid"}
+            # 지금 엔진(face)이 낼 수 있는 값만 쓴다: HRV · 스트레스는 SNR ≥ 10 dB 에서만 나오고, 리듬은 계산하지 않는다
+            m = {"hr": round(hr, 1), "snr": round(10.8 + (i % 4) * 0.5, 1), "signal": "high", "rmssd": round(rm, 1), "sdnn": round(rm * 0.95, 1), "pnn50": round(rm / 4, 1),
+                 "si": None, "stress": round(st, 1), "hrv_conf": "high", "irregular": None, "rr": round(rnd.gauss(16, 1.5), 1), "rr_conf": "mid"}
             add_scan(con, m, sleep, caf, rnd.choice([2, 3]) if exam else rnd.choice([3, 4, 4, 5]), at=t, member=mid, _checkin=False)
-    b = add_scan(con, {"hr": 84.0, "snr": 4.0, "signal": "high", "rmssd": 21.0, "sdnn": 22.0, "pnn50": 4.0, "si": None, "stress": 68.0,
-                       "hrv_conf": "high", "irregular": False, "rr": 19.0, "rr_conf": "mid"}, 5.5, 2, 2, kind="before_breath", at=at - dt.timedelta(minutes=5),
+    b = add_scan(con, {"hr": 84.0, "snr": 11.4, "signal": "high", "rmssd": 21.0, "sdnn": 22.0, "pnn50": 4.0, "si": None, "stress": 68.0,
+                       "hrv_conf": "high", "irregular": None, "rr": 19.0, "rr_conf": "mid"}, 5.5, 2, 2, kind="before_breath", at=at - dt.timedelta(minutes=5),
                 member=mid, _checkin=False)
-    add_scan(con, {"hr": 76.0, "snr": 4.4, "signal": "high", "rmssd": 31.0, "sdnn": 30.0, "pnn50": 9.0, "si": None, "stress": 49.0,
-                   "hrv_conf": "high", "irregular": False, "rr": 12.5, "rr_conf": "mid"}, 5.5, 2, 3, kind="after_breath", pair=b["id"],
+    add_scan(con, {"hr": 76.0, "snr": 12.1, "signal": "high", "rmssd": 31.0, "sdnn": 30.0, "pnn50": 9.0, "si": None, "stress": 49.0,
+                   "hrv_conf": "high", "irregular": None, "rr": 12.5, "rr_conf": "mid"}, 5.5, 2, 3, kind="after_breath", pair=b["id"],
              at=at - dt.timedelta(minutes=2), member=mid, _checkin=False)
