@@ -37,7 +37,7 @@ STATIC_ROOTS = [("", STATIC, ""),
 FACE_DIST = Path(__file__).resolve().parent / "face" / "dist"
 FACE_MISSING = ("/face 는 아직 빌드되지 않았어요.\n"
                 "cd webapp/face && npm ci && npm run build 를 실행한 뒤 서버를 다시 켜 주세요.\n")
-CERT_DIR = ROOT_DIR / "data" / "app"
+CERT_DIR = Path(__file__).resolve().parent / "data"
 LOCK = threading.Lock()
 CCON = None                                         # 대학생 헬스체크 (check.py)
 MCON = None                                         # 거울 기록 (mirror.py) — 보고서 설계

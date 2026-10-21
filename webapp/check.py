@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "research" / "src"))
 from nesy import vitals as V  # noqa: E402
 
-DB_PATH = ROOT / "data" / "app" / "check.db"
+DB_PATH = Path(__file__).resolve().parent / "data" / "check.db"
 BASE_DAYS, BASE_MIN = 14, 3
 KINDS = ("normal", "before_breath", "after_breath")
 

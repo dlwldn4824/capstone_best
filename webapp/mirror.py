@@ -8,8 +8,8 @@
     이유는 사람이 안다     음주 · 카페인 · 운동 · 수면부족 · 해당 없음
     리포트는 문장만 쓴다   수치 요약을 받아 문장으로 (진단 · 조언 없음)
 
-보고서 기능 번호(FR-xx)를 함수 설명에 적었다. 워치 버전 엔진은 engine.py 에 그대로 있다.
-저장: data/app/mirror.db (git 제외). 얼굴 영상은 브라우저 밖으로 나오지 않는다 — 숫자만 온다.
+보고서 기능 번호(FR-xx)를 함수 설명에 적었다. 워치 버전 엔진은 legacy/webapp_v1/engine.py 에 그대로 있다.
+저장: webapp/data/mirror.db (git 제외). 얼굴 영상은 브라우저 밖으로 나오지 않는다 — 숫자만 온다.
 """
 from __future__ import annotations
 
@@ -20,8 +20,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-DB_PATH = ROOT / "data" / "app" / "mirror.db"
+DB_PATH = Path(__file__).resolve().parent / "data" / "mirror.db"
 
 ROUTINES = ("morning", "desk", "night")
 ROUTINE_KO = {"morning": "아침 거울", "desk": "공부 시작", "night": "밤 세안"}
