@@ -36,9 +36,13 @@ def test_face_without_build_says_how(base, monkeypatch, tmp_path):
     assert "npm run build" in body.decode("utf-8")
 
 
-@pytest.mark.skipif(not (S.FACE_DIST / "index.html").is_file(),
-                    reason="webapp/face/dist 없음 (cd webapp/face && npm ci && npm run build)")
-def test_face_serves_build(base):
+def test_face_serves_build(base, monkeypatch, tmp_path):
+    # 실제 빌드 없이도 돌도록 빌드 결과 모양만 갖춘 폴더를 쓴다 (CI 의 python job 은 face 를 빌드하지 않는다)
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text('<!doctype html><script type="module" src="/face/assets/app.js"></script>', encoding="utf-8")
+    (dist / "manifest.webmanifest").write_text('{"name": "Vity"}', encoding="utf-8")
+    monkeypatch.setattr(S, "FACE_DIST", dist)
     code, ctype, body = get(base + "/face/")
     assert code == 200 and ctype.startswith("text/html")
     assert b"/face/" in body
