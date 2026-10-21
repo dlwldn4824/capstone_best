@@ -1,8 +1,8 @@
 # Vity 체크 — 대학생 30초 컨디션 측정 (`/check`)
 
 ```bash
-python webapp/server.py --https     # 폰: https://<PC IP>:8000/check
-python scripts/27_vitals.py         # 공개 데이터 검증 (MCD-rPPG traces 필요)
+python webapp/server.py --https       # 폰: https://<PC IP>:8000/check
+python research/scripts/27_vitals.py  # 공개 데이터 검증 (MCD-rPPG traces 필요)
 ```
 
 ## 참고한 서비스 → 대학생 버전
@@ -21,7 +21,7 @@ python scripts/27_vitals.py         # 공개 데이터 검증 (MCD-rPPG traces �
 4. 결과: 종합 점수 · 항목별 점수 · 지표 6개 · 평소 대비 · 추천 최대 3개
 5. 스트레스가 높으면 **1분 호흡**(4초 들숨 · 6초 날숨 × 6) → 다시 재기 → 전후 비교 카드
 
-## 알고리즘 (`src/nesy/vitals.py` = `webapp/static/vitals.js`, 브라우저와 소수점까지 같음)
+## 알고리즘 (`research/src/nesy/vitals.py` = `webapp/static/vitals.js`, 브라우저와 소수점까지 같음)
 
 | 단계 | 방법 |
 | --- | --- |
@@ -39,7 +39,7 @@ python scripts/27_vitals.py         # 공개 데이터 검증 (MCD-rPPG traces �
 
 ## 검증 — MCD-rPPG 100명, 운동 전 · 후 영상, 30초 창 1,001개, 손끝 PPG 에 같은 계산
 
-> 이 검증(심박 0.33 bpm 등)은 `/check` 의 `vitals.js`(= `src/nesy/vitals.py`) 엔진에만 해당한다. `/face`(`webapp/face/src/pipeline/`)는 다른 엔진이라 이 수치를 쓰지 않는다 — [FACE_DESIGN.md](FACE_DESIGN.md).
+> 이 검증(심박 0.33 bpm 등)은 `/check` 의 `vitals.js`(= `research/src/nesy/vitals.py`) 엔진에만 해당한다. `/face`(`webapp/face/src/pipeline/`)는 다른 엔진이라 이 수치를 쓰지 않는다 — [FACE_DESIGN.md](FACE_DESIGN.md).
 
 | 지표 | 신호 좋은 창 (129) | 전체 보고된 창 |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ python scripts/27_vitals.py         # 공개 데이터 검증 (MCD-rPPG traces �
 | 불규칙 오탐 | 0 / 129 (건강한 사람) | |
 
 - 넓은 대역(0.6–3.3 Hz) 그대로 박동을 찾으면 박동 시각이 ±40 ms 흔들려 RMSSD 가 83 ms(손끝 31 ms)로 부풀었다.
-  내 심박 ±0.4 Hz 로 좁히자 32 ms 로 맞았다 (`scripts/27_vitals.py` 실험).
+  내 심박 ±0.4 Hz 로 좁히자 32 ms 로 맞았다 (`research/scripts/27_vitals.py` 실험).
 - 운동 전후: 손끝 PPG 로도 심박이 오른 사람이 62%뿐(촬영 사이 회복). 얼굴도 60%로 같은 수준.
 - 진짜 부정맥 데이터로는 확인하지 않았다 — '불규칙'은 다시 재기 · 반복되면 보건실 안내로만 쓴다.
 

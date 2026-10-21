@@ -5,8 +5,8 @@
 
 | 폴더 | 무엇 | 여는 법 |
 | --- | --- | --- |
-| `webapp_v1/` | 폰 · 워치 연동 웹앱 v1 (밤 심박 판정 · 위험 알람 모델 · 실시간 동기화). `engine.py` · `model/risk_v1.json` · `static/` (phone · watch · app.js · ble.js · guide.js · rppg.js v1 · sw.js) | `python webapp/server.py` → `/v1` (폰) · `/watch` (워치) |
+| `webapp_v1/` | 폰 · 워치 연동 웹앱 v1 (밤 심박 판정 · 위험 알람 모델 · 실시간 동기화). `engine.py` · `model/risk_v1.json` · `static/` (phone · watch · app.js · ble.js · guide.js · rppg.js v1 · sw.js) | 보관만 한다 — 서버가 `/v1` · `/watch` 를 내보내지 않는다 |
 | `watch_app/ExcuseGauge/` | Apple Watch SwiftUI 앱 소스 (Xcode 필요) | Xcode 에서 열기 |
 | `watch_app/web/` | Xcode 없이 브라우저로 여는 워치 데모 한 장 | `index.html` 을 브라우저로 |
 
-`webapp/server.py` 가 `webapp_v1/engine.py` 를 불러 `/v1` · `/watch` 와 그 API 를 계속 내보낸다. 테스트는 `tests/test_webapp_engine.py`.
+`webapp/server.py` 는 `webapp_v1/engine.py` 를 부르지 않고 `/v1` · `/watch` 와 그 API 도 내보내지 않는다. 테스트는 `webapp_v1/tests/test_webapp_engine.py` (기본 pytest 수집에서 빠진다 — `python -m pytest legacy/webapp_v1/tests`).

@@ -3,7 +3,7 @@
 Vity(캡스톤, Team 삼삼오오)의 얼굴 카메라 부분 시연 PWA. 아이폰 Safari 전면 카메라로 30초 얼굴을 찍어 **심박 · 맥파 · 박동 간격(RMSSD) · 호흡 · 눈 깜빡임 · 머리 흔들림**을 기기 안에서 계산해 보여 준다. 화면 톤은 `webapp/static/check.html`(/check)을 따른다.
 코드는 [`webapp/face/`](../../webapp/face/) (vity-face-test@4994ea7 에서 옮겨 왔다). 이 문서의 경로는 `webapp/face/` 기준이다.
 
-`/check` 와는 계산 엔진이 다르다. `/check` 는 `webapp/static/vitals.js`(= `src/nesy/vitals.py`), `/face` 는 `webapp/face/src/pipeline/`.
+`/check` 와는 계산 엔진이 다르다. `/check` 는 `webapp/static/vitals.js`(= `research/src/nesy/vitals.py`), `/face` 는 `webapp/face/src/pipeline/`.
 [CHECK_DESIGN.md](CHECK_DESIGN.md) 의 공개 데이터 검증(심박 0.33 bpm 등)은 `vitals.js` 엔진 결과이고 `/face` 에는 해당하지 않는다.
 
 ## 절대 규칙
@@ -52,7 +52,7 @@ src/store/db.js          IndexedDB(scans, kv)
 src/debug/synth.js       합성 Sample[] (간섭 · 구멍 · 고조파 옵션)
 scripts/robustness/      합성 견고성 감사 스크립트와 결과(results_before.md / results_after.md)
 scripts/sync-assets.mjs  위 "주소와 파일"
-tests/legacy_vitals_parity.test.js  /check 의 rppg2.js + vitals.js 가 tests/test_vitals.py 기준값을 내는지 (엔진 대응 확인용)
+tests/legacy_vitals_parity.test.js  /check 의 rppg2.js + vitals.js 가 webapp/tests/test_vitals.py 기준값을 내는지 (엔진 대응 확인용)
 public/sw.js             범위 /face/
 Dockerfile, nginx.conf   단독 Cloud Run 정적 서빙(포트 8080, / → /face/)
 ```

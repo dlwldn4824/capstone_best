@@ -1,11 +1,11 @@
 # 얼굴 영상 → 심박 · 상태 분류 — MCD-rPPG 100명
 
 과제명 "Face ID 영상을 이용하여 건강상태를 분류" 의 근거 실험.
-얼굴 심박은 웹앱(`legacy/webapp_v1/static/rppg.js`)과 **같은 계산**(`src/nesy/rppg.py`, 합성 신호에서 소수점까지 일치)으로 냈다.
+얼굴 심박은 웹앱(`legacy/webapp_v1/static/rppg.js`)과 **같은 계산**(`research/src/nesy/rppg.py`, 합성 신호에서 소수점까지 일치)으로 냈다.
 
 ```bash
-python scripts/23_mcd_extract.py --n 100   # 영상 200개(16 GB)를 받아 얼굴 색 신호만 남기고 지운다 (~25분)
-python scripts/24_mcd_analysis.py
+python research/scripts/23_mcd_extract.py --n 100   # 영상 200개(16 GB)를 받아 얼굴 색 신호만 남기고 지운다 (~25분)
+python research/scripts/24_mcd_analysis.py
 ```
 
 | | |
@@ -14,7 +14,7 @@ python scripts/24_mcd_analysis.py
 | 표본 | 앞에서부터 100명 × 안정 / 운동 후 · 정면 웹캠 640×480 30 fps · 영상 3분 |
 | 정답 | 프레임에 동기된 손끝 PPG → 같은 주파수 분석으로 심박 |
 | 얼굴 | OpenCV Haar 얼굴 검출(15프레임마다) → 이마 · 양 볼 평균 RGB → POS |
-| 개인정보 | 원본 영상은 처리 직후 삭제. 프레임별 평균 색만 `data/raw/` (git 제외) |
+| 개인정보 | 원본 영상은 처리 직후 삭제. 프레임별 평균 색만 `research/data/raw/` (git 제외) |
 
 ## 1. 얼굴 심박 정확도
 
