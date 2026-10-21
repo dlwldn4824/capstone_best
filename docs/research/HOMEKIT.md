@@ -21,7 +21,7 @@ Homekit2020 은 **잘 때도 쟀고, PCR 로 확인된 독감**이 있다.
 | 3 | 프로필 검증 | 이름·소속·도시 / ORCID 연결(공개, 항목 1개 이상) / Synapse Pledge / **신원 증빙** |
 | 4 | [`homekit2020_access`](https://www.synapse.org/#!Team:3434178) 팀 가입 요청 + Intended Data Use 제출 | 계획서는 **공개 게시**된다 |
 | 5 | Conditions for Use 동의 | 재식별 금지 · 재배포 금지 · 감사문 · `syn22803188` 인용 · 발표자료 공유 |
-| 6 | 다운로드 | `python scripts/17_homekit_download.py` |
+| 6 | 다운로드 | `python research/scripts/17_homekit_download.py` |
 
 **3단계 신원 증빙에서 학생증·졸업장은 안 된다.** 지도교수(본인 불가)가 학교 레터헤드에
 **영문**으로 서명한 신원 확인서(최근 1개월 이내)가 현실적이다. 템플릿은 Synapse 도움말에 있다.
@@ -31,21 +31,21 @@ Homekit2020 은 **잘 때도 쟀고, PCR 로 확인된 독감**이 있다.
 > These data were contributed by participants as part of the Home Testing of Respiratory
 > Illness Study developed by Evidation Health and described in Synapse (doi.org/10.7303/syn22803188).
 
-**원자료와 참가자 ID 가 든 중간 산출물은 커밋하지 않는다.** `data/raw/*`, `data/cache/*`,
-`outputs/` 는 이미 `.gitignore` 에 있다.
+**원자료와 참가자 ID 가 든 중간 산출물은 커밋하지 않는다.** `research/data/raw/*`, `research/data/cache/*`,
+`research/outputs/` 는 이미 `.gitignore` 에 있다.
 
 ## 실행
 
 ```bash
 pip install synapseclient
-python scripts/17_homekit_download.py        # SYNAPSE_AUTH_TOKEN 환경변수 필요
-python scripts/18_homekit_audit.py           # 로더 상수를 믿기 전에 먼저
-python scripts/19_homekit_persistence.py
+python research/scripts/17_homekit_download.py        # SYNAPSE_AUTH_TOKEN 환경변수 필요
+python research/scripts/18_homekit_audit.py           # 로더 상수를 믿기 전에 먼저
+python research/scripts/19_homekit_persistence.py
 ```
 
 승인 전에는 `--synthetic` 으로 같은 경로를 끝까지 돌릴 수 있다. **합성 수치는 결과가 아니다.**
 
-## 설계 (`src/nesy/homekit.py`)
+## 설계 (`research/src/nesy/homekit.py`)
 
 출력은 `persistence.py` 가 받는 하루 표(`subject_id, day, carried_frac, valid`)다.
 `fit_day_thresh / alerts / sweep / chance_baseline` 을 고치지 않고 그대로 쓴다.

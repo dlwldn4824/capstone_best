@@ -1,0 +1,10 @@
+# 연구 실험용. 루트 requirements.txt 위에 더 설치한다
+#   pip install -r requirements.txt -r research/requirements-ml.txt
+
+# Homekit2020 다운로드 (research/scripts/17_homekit_download.py). 승인 후에만 필요
+# synapseclient>=4.0
+
+# Exp 1 (research/src/nesy): 모델 · 그림
+xgboost>=2.0
+torch>=2.1
+matplotlib>=3.8

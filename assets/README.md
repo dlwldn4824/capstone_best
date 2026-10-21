@@ -1,7 +1,6 @@
-# assets — 캐릭터 · 글꼴
+# assets
 
 웹앱이 쓰는 공용 에셋 원본이다. 서버가 폴더와 같은 주소 `/assets/characters/…` · `/assets/fonts/…` 로 내보낸다 (`webapp/server.py` 의 `STATIC_ROOTS`).
-새 표정을 추가할 때도 여기에 넣으면 된다.
 
 | 폴더 | 파일 | 쓰는 곳 |
 | --- | --- | --- |

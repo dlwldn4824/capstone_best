@@ -1,7 +1,7 @@
 # Nurse Stress Dataset 세션 감사
 
 
-생성: `python scripts/10_nurse_audit.py`
+생성: `python research/scripts/10_nurse_audit.py`
 
 
 ## 피험자별

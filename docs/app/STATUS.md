@@ -1,20 +1,24 @@
-# 개발 현황 — 기준: Vity 체크 (`/check`) · 2026-10-20
+# 개발 현황: Vity 체크 (`/check`) · 2026-10-21
 
 ```bash
-python webapp/fetch_vendor.py      # 얼굴 메시(MediaPipe) 로컬에 한 번 받기 (없으면 CDN)
+pip install -r requirements.txt pytest
+npm --prefix webapp/face ci
+npm --prefix webapp/face run build       # /face
+npm --prefix webapp/face run build:lib   # /check 가 쓰는 측정 엔진
+python webapp/fetch_vendor.py      # 거울 기록(/)의 얼굴 메시 모델을 한 번 받기 (없으면 CDN)
 python webapp/server.py            # http://localhost:8000/check
 python webapp/server.py --https    # 폰 카메라는 https 에서만 열린다 → https://<PC IP>:8000/check
-python -m pytest -q                # 142개
-npm --prefix webapp/face test      # /face (vitest)
+python -m pytest -q
+npm --prefix webapp/face test      # 측정 엔진 (vitest)
 ```
 
 지금 서비스의 중심은 **Vity 체크**다. 30초 얼굴 스캔으로 심박 · HRV · 스트레스 지수를 재고, 오늘의 공부 방식을 추천하고,
 스터디 친구들과 기상 · 공부 시작 인증을 한다. 같은 서버의 `/` 거울 기록(루틴별 15초 · 이유 묻기 · 시험기간 리포트)은
-설정에서 서로 열 수 있게만 이어져 있다. `/v1` · `/watch` 는 초기 워치 버전으로 남아 있다.
+설정에서 서로 열 수 있게만 이어져 있다. 초기 워치 버전(`/v1` · `/watch`)은 `legacy/webapp_v1/` 에 보관만 하고 서버가 내보내지 않는다.
 
-`/face` 는 얼굴 카메라 부분만 떼어 낸 시연 PWA(Vity 얼굴 체크, `webapp/face/`)다. 심박 · 맥파 · RMSSD · 호흡 · 깜빡임 · 머리 흔들림을 다른 엔진(`webapp/face/src/pipeline/`)으로 계산하고 서버에 아무것도 보내지 않는다. 먼저 `cd webapp/face && npm ci && npm run build` 를 한 번 해야 열린다. 실기기 검증 전 🟡 — 설계 · 남은 일: [`FACE_DESIGN.md`](FACE_DESIGN.md).
+`/face` 는 얼굴 카메라 부분만 떼어 낸 시연 PWA(Vity 얼굴 체크, `webapp/face/`)다. 심박 · 맥파 · RMSSD · 호흡 · 깜빡임 · 머리 흔들림을 `webapp/face/src/pipeline/`으로 계산하고 서버에 아무것도 보내지 않는다. `/check`도 2026-10-21부터 같은 엔진을 라이브러리(`webapp/static/vity-face.js`)로 불러 쓴다. 실기기 검증 전 🟡. 설계와 남은 일은 [`FACE_DESIGN.md`](FACE_DESIGN.md)에 있다.
 
-화면 캡처 전체: [`docs/app/screens/`](screens/) (390×844, 2배율. 스캔 화면은 카메라 대신 MediaPipe 표준 얼굴 메시를 그려 넣었다)
+화면 캡처 전체: [`docs/app/screens/`](screens/) (390×844, 2배율. 스캔 화면은 카메라 대신 MediaPipe 표준 얼굴 메시를 그려 넣었다). 스캔 캡처(12 · 13)는 촬영 화면을 face 것으로 바꾸기 전 화면이다.
 
 ## 화면별 상태
 
@@ -26,7 +30,7 @@ npm --prefix webapp/face test      # /face (vitest)
 | 홈 | 파란 영역(한 줄 요약 · 상태별 캐릭터) + 오늘 / 이번 주 / 내 평소 탭 + 그룹 카드(급한 순) + 공부 모드 | ✅ | [오늘](screens/06_home_today.png) [전체](screens/07_home_full.png) [이번 주](screens/08_home_week.png) [내 평소](screens/09_home_baseline.png) |
 | 도움말 | 컨디션 · 심박 · 스트레스 · HRV · 호흡 · 리듬 · BMI · 공부 모드 · 신호 · 인증 옆 "?" 말풍선 | ✅ | [보기](screens/10_home_help_bubble.png) |
 | 측정 전 질문 | 어젯밤 수면 · 커피 잔 수 · 기분 (지난 답 기억) | ✅ | [보기](screens/11_pre_questions.png) |
-| 30초 스캔 | MediaPipe 478점 메시 · 이마 · 양 볼 측정 영역 · 자동 시작 · 실시간 맥파 · 심박 · 4단계 진행 · 품질 판정 | 🟡 | [준비](screens/12_scan_ready.png) [측정 중](screens/13_scan_measuring.png) |
+| 30초 스캔 | face 촬영 화면: 자세 맞추기 안내 · 자동 시작 · 얼굴 메시 오버레이 · 실시간 심박 · 품질 판정 | 🟡 | [준비](screens/12_scan_ready.png) [측정 중](screens/13_scan_measuring.png) |
 | 결과 | 그룹별 인증 줄 · 종합 점수(계산식 공개) · 지표 6개 · 공부 모드 · 추천 최대 3개 | ✅ | [위](screens/14_result_top.png) [전체](screens/14_result_full.png) |
 | 다시 재기 | 얼굴 · 밝기 · 움직임 · 신호 이유별 안내 | ✅ | [보기](screens/18_retry.png) |
 | 1분 호흡 → 재측정 | 4초 들숨 · 6초 날숨 × 6 → 다시 재서 전후 비교 카드 | ✅ | [호흡](screens/16_breathing.png) [전후 비교](screens/15_breath_compare_full.png) |
@@ -38,6 +42,8 @@ npm --prefix webapp/face test      # /face (vitest)
 
 ## 계산 · 검증
 
+아래 표는 그 전 엔진(`vitals.js`)으로 낸 값이다. 지금 face 엔진(`webapp/face/src/pipeline/`)으로는 같은 검증을 아직 하지 않았다.
+
 | 지표 | 방법 | 공개 데이터(MCD-rPPG 100명, 30초 창, 신호 좋음) |
 | --- | --- | --- |
 | 심박 | POS → 추세 제거 → 대역 통과 → 주기도 최고점 | 오차 0.33 bpm |
@@ -46,7 +52,7 @@ npm --prefix webapp/face test      # /face (vitest)
 | 리듬 | 신호 좋을 때만, 박동 간격 급변 비율 | 건강한 사람 오탐 0 / 129 |
 | 호흡 | 세 변조 융합 | 손끝 PPG 호흡과 상관 0.1 → 참고값, 점수 제외 |
 
-브라우저(`vitals.js`)와 Python(`src/nesy/vitals.py`)이 같은 입력에서 같은 값을 낸다 (`tests/test_vitals.py` 기준값).
+브라우저(`vitals.js`)와 Python(`research/src/nesy/vitals.py`)이 같은 입력에서 같은 값을 낸다 (`webapp/tests/test_vitals.py` 기준값).
 자세한 내용: [`docs/app/CHECK_DESIGN.md`](CHECK_DESIGN.md).
 
 ## 서버 API (`webapp/server.py` → `webapp/check.py`)

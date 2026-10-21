@@ -6,7 +6,7 @@ A / B / C 세 역할은 **이 파일들로만** 소통한다. 여기 정의된 �
 
 ---
 
-## 1. `outputs/features.csv` — 역할 A 가 생산
+## 1. `research/outputs/features.csv` — 역할 A 가 생산
 
 한 행 = 한 시간 윈도.
 
@@ -57,7 +57,7 @@ cols = feature_extraction.ALL_FEATURES              # ablation 은 ABLATION_SETS
 
 ---
 
-## 2. `outputs/predictions_{model}.csv` — 역할 B 가 생산
+## 2. `research/outputs/predictions_{model}.csv` — 역할 B 가 생산
 
 | 컬럼 | 설명 |
 | --- | --- |
@@ -73,7 +73,7 @@ cols = feature_extraction.ALL_FEATURES              # ablation 은 ABLATION_SETS
 
 ---
 
-## 3. `outputs/facts.csv` — 역할 C 가 생산
+## 3. `research/outputs/facts.csv` — 역할 C 가 생산
 
 | 컬럼 | 설명 |
 | --- | --- |
@@ -85,7 +85,7 @@ cols = feature_extraction.ALL_FEATURES              # ablation 은 ABLATION_SETS
 
 ---
 
-## 4. `outputs/results.csv` — 세 역할이 공유 (append)
+## 4. `research/outputs/results.csv` — 세 역할이 공유 (append)
 
 | 컬럼 | 설명 |
 | --- | --- |

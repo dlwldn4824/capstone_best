@@ -1,8 +1,8 @@
 # 위험 알람 모델 v1 — 공개 데이터로 학습한 결과
 
 ```bash
-python scripts/20_mishra_persistence.py   # 캐시 생성 (처음 한 번)
-python scripts/22_risk_model.py           # 학습 · 평가 · legacy/webapp_v1/model/risk_v1.json 저장
+python research/scripts/20_mishra_persistence.py   # 캐시 생성 (처음 한 번)
+python research/scripts/22_risk_model.py           # 학습 · 평가 · legacy/webapp_v1/model/risk_v1.json 저장
 ```
 
 ## 설계

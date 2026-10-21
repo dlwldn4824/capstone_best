@@ -13,11 +13,11 @@ PMData 에는 **음주 여부와 스트레스가 매일** 적혀 있다.
 | **없는 것** | 감염 라벨. 여기서는 헛경보만 잰다 |
 
 ```bash
-unzip pmdata.zip -x '*/food-images/*' -d data/raw/pmdata
-python scripts/21_pmdata_context.py
+unzip pmdata.zip -x '*/food-images/*' -d research/data/raw/pmdata
+python research/scripts/21_pmdata_context.py
 ```
 
-## 로더 (`src/nesy/pmdata.py`) — 감사에서 확인한 함정
+## 로더 (`research/src/nesy/pmdata.py`) — 감사에서 확인한 함정
 
 | 함정 | 처리 |
 | --- | --- |

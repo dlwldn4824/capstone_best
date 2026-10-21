@@ -1,4 +1,4 @@
-// /check 의 브라우저 엔진(webapp/static/rppg2.js + vitals.js)이 tests/test_vitals.py 의 기준값을 그대로 내는지 본다.
+// /check 의 브라우저 엔진(webapp/static/rppg2.js + vitals.js)이 webapp/tests/test_vitals.py 의 기준값을 그대로 내는지 본다.
 // 두 파일은 전역(RPPG2 · VITALS)을 만드는 일반 스크립트라 vm 으로 한 번에 실행한다. /face 파이프라인과는 별개다.
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -9,7 +9,7 @@ const STATIC = fileURLToPath(new URL('../../static/', import.meta.url));
 const src = ['rppg2.js', 'vitals.js'].map(f => readFileSync(STATIC + f, 'utf8')).join('\n;\n');
 const { VITALS } = vm.runInNewContext(src + '\n;({ RPPG2, VITALS });', {}, { filename: 'legacy-vitals.js' });
 
-// tests/test_vitals.py synth(): 심박 75 bpm(1.25 Hz) · 호흡 15회/분(0.25 Hz) 로 심박이 출렁이는(RSA) 얼굴 RGB
+// webapp/tests/test_vitals.py synth(): 심박 75 bpm(1.25 Hz) · 호흡 15회/분(0.25 Hz) 로 심박이 출렁이는(RSA) 얼굴 RGB
 function synth(n = 900, fs = 30) {
   const w = 2 * Math.PI * 0.25, frames = [];
   for (let i = 0; i < n; i++) {

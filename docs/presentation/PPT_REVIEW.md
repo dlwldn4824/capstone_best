@@ -329,7 +329,7 @@ LOSO(한 명씩 빼기)도 0.832 로 피험자 분리와 같은 수준이다.
 그리고 이 표에서 더 중요한 건 **어떤 과제가 떨어졌는가**입니다.
 운동 세기는 안 떨어지고, 사람 속을 묻는 과제만 떨어집니다."
 
-**각주** — `outputs/tables/baseline_summary.csv`, `split_comparison.csv` · XGBoost · Hongn 1,251윈도
+**각주** — `research/outputs/tables/baseline_summary.csv`, `split_comparison.csv` · XGBoost · Hongn 1,251윈도
 
 ## 4.12 오류의 84.6%는 휴식↔스트레스 `A`
 
@@ -355,7 +355,7 @@ LOSO(한 명씩 빼기)도 0.832 로 피험자 분리와 같은 수준이다.
 **말할 것** — "이 표를 보고 계획을 바꿨습니다. 저희가 두 달 동안 겨냥한 게
 전체 오류의 9.5%였습니다. 남은 84.6%는 가속도로 안 갈립니다."
 
-**각주** — `outputs/tables/errors_baseline.csv` · 오답 253건 전수
+**각주** — `research/outputs/tables/errors_baseline.csv` · 오답 253건 전수
 
 ## 4.13 움직임을 넣으면 운동 혼동은 사라진다 `기존 14장 · 수치 통일`
 
@@ -518,7 +518,7 @@ LOSO(한 명씩 빼기)도 0.832 로 피험자 분리와 같은 수준이다.
 가슴에서는 27% 떨어지고 손목에서는 방향이 반대입니다. 같은 윈도에서 심박수는
 양쪽 다 15명 전원 올라갑니다. 결론이 하나로 나옵니다."
 
-**각주** — `scripts/15_wesad_hrv.py` · [`docs/research/HRV_VERDICT.md`](../research/HRV_VERDICT.md)
+**각주** — `research/scripts/15_wesad_hrv.py` · [`docs/research/HRV_VERDICT.md`](../research/HRV_VERDICT.md)
 
 ## 4.19 그래서 하드웨어는 이 방향 `기존 6·7장 재작성`
 
@@ -593,7 +593,7 @@ LOSO(한 명씩 빼기)도 0.832 로 피험자 분리와 같은 수준이다.
 | **2. 설명으로 감당되는 크기를 넘으면 넘긴다** | 같은 사람이 평소 운동한 날 벗어나는 정도를 **학습 구간에서 미리 재두고**, 그 **상한(95분위)** 을 넘으면 닫지 않는다 |
 
 구현: `deviation.fit_cause_ceiling()` / `EXCEEDS_EXPLANATION`
-상한은 **학습 구간에서만** 정한다. 임계값과 같은 이유다 (테스트: `tests/test_deviation.py`)
+상한은 **학습 구간에서만** 정한다. 임계값과 같은 이유다 (테스트: `research/tests/test_deviation.py`)
 
 > **한 줄** 설명을 받되, **설명에 상한을 둔다.**
 
@@ -718,4 +718,4 @@ pptx 는 기존 15장을 대체하는 게 아니라 **고칠 장과 새로 넣�
 > U+2212(−)가 없어 `−0.136` 이 두부로 깨지던 것을 고쳤다.
 > 그래도 PowerPoint 의 실제 줄바꿈은 미세하게 다를 수 있다.
 
-숫자 원본은 전부 [README "숫자로 보는 결과"](../../README.md) 와 `outputs/tables/` 에 있다.
+숫자 원본은 전부 [README "숫자로 보는 결과"](../../README.md) 와 `research/outputs/tables/` 에 있다.

@@ -175,12 +175,12 @@ Spang et al. 은 **심박수(bpm)가 지배적**이라고 보고했다. 재현�
 
 | 파일 | 내용 |
 | --- | --- |
-| `data/own/{ID}/watch/` | Samsung Health export |
-| `data/own/{ID}/polar/` | Polar Sensor Logger 파일 |
-| `data/own/{ID}/tags.csv` | 구간 시작·종료 epoch |
-| `data/own/{ID}/report.csv` | 구간별 자기보고 1–10 |
-| `data/own/{ID}/sync_start.jpg` | 시계 동기 사진 |
-| `data/own/subjects.csv` | 인구통계·카페인·수면 |
+| `research/data/own/{ID}/watch/` | Samsung Health export |
+| `research/data/own/{ID}/polar/` | Polar Sensor Logger 파일 |
+| `research/data/own/{ID}/tags.csv` | 구간 시작·종료 epoch |
+| `research/data/own/{ID}/report.csv` | 구간별 자기보고 1–10 |
+| `research/data/own/{ID}/sync_start.jpg` | 시계 동기 사진 |
+| `research/data/own/subjects.csv` | 인구통계·카페인·수면 |
 
 **폴더 구조를 Hongn 과 맞춘다.** 그래야 `io_e4` 와 `protocol.py` 를 최소 수정으로
 재사용할 수 있다.
