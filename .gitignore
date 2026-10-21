@@ -42,3 +42,9 @@ data/app/
 
 # 얼굴 메시 라이브러리·모델 — python webapp/fetch_vendor.py 로 받는다
 webapp/static/vendor/
+
+# /face (webapp/face) — npm 설치물 · 빌드 결과 · 빌드 때 복사해 오는 에셋 · MediaPipe 모델
+webapp/face/node_modules/
+webapp/face/dist/
+webapp/face/shared-assets/
+webapp/face/public/mediapipe/

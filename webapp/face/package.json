@@ -1,0 +1,23 @@
+{
+  "name": "vity-face-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/sync-assets.mjs",
+    "dev": "vite --host",
+    "prebuild": "node scripts/sync-assets.mjs",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "predeploy": "node scripts/sync-assets.mjs",
+    "deploy": "gcloud run deploy vity-face --source . --project vity-face-kw2026 --region asia-northeast3 --allow-unauthenticated --memory 256Mi --max-instances 2"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "0.10.14"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules
+dist
+mockup
+.omc
+.claude
+.git
+.playwright-mcp

@@ -1,0 +1,11 @@
+# shared-assets/ 와 public/mediapipe/ 는 .gitignore 에 있지만 빌드에 필요하므로 올린다
+.git
+node_modules
+dist
+mockup
+scripts/robustness
+.omc
+.claude
+*.log
+.DS_Store
+.playwright-mcp

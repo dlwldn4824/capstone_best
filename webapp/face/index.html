@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1A6DFF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Vity 체크">
+  <link rel="manifest" href="/face/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/face/icons/icon-192.png">
+  <link rel="preload" href="/assets/fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <title>Vity 체크</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+<div class="app">
+  <section class="view on" id="v-home"></section>
+  <section class="view" id="v-log"></section>
+</div>
+
+<nav class="tabs"><div role="tablist">
+  <button role="tab" aria-selected="true" data-tab="home" type="button" data-ic="scan-face">홈</button>
+  <button role="tab" aria-selected="false" data-tab="log" type="button" data-ic="history">기록</button>
+</div></nav>
+
+<!-- 결과 -->
+<div class="page" id="result" role="dialog" aria-modal="true" aria-label="결과"></div>
+<div class="dock" id="dock"><div class="btns"><button class="btn sub" type="button" data-act="scan">다시 재기</button><button class="btn" type="button" data-act="close">확인</button></div></div>
+
+<!-- 상세 시트 -->
+<div class="sheetbg" id="sheet"><div class="in" id="sheetIn"></div></div>
+
+<!-- 촬영: 전체 화면 카메라 + 타원 가이드. 위: 지금 할 일 한 줄 / 가운데: 타원 / 아래: 팁 · 남은 시간 · 실시간 심박 -->
+<div class="scan" id="scan" role="dialog" aria-modal="true" aria-label="얼굴 촬영">
+  <video id="video" playsinline muted></video>
+  <canvas class="face-overlay" id="faceCv" aria-hidden="true"></canvas>
+  <div class="scan-ui">
+    <header class="scan-top">
+      <button class="scan-x" id="scanX" type="button" aria-label="촬영 닫기" data-ic="x"></button>
+      <span class="scan-step" id="scanStep">자세 맞추기</span>
+      <span aria-hidden="true"></span>
+    </header>
+    <div class="scan-msg" id="scanMsg" aria-live="polite" aria-atomic="true">
+      <p class="hint" id="hint"><span class="hint-ic" id="hintIc" aria-hidden="true"></span><span id="hintText">카메라를 켜는 중</span></p>
+    </div>
+    <div class="oval-wrap">
+      <div class="oval" id="oval">
+        <svg viewBox="0 0 100 130" preserveAspectRatio="none" aria-hidden="true">
+          <ellipse class="track" cx="50" cy="65" rx="49" ry="64"></ellipse>
+          <path id="ring" d="M50 1 A49 64 0 1 1 49.99 1" pathLength="100" stroke-dasharray="0 100"></path>
+        </svg>
+        <div class="oval-center" id="ovalCenter" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div class="scan-foot" id="scanFoot">
+      <p class="tip" id="tip"></p>
+      <div class="meter" id="meter" hidden>
+        <p class="count"><b id="count">30</b><small>초</small></p>
+        <div class="live" id="live" hidden><svg class="heart" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z" fill="#FF6B7A"></path></svg><b id="liveBpm">··</b><span>bpm</span></div>
+      </div>
+      <button class="btn light" id="scanRetry" type="button" hidden>다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

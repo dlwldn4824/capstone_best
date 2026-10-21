@@ -39,6 +39,8 @@ python scripts/27_vitals.py         # 공개 데이터 검증 (MCD-rPPG traces �
 
 ## 검증 — MCD-rPPG 100명, 운동 전 · 후 영상, 30초 창 1,001개, 손끝 PPG 에 같은 계산
 
+> 이 검증(심박 0.33 bpm 등)은 `/check` 의 `vitals.js`(= `src/nesy/vitals.py`) 엔진에만 해당한다. `/face`(`webapp/face/src/pipeline/`)는 다른 엔진이라 이 수치를 쓰지 않는다 — [FACE_DESIGN.md](FACE_DESIGN.md).
+
 | 지표 | 신호 좋은 창 (129) | 전체 보고된 창 |
 | --- | --- | --- |
 | 심박 | 오차 0.33 bpm · ρ 0.99 | 3.3 bpm (1,001창) |

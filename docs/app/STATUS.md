@@ -4,12 +4,15 @@
 python webapp/fetch_vendor.py      # 얼굴 메시(MediaPipe) 로컬에 한 번 받기 (없으면 CDN)
 python webapp/server.py            # http://localhost:8000/check
 python webapp/server.py --https    # 폰 카메라는 https 에서만 열린다 → https://<PC IP>:8000/check
-python -m pytest -q                # 139개
+python -m pytest -q                # 142개
+npm --prefix webapp/face test      # /face (vitest)
 ```
 
 지금 서비스의 중심은 **Vity 체크**다. 30초 얼굴 스캔으로 심박 · HRV · 스트레스 지수를 재고, 오늘의 공부 방식을 추천하고,
 스터디 친구들과 기상 · 공부 시작 인증을 한다. 같은 서버의 `/` 거울 기록(루틴별 15초 · 이유 묻기 · 시험기간 리포트)은
 설정에서 서로 열 수 있게만 이어져 있다. `/v1` · `/watch` 는 초기 워치 버전으로 남아 있다.
+
+`/face` 는 얼굴 카메라 부분만 떼어 낸 시연 PWA(Vity 얼굴 체크, `webapp/face/`)다. 심박 · 맥파 · RMSSD · 호흡 · 깜빡임 · 머리 흔들림을 다른 엔진(`webapp/face/src/pipeline/`)으로 계산하고 서버에 아무것도 보내지 않는다. 먼저 `cd webapp/face && npm ci && npm run build` 를 한 번 해야 열린다. 실기기 검증 전 🟡 — 설계 · 남은 일: [`FACE_DESIGN.md`](FACE_DESIGN.md).
 
 화면 캡처 전체: [`docs/app/screens/`](screens/) (390×844, 2배율. 스캔 화면은 카메라 대신 MediaPipe 표준 얼굴 메시를 그려 넣었다)
 
