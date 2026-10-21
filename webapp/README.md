@@ -1,86 +1,51 @@
-> **2026-10-20 현재 중심 앱은 `/check` (Vity 체크)** — 화면별 상태 · 캡처는 [`docs/app/STATUS.md`](../docs/app/STATUS.md), 설계 · 검증은 [`docs/app/CHECK_DESIGN.md`](../docs/app/CHECK_DESIGN.md).
-> **2026-10-19 기획 변경:** `/` 는 이제 워치 없는 **거울 기록**(전면 카메라 심박 · 안색 · 루틴별 베이스라인 · 시험기간 리포트)이다.
-> 설계와 검증은 [`docs/app/MIRROR_DESIGN.md`](../docs/app/MIRROR_DESIGN.md). 아래 워치 버전(v1)은 [`legacy/webapp_v1/`](../legacy/webapp_v1/) 로 옮겨 보관만 한다. 서버는 `/v1` · `/watch` 를 더 이상 내보내지 않는다.
-> 얼굴 메시를 처음 한 번 받아두려면 `python webapp/fetch_vendor.py`. 캐릭터 · 글꼴은 [`assets/`](../assets/) 에 있고 서버가 `/assets/characters` · `/assets/fonts` 로 내보낸다.
+# webapp
 
-# 핑계 게이지 웹앱 — 폰 + 워치
-
-> 보관 기록이다. 지금 서버는 이 화면 · API 를 내보내지 않고 `--demo` 옵션도 없다. 아래 명령 · 주소는 옮기기 전 그대로다.
-
-연구 엔진(`research/src/nesy`)으로 실제로 판정하는 서비스 웹앱이다. 폰과 워치가 서버를 통해
-**실시간으로 같은 판정**을 본다. 워치에서 "술" 을 누르면 폰 화면이 바로 바뀐다.
+Python 서버(`server.py`) 하나가 화면 세 개와 API를 내보낸다. 명령은 저장소 루트에서 실행한다.
 
 ```bash
-python webapp/server.py --demo            # 노트북에서 시연 (http://localhost:8000)
-python webapp/server.py --demo --https    # 폰에서 카메라·블루투스까지 쓸 때
+pip install -r requirements.txt
+npm --prefix webapp/face ci
+npm --prefix webapp/face run build        # /face
+npm --prefix webapp/face run build:lib    # /check가 쓰는 측정 엔진 → static/vity-face.js
+python webapp/server.py                   # http://localhost:8000
+python webapp/server.py --https           # 휴대폰 카메라용. 자체 서명 인증서를 data/에 만든다
 ```
 
-설치할 것 없음 — 표준 라이브러리 서버 + 이미 쓰는 pandas/numpy. 서버가 켜지면
-같은 와이파이에서 열 주소를 찍어준다.
+휴대폰 브라우저는 https(또는 localhost)에서만 카메라를 연다. `--https`로 켜고 같은 와이파이의 휴대폰에서 `https://<노트북 IP>:8000/check`를 연다. 노트북 IP는 서버를 켤 때 터미널에 나온다. 인증서는 openssl로 만들므로 openssl이 있어야 한다(macOS · Linux에는 기본으로 있고, Windows는 Git for Windows에 들어 있다). 휴대폰에 경고가 뜨면 고급 → 계속.
 
-| 주소 | 화면 |
-| --- | --- |
-| `/` | **폰** — 오늘 판정 · 어젯밤 심박 · 맥락 4탭 · 30초 얼굴 체크 · 4주 기록 · 기기 연결 |
-| `/watch` | **워치** — 원형 게이지 · 판정 한 단어 · 사흘 칸 · 실시간 심박 · 이유 고르기 |
-
-## 무엇이 진짜로 돌아가나
-
-| 기능 | 상태 | 비고 |
+| 주소 | 화면 | 파일 |
 | --- | --- | --- |
-| 판정 (기준선 → 이탈 → 설명 → 사흘 누적) | ✅ | 연구 코드와 **같은 함수** (`homekit.rolling_z` · `apply_explanation` · `persistence.alerts`) |
-| 폰 ↔ 워치 실시간 동기화 | ✅ | Server-Sent Events. 어느 쪽에서 눌러도 양쪽이 바뀐다 |
-| 맥락 입력 (술·잠·운동·긴장·없음) | ✅ | 이탈한 날은 **묻기 전에는 판정하지 않는다** (연속 계산에서 보류) |
-| 설명 상한 | ✅ | 술이 보통 만드는 크기를 넘는 이탈은 술로 덮지 않는다 |
-| 얼굴 체크 (rPPG, POS) | ✅ 브라우저 계산 | Face ID 처럼 **얼굴이 자리 잡으면 자동 시작**, 심박이 3초 연속 ±3 bpm 안이면 **바로 끝** (최소 8초 · 최대 20초). 합성 신호 72/58/95 bpm → 72.0/58.2/94.8. **실제 얼굴 정확도는 Polar H10 으로 재야 한다** |
-| 폰·워치 팝업 알람 | ✅ | "어젯밤이 평소와 달랐어요"(질문) · "3일째"(알림)가 **두 화면에 동시에** 뜬다. 소리·진동. 한쪽에서 확인하면 양쪽이 닫힌다. 늦게 켠 화면도 못 본 알림을 받는다 |
-| 알림창(상단) 알림 | ⚠ 앱이 열려 있을 때 | 서비스 워커로 띄운다. 앱을 완전히 닫아도 받으려면 Web Push(VAPID) 서버가 필요 — 아직 없다 |
-| 진료 안내 | ⚠ **의료진 검토 전 초안** | 사흘째면 위험 신호(119) → 증상 고르기 → "이런 경우일 수 있어요" + 어디로·언제. 문구는 `legacy/webapp_v1/static/guide.js` 한 파일에 모았다 |
-| 안색 (CIELAB a\*) | ⚠ 실험 | 본인 지난 5회 대비 차이만. 화면에 "검증 안 됨" 표시 |
-| 블루투스 심박 센서 | ✅ 표준 프로필 | Polar H10/Verity Sense, 심박 방송을 켠 워치. 안드로이드 Chrome + https |
-| 밤 기록 | ✅ 블루투스 / 직접 입력 / 시연 | 블루투스는 폰 화면을 켠 채 충전기에 두어야 한다 |
-| Galaxy Watch 피부전도·체온 | ❌ 아직 | 네이티브 앱(Health Sensor SDK) 필요 — `docs/research/PROTOTYPE_PLAN.md` |
+| `/check` | Vity 체크. 30초 스캔 · 결과 · 공부 모드 · 스터디 그룹 · 기록 | `static/check.html`, API `/api/c/*` → `check.py` |
+| `/` | 거울 기록. 루틴별 15초 측정 · 이유 묻기 · 시험기간 리포트 | `static/mirror.html`, API `/api/m/*` → `mirror.py` |
+| `/face/` | 얼굴 측정만 떼어 낸 시연 앱 | `face/dist/` (`npm run build`) |
+| `/vity-face.js` | `/check`가 불러 쓰는 측정 엔진 | `static/vity-face.js` (`npm run build:lib`) |
+| `/assets/…` | 캐릭터 · 글꼴 | 저장소 `assets/` |
 
-## 시연 순서 (3분)
-
-1. `--demo` 로 켜면 지난 5주 기록이 채워져 있다. 마지막 이틀은 **이유 없이 높았던 밤**이다.
-2. 폰 **기기** 탭 → "술 마신 밤" → 오늘 탭이 **"평소와 조금 달랐어요"** 로 묻는다.
-3. "술을 마셨어요" → **"그럴 만해요"**. 워치도 같이 바뀐다.
-4. 워치에서 **이유 → "짚이는 게 없어요"** → 폰과 워치에 동시에 **"3일째" 팝업**이 뜬다.
-5. 폰 팝업의 **"증상 확인하기"** → 열·기침을 고르면 "1–2일 안에 진료", 숨참을 더하면 "오늘 진료".
-6. 기록 탭: 배우는 중 / 평소 / 설명됨 / 설명 안 됨 / 알림 이 4주 달력에 보인다.
-
-## 폰에서 열기 (카메라·블루투스)
-
-브라우저는 카메라와 블루투스를 **https 또는 localhost** 에서만 허용한다.
-
-1. 노트북에서 `python webapp/server.py --demo --https` (openssl 로 자체 서명 인증서를 만든다 — Git for Windows 에 들어 있다)
-2. 폰 Chrome 에서 서버가 찍어준 `https://192.168.x.x:8000` 열기 → 경고 화면에서 **고급 → 계속**
-3. 워치(또는 다른 폰·태블릿) 브라우저에서 `https://192.168.x.x:8000/watch`
-
-Windows 방화벽이 8000 포트를 막으면 처음 실행할 때 뜨는 창에서 **개인 네트워크 허용**.
+`/check`와 `/face`는 같은 측정 엔진(`face/src/`)을 쓴다. 설계와 품질 기준은 [`docs/app/FACE_DESIGN.md`](../docs/app/FACE_DESIGN.md), 화면별 상태는 [`docs/app/STATUS.md`](../docs/app/STATUS.md)에 있다.
 
 ## 데이터
 
-`legacy/webapp_v1/data/app.db` (SQLite) 에만 저장된다. git 에서 제외되어 있다 — 개인 생체 기록이다.
-얼굴 영상은 브라우저 안에서 숫자(심박·Lab)로만 바뀌고 서버로도 보내지 않는다.
+서버에는 브라우저가 계산한 숫자만 온다.
 
-## 잠정값 (연구로 바꿔야 할 것)
+| 파일 | 내용 |
+| --- | --- |
+| `data/check.db` | `/check` 측정 기록 · 프로필 · 그룹 (SQLite) |
+| `data/mirror.db` | 거울 기록 (SQLite) |
+| `data/dev.crt` · `data/dev.key` | `--https`용 자체 서명 인증서 |
 
-| 값 | 지금 | 근거 / 할 일 |
-| --- | --- | --- |
-| 설명 상한 (z) | 술 4.0 · 운동 3.0 · 짧은 잠 3.0 · 긴장 2.5 | PMData 효과 크기 순서. 실사용 데이터가 쌓이면 `fit_cause_ceiling` 으로 |
-| 기준선 | 21일 전엔 짧은 기준선(7일) | 화면에 "짧은 기준선" 으로 표시한다 |
-| 밤 기록 최소 | 60분 | 연구는 180분. 블루투스 시연을 위해 낮췄다 |
-| 얼굴 신호 품질 | SNR ≥ −2 dB 면 "좋음" | Polar H10 동시 측정으로 다시 정할 것 |
+`data/`는 git에서 뺀다. 예전에는 저장소 루트의 `data/app/`에 있었으니, 그 기록을 계속 쓰려면 옮긴다.
 
-## 진료 안내 (`legacy/webapp_v1/static/guide.js`)
+```bash
+mkdir -p webapp/data && mv data/app/check.db data/app/mirror.db webapp/data/
+```
 
-설명되지 않는 변화가 사흘 이어지면(이틀째는 접힌 상태로) 폰 오늘 화면에 뜬다.
+## 폴더
 
-1. **위험 신호** — 가슴 통증, 심한 숨참, 실신, 입술 청색, 한쪽 마비 → 다른 것 보지 말고 **119** (전화 버튼)
-2. **증상 고르기** — 열, 기침, 몸살, 피로, 어지러움, 숨참, 두근거림, 구토·설사, 창백, 체중 감소, 배뇨통
-3. **이런 경우일 수 있어요** — 호흡기 감염 · 탈수 · 빈혈 · 갑상선 항진 · 심장 리듬 문제 · 다른 곳의 염증 · 과로.
-   각각 왜 떠올렸는지(기기가 본 변화 + 고른 증상), 확인해 볼 것, **어느 과로 언제** 가야 하는지
-4. 안색 변화(붉어짐·창백)는 **실험 채널**이라 "(실험)" 표시를 붙여 근거로만 보여준다
+| 폴더 | 내용 |
+| --- | --- |
+| `static/` | `/check` · `/` 화면. `rppg2.js` · `facemesh.js`는 거울 기록이, `meshdraw.js`는 두 화면이 쓴다. `vitals.js`는 예전 `/check` 엔진으로, 지금은 테스트에서 지난 기록과 같은 값을 내는지 비교할 때만 쓴다 |
+| `face/` | 측정 엔진과 `/face` 화면 (Vite · vitest) |
+| `tests/` | 서버 · API · 프라이버시 검사 (pytest) |
+| `data/` | 기록 DB · 인증서 (git 제외) |
 
-진단하지 않는다. 문구는 일반 건강 정보 수준으로 쓴 초안이며 **서비스 전에 의료진 검토가 필요하다.**
+거울 기록의 얼굴 메시 모델은 `python webapp/fetch_vendor.py`로 한 번 받아 `static/vendor/`에 둔다. 받지 않으면 거울 기록 화면이 CDN에서 불러온다.

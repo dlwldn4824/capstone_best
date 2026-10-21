@@ -1,15 +1,16 @@
-"""Vity 웹앱 서버 — 거울 기록(/) · 대학생 헬스체크(/check) · Vity 얼굴 체크(/face/).
+"""Vity 웹앱 서버: 거울 기록(/) · 대학생 헬스체크(/check) · Vity 얼굴 체크(/face/).
 
     python webapp/server.py                 # http://localhost:8000
-    python webapp/server.py --https         # 폰에서 카메라·블루투스를 쓰려면 (아래 참고)
+    python webapp/server.py --https         # 폰에서 카메라를 쓰려면 (아래 참고)
 
-설치할 것 없음 — 표준 라이브러리 http.server + sqlite3.
+표준 라이브러리 http.server + sqlite3 로 돈다. check.py · mirror.py 가 numpy 를 쓰므로
+저장소 루트의 requirements.txt 를 먼저 설치한다.
 워치 버전(/v1 · /watch)은 legacy/webapp_v1 에 보관만 하고 내보내지 않는다.
 
-**왜 --https 인가.** 브라우저는 카메라(getUserMedia)와 Web Bluetooth 를 보안
-컨텍스트(https 또는 localhost)에서만 허용한다. 폰이 노트북 IP(http://192.168.x.x)로
-접속하면 둘 다 막힌다. --https 는 openssl 로 자체 서명 인증서를 만들어 쓴다
-(Git for Windows 에 openssl 이 들어 있다). 폰에서 처음 열 때 경고가 뜨면 '계속'.
+**왜 --https 인가.** 브라우저는 카메라(getUserMedia)를 보안 컨텍스트(https 또는
+localhost)에서만 허용한다. 폰이 노트북 IP(http://192.168.x.x)로 접속하면 막힌다.
+--https 는 openssl 로 자체 서명 인증서를 만들어 쓴다 (Git for Windows 에 openssl 이
+들어 있다). 폰에서 처음 열 때 경고가 뜨면 '계속'.
 """
 from __future__ import annotations
 
@@ -281,7 +282,7 @@ def main():
     sys.stdout.reconfigure(line_buffering=True)      # 안내 문구가 바로 보이게
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8000)
-    ap.add_argument("--https", action="store_true", help="폰에서 카메라·블루투스를 쓰려면")
+    ap.add_argument("--https", action="store_true", help="폰에서 카메라를 쓰려면")
     args = ap.parse_args()
 
     global MCON, CCON
@@ -307,7 +308,7 @@ def main():
     print("  같은 와이파이의 폰에서")
     print("             {}://{}:{}/".format(scheme, ip, args.port))
     if not args.https:
-        print("  * 폰에서 카메라·블루투스를 쓰려면 --https 로 다시 켤 것")
+        print("  * 폰에서 카메라를 쓰려면 --https 로 다시 켤 것")
     print("  종료: Ctrl+C")
     try:
         httpd.serve_forever()
