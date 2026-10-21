@@ -17,11 +17,16 @@
 <div class="app">
   <section class="view on" id="v-home"></section>
   <section class="view" id="v-log"></section>
+  <section class="view" id="v-me"></section>
 </div>
+
+<!-- 홈 하단 바 위 손잡이 — 누르거나 위로 쓸면 준비 시트가 올라온다 -->
+<button class="peek" id="peek" type="button" data-act="prep" aria-label="측정 준비 열기"><span></span></button>
 
 <nav class="tabs"><div role="tablist">
   <button role="tab" aria-selected="true" data-tab="home" type="button" data-ic="scan-face">홈</button>
   <button role="tab" aria-selected="false" data-tab="log" type="button" data-ic="history">기록</button>
+  <button role="tab" aria-selected="false" data-tab="me" type="button" data-ic="user">내 정보</button>
 </div></nav>
 
 <!-- 결과 -->
@@ -63,6 +68,9 @@
     </div>
   </div>
 </div>
+
+<!-- 온보딩 (첫 실행) -->
+<div class="onb" id="onb"></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script type="module" src="/src/main.js"></script>

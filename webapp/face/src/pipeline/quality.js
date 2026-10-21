@@ -1,9 +1,14 @@
-// 품질 4조건. 발표 기준: 얼굴 밝기 55–225 인 프레임 90% 이상 · 머리 이동 < 얼굴 폭 3.5% · 깜빡임·말하기 30% 미만 · 맥박 SNR ≥ 0 dB
+// 품질 4조건: 얼굴 밝기 55–225 인 프레임 90% 이상 · 머리 이동 < 얼굴 폭 5% 인 프레임 85% 이상 · 깜빡임·말하기 30% 미만 · 맥박 SNR ≥ -3 dB
+//
+// 이동(3.5%/90% → 5%/85%)과 SNR(0 → -3 dB)은 풀어 둔 것이다. 손으로 든 폰은 이 선을 넘기 쉬운데,
+// 넘었다고 bpm 이 틀리지는 않았다 (scripts/experiments/p3_gate.js, 합성 280회 obs=hard):
+// 이전 기준에서 전체의 21% 가 bpm 은 참값 ±5 안인데 거부당했고, 실패 이유의 대부분이 이동(14%)이었다.
+// 완화 후 통과 78% → 91%, 거짓 통과는 0% 그대로.
 export const QUALITY = {
   brightnessMin: 55, brightnessMax: 225, brightnessRatioMin: 0.9,
-  motionFrac: 0.035, motionRatioMin: 0.9,   // 이동이 기준 안인 프레임 비율
+  motionFrac: 0.05, motionRatioMin: 0.85,   // 이동이 기준 안인 프레임 비율
   blinkRatioMax: 0.3,
-  snrMinDb: 0,
+  snrMinDb: -3,
   minSamples: 240,                          // 8초 미만이면 판정 불가
 };
 

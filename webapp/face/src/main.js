@@ -1,5 +1,6 @@
 // Vity 얼굴 체크 — 30초 얼굴 촬영으로 심박 · 맥파 · 박동 간격 · 호흡 · 눈 깜빡임 · 머리 흔들림을 읽어 보여 준다.
-// 흐름: 홈 → 준비 시트 → 촬영(자세 맞추기 → 30초) → 결과 → 상세 시트. 기록 탭.
+// 앱이 하려는 말은 '심박이 몇이다'가 아니라 '평소와 다른가'다 (src/pipeline/baseline.js 에 근거).
+// 흐름: (첫 실행) 온보딩 → 홈 → 준비 시트 → 촬영(자세 맞추기 → 30초) → 결과 → 이유 묻기 → 상세 시트. 기록 · 내 정보 탭.
 // 계산은 src/pipeline, 자세 판정은 src/capture/framing.js, 결과 표시 규칙은 src/ui/view.js.
 // 카메라 프레임 · 랜드마크는 메모리에서만 쓰고 저장하지 않는다.
 import { openCamera, closeCamera } from './capture/camera.js';
@@ -13,7 +14,8 @@ import { ic } from './ui/icons.js';
 import { EVIDENCE } from './ui/evidence.js';
 import { resultView } from './ui/view.js';
 import { createOverlay } from './ui/overlay.js';
-import { putScan, listScans, clearScans, persistStorage } from './store/db.js';
+import { baselineOf, unexplained, WHY, WHY_LABEL } from './pipeline/baseline.js';
+import { putScan, listScans, clearScans, persistStorage, getProfile, setProfile, wipeAll } from './store/db.js';
 
 const SECS = 30, HOLD_MS = 1000, SHAKE_MS = 500;
 // 측정 방식: quick = 맥박이 안정되고 품질을 통과하면 10초부터 끝냄(최대 30초) · full = 30초 (박동 간격 · 호흡 · 깜빡임까지)
@@ -36,20 +38,28 @@ function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('on
 document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic, el.closest('.tabs') ? 24 : 22) + (el.dataset.ic === 'x' ? '' : el.innerHTML); });
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
 function go(tab) {
+  document.body.dataset.tab = tab;                  // CSS 가 홈에서만 손잡이를 보이게 한다
   document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === tab));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + tab));
-  (tab === 'log' ? renderLog : renderHome)();
+  ({ log: renderLog, me: renderMe }[tab] || renderHome)();
   window.scrollTo(0, 0);
 }
 
+// ---------- 평소값 ----------
+// 화면 여러 곳에서 쓰므로 한 번 계산해 둔다. 측정이 끝날 때마다 다시 잡는다.
+let BASE = { ready: false, n: 0, need: 0, bpm: NaN, spread: NaN };
+async function refreshBase() { BASE = baselineOf(await listScans()); return BASE; }
+
 // ---------- 홈 ----------
 async function renderHome() {
-  const last = (await listScans())[0];
-  const lv = last ? resultView(last) : null;
+  const scans = await listScans();
+  BASE = baselineOf(scans);
+  const last = scans[0];
+  const lv = last ? resultView(last, BASE) : null;
   $('v-home').innerHTML = `
     <div class="hero">
       <p class="eyebrow">${DAY(new Date())}</p>
-      <h1>얼굴 30초로<br><em>지금 몸 상태</em>를<br>읽어 볼게요</h1>
+      <h1>얼굴 30초로<br><em>평소와 다른지</em><br>봐 드릴게요</h1>
       <img src="/assets/characters/coffee.png" alt="" width="136" height="136">
       <div class="reads">${['심박', '맥파', '박동 간격', '호흡', '눈 깜빡임', '머리 흔들림'].map(t => `<span class="chip">${t}</span>`).join('')}</div>
     </div>
@@ -57,6 +67,10 @@ async function renderHome() {
       <button class="btn" type="button" data-act="prep">${ic('scan-face', 22)}시작하기</button>
       <p>카메라 영상은 이 휴대폰 안에서만 처리돼요</p>
     </div>
+    ${BASE.ready
+      ? `<p class="sec">내 평소</p>
+    <div class="base"><span class="v num">${fmt(BASE.bpm)}<small>bpm</small></span><span class="k">최근 ${BASE.n}번의 가운데 값이에요</span></div>`
+      : `<div class="base learn"><span class="k">${BASE.n ? `평소를 알려면 <b>${BASE.need}번</b> 더 재면 돼요` : '몇 번 재고 나면 평소와 비교해 드릴게요'}</span></div>`}
     ${last ? `<p class="sec">최근 결과</p>
     <button class="last" type="button" data-show="${last.id}">
       <span class="k">${ago(last.ts)}</span>
@@ -266,7 +280,7 @@ function tick(now) {
     live.bpm = show ? q.bpm : NaN;
     if (show) { $('liveBpm').textContent = Math.round(q.bpm); document.querySelector('.live .heart').style.animationDuration = (60 / q.bpm).toFixed(2) + 's'; }
     // 빠르게: 최근 3번이 ±2 bpm 안 · SNR ≥ 3 dB · 10초 이상이고, 지금까지 전체가 품질을 통과하면 끝낸다
-    if (cam.mode === 'quick' && stableEnough(cam.hist, el) && analyze(cam.samples, { resp: false }).quality.pass) return finish();
+    if (cam.mode === 'quick' && stableEnough(cam.hist, el) && analyze(cam.samples, { resp: false, windowRetry: false }).quality.pass) return finish();
   }
   if (el >= EARLY_STOP.maxSec) finish();
 }
@@ -308,6 +322,7 @@ async function finish() {
     await putScan(scan);
   }
   await new Promise(r => setTimeout(r, Math.max(0, 750 - (performance.now() - t))));   // 완료 표시를 볼 시간
+  BASE = baselineOf((await listScans()).filter(x => x.id !== scan.id));   // 이번 값은 자기 평소에 넣지 않는다
   showResult(scan);                                               // 결과는 촬영 화면 아래에서 먼저 올라오고
   const el = scanEl(); el.classList.add('leaving');               // 촬영 화면이 그 위에서 사라진다
   setTimeout(() => { if (cam.phase === 'done') { overlay.reset(); center(null); el.className = 'scan'; } }, 300);
@@ -343,7 +358,7 @@ function demoMeasure() {
 // ---------- 결과 ----------
 let CUR = null, VIEW = null;
 function showResult(scan) {
-  CUR = scan; VIEW = resultView(scan);
+  CUR = scan; VIEW = resultView(scan, BASE);
   const v = VIEW, d = new Date(scan.ts);
   let h = `<div class="bar"><button class="x" type="button" data-act="close" aria-label="닫기">${ic('x', 22)}</button><span>${DAY(d)} ${HM(d)}</span><span></span></div>`;
   if (v.status !== 'ok') h += `<div class="retry"><div><h2>${esc(v.title)}</h2><p>${esc(v.message)}</p></div><img src="/assets/characters/idle.png" alt=""></div>`;
@@ -352,6 +367,16 @@ function showResult(scan) {
       <span class="k">심박 <span class="chip ${v.signal.tone}">${v.signal.label}</span></span>
       <span class="v num">${v.hr.value}${v.hr.unit ? `<small>${v.hr.unit}</small>` : ''}</span>
       ${v.wave ? '<canvas id="pulseCv" aria-label="맥파 그래프"></canvas><span class="t">얼굴 피부색에서 읽은 맥파 · 마지막 10초</span>' : ''}</button>`;
+  // 평소와 얼마나 다른가 — 숫자보다 이게 먼저다
+  const dv = v.deviation;
+  if (dv.level !== 'none') {
+    const off = dv.level === 'high' || dv.level === 'low';
+    h += `<div class="dev${off ? ' off' : ''}${dv.level === 'learning' ? ' learn' : ''}">
+      <b>${esc(dv.text)}</b>${dv.level === 'learning' ? '' : `<span>평소 ${fmt(dv.baseBpm)} bpm</span>`}</div>`;
+    if (off) h += `<div class="why"><p>왜 그런지 짚이는 게 있나요?</p><div class="chips">${WHY.map(w =>
+      `<button class="chip${scan.why === w.key ? ' on' : ''}" type="button" data-why="${w.key}">${w.label}</button>`).join('')}</div>
+      ${scan.why === 'none' ? '<p class="note">이유 없는 변화로 따로 모아 둘게요. 며칠 이어지면 알려 드려요.</p>' : ''}</div>`;
+  }
   h += `<div class="tiles">${v.tiles.map(t => `<button class="tile${t.state === 'held' ? ' off' : ''}" type="button" data-detail="${t.key}">
       <span class="k">${t.label}${t.state === 'ref' ? '<em class="ref">참고</em>' : ''}</span>
       <span class="v num">${t.value}${t.unit ? `<small>${t.unit}</small>` : ''}</span><span class="s">${esc(t.sub)}</span></button>`).join('')}</div>
@@ -407,21 +432,133 @@ function detail(k) {
 // ---------- 기록 ----------
 async function renderLog() {
   const scans = await listScans(), by = {};
+  BASE = baselineOf(scans);
   for (const s of scans) (by[DAY(new Date(s.ts))] ||= []).push(s);
-  $('v-log').innerHTML = `<h1 class="log-h">기록</h1>` + (scans.length
+  const u = unexplained(scans);
+  const head = u.ready && u.streak >= 2
+    ? `<div class="unex on"><b>설명되지 않은 변화가 ${u.streak}일째예요</b><span>짚이는 이유 없이 평소와 다른 날이 이어지고 있어요. 계속되면 한번 쉬어 가세요.</span></div>`
+    : u.ready
+      ? `<div class="unex"><b>설명되지 않은 변화 ${u.recent}번</b><span>최근 3일 중, 이유를 짚지 못한 날이에요.</span></div>`
+      : '';
+  $('v-log').innerHTML = `<h1 class="log-h">기록</h1>` + head + (scans.length
     ? Object.entries(by).map(([d, rs]) => `<div class="day"><h3>${d}</h3>${rs.map(s => {
-        const v = resultView(s), blink = v.tiles.find(t => t.key === 'blink');
+        const v = resultView(s, BASE), blink = v.tiles.find(t => t.key === 'blink');
         return `<button class="rec" type="button" data-show="${s.id}"><b class="num">${v.hr?.value ?? '–'}${v.hr?.unit ? `<small>${v.hr.unit}</small>` : ''}</b>
           <span class="chip ${v.status === 'ok' ? '' : 'warn'}">${v.status === 'ok' ? '통과' : '미달'}</span>
-          <span class="n">${HM(new Date(s.ts))}${blink && blink.state !== 'held' ? ` · 깜빡임 ${blink.value}회/분` : ''}</span></button>`;
+          <span class="n">${HM(new Date(s.ts))}${v.deviation?.level === 'high' || v.deviation?.level === 'low' ? ` · ${esc(v.deviation.text)}` : ''}${s.why ? ` · ${esc(WHY_LABEL[s.why] || '')}` : ''}${blink && blink.state !== 'held' ? ` · 깜빡임 ${blink.value}회/분` : ''}</span></button>`;
       }).join('')}</div>`).join('') + '<button class="link-quiet" type="button" data-act="wipe">기록 모두 지우기</button>'
     : `<div class="empty"><img src="/assets/characters/sleep.png" alt="" width="120" height="120"><p>아직 기록이 없어요</p><button class="btn" type="button" data-act="prep" style="max-width:240px">첫 측정 하기</button></div>`);
+}
+
+// ---------- 내 정보 ----------
+async function renderMe() {
+  const p = await getProfile();
+  BASE = baselineOf(await listScans());
+  const num = (id, label, val, unit, ph) =>
+    `<label class="fld"><span>${label}</span><input id="${id}" inputmode="numeric" value="${val ?? ''}" placeholder="${ph}"><em>${unit}</em></label>`;
+  const mode = (k, t, d) => `<button class="mode" type="button" role="radio" aria-checked="${MODE === k}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
+  $('v-me').innerHTML = `<h1 class="log-h">내 정보</h1>
+    <div class="card">
+      <label class="fld"><span>이름</span><input id="pNick" maxlength="12" value="${esc(p.nick)}" placeholder="예: 하린"></label>
+      ${num('pH', '키', p.height, 'cm', '170')}
+      ${num('pW', '몸무게', p.weight, 'kg', '60')}
+      ${num('pY', '태어난 해', p.birth_year, '년', '2004')}
+      <button class="btn sub" type="button" data-act="saveMe">저장</button>
+    </div>
+    <div class="card">
+      <p class="sec">내 평소</p>
+      ${BASE.ready
+        ? `<div class="base"><span class="v num">${fmt(BASE.bpm)}<small>bpm</small></span><span class="k">최근 ${BASE.n}번의 가운데 값 · 흩어짐 ±${fmt(BASE.spread, 1)}</span></div>`
+        : `<div class="base learn"><span class="k">${BASE.n ? `${BASE.need}번 더 재면 잡혀요` : '아직 재지 않았어요'}</span></div>`}
+    </div>
+    <div class="card">
+      <p class="sec">측정 방식</p>
+      <div class="modes" role="radiogroup" aria-label="측정 방식">
+        ${mode('quick', '빠르게', '심박 · 맥파<br>보통 10–20초')}
+        ${mode('full', '전체', '박동 간격 · 호흡 · 깜빡임까지<br>30초')}
+      </div>
+    </div>
+    <div class="card quiet">
+      <p>카메라 영상 · 얼굴 랜드마크는 저장하지 않아요. 계산한 숫자만 이 휴대폰에 남아요.</p>
+      <button class="link-quiet" type="button" data-act="tutorial">튜토리얼 다시 보기</button>
+      <button class="link-quiet" type="button" data-act="wipeAll">모든 기록과 내 정보 지우기</button>
+    </div>`;
+}
+
+// ---------- 스와이프 ----------
+// 준비 시트는 홈의 '시작하기'로 열리지만, 엄지로 올리는 쪽이 빠르다. 홈에서 위로 쓸면 열고 시트에서 아래로 쓸면 닫는다.
+// pointer 로 받아 마우스로도 같게 돈다. 가로로 많이 움직였거나 느린 동작은 스와이프로 보지 않는다(스크롤·탭과 섞이지 않게).
+const SWIPE = { dist: 70, side: 48, ms: 700 };
+let swipe = null;
+addEventListener('pointerdown', e => { swipe = e.isPrimary ? { x: e.clientX, y: e.clientY, t: Date.now() } : null; }, { passive: true });
+addEventListener('pointerup', e => {
+  const p = swipe; swipe = null;
+  if (!p || Date.now() - p.t > SWIPE.ms || Math.abs(e.clientX - p.x) > SWIPE.side) return;
+  const dy = p.y - e.clientY;
+  const sheetOn = $('sheet').classList.contains('on');
+  if (dy <= -SWIPE.dist && sheetOn) return closeSheet();                       // 아래로 → 시트 닫기
+  if (dy < SWIPE.dist) return;
+  if (sheetOn || $('result').classList.contains('on') || cam.phase !== 'off') return;
+  if (!$('v-home').classList.contains('on')) return;
+  if (document.documentElement.scrollHeight - innerHeight - scrollY > 8) return;   // 아직 스크롤할 게 남았으면 스크롤이다
+  buzz(10); openPrep();                                                        // 위로 → 준비 시트
+}, { passive: true });
+
+// ---------- 온보딩 (첫 실행) ----------
+// check.html 의 캐릭터 컷씬 5단계를 글 그대로 가져왔다. 바꾼 곳은 두 군데뿐:
+//   - 2단계 "심박 · 박동 간격 · 긴장도" → "심박 · 박동 간격". 이 앱은 긴장도를 계산하지 않는다 (근거 없는 말은 하지 않는다).
+//   - 3단계 그룹 참여 · 만들기는 check.py 서버가 있어야 돈다. 이 앱은 백엔드가 없어 안내만 하고 넘어간다.
+let OB = { step: 0, nick: '', after: null };
+function renderOnb() {
+  const s = OB.step, o = $('onb');
+  o.classList.toggle('dark', s === 2);
+  const dots = `<div class="dots">${[0, 1, 2, 3, 4].map(i => `<i class="${i === s ? 'on' : ''}"></i>`).join('')}</div>`;
+  const back = s ? `<button class="back" type="button" data-ob="back" aria-label="뒤로">${ic('chevron-left', 22)}</button>` : '<span class="sp"></span>';
+  let body = '', ch = 'calm', small = false;
+  if (s === 0) body = `<h1>만나서 반가워요!</h1><p>저는 Vity예요. 시험기간 동안 매일 30초씩, 당신의 컨디션을 같이 지켜볼게요.</p>
+    <button class="obtn" type="button" data-ob="next">시작하기</button>`;
+  else if (s === 1) { ch = 'ask'; small = true; body = `<h1>이름을 알려 줄래요?</h1><p>그룹 친구들에게 이 이름으로 보여요.</p>
+    <input id="obNick" maxlength="12" placeholder="예: 하린" value="${esc(OB.nick)}" aria-label="내 이름">
+    <button class="obtn" type="button" data-ob="nick">좋아요</button>`; }
+  else if (s === 2) { ch = 'coffee'; body = `<span class="bubble">${esc(OB.nick || '당신')}님, 30초만 저를 봐 주세요</span><h1>얼굴로 맥박을 읽어요</h1>
+    <p>카메라가 이마와 볼 피부색의 아주 작은 변화를 읽어 심박 · 박동 간격을 계산해요. 밝은 곳에서, 말하지 않고 30초면 돼요.</p>
+    <button class="obtn" type="button" data-ob="next">알겠어요</button>`; }
+  else if (s === 3) { ch = 'sleep'; small = true; body = `<h1>같이 할 친구가 있나요?</h1><p>스터디 친구들과 기상 · 공부 시작 인증을 하면 매일 재기가 쉬워져요. 그룹엔 인증 시각만 보여요.</p>
+    <div class="ochoice"><input id="obCode" maxlength="6" placeholder="초대 코드 6자리" autocapitalize="characters" aria-label="초대 코드">
+    <button class="obtn" type="button" data-ob="join">코드로 참여</button>
+    <button class="oghost" type="button" data-ob="make">새 그룹 만들게요</button>
+    <button class="oghost" type="button" data-ob="solo">혼자 할게요</button></div>`; }
+  else { small = true; body = `<h1>마지막으로 약속할게요</h1>
+    <ul><li>영상 · 사진은 저장하지 않아요. 계산한 숫자만 남아요.</li>
+    <li>그룹엔 이름 · 인증 시각 · 연속 일수만 보여요.</li>
+    <li>의료기기가 아니에요. 진단하지 않고 내 평소와 비교해요.</li>
+    <li>생체 정보라 따로 동의를 받아요 (개인정보보호법 제23조).</li></ul>
+    <button class="obtn" type="button" data-ob="agree">동의하고 시작</button>`; }
+  o.innerHTML = `<div class="in"><div class="top">${back}<div class="f">${dots}</div><span class="sp"></span></div>${body}</div>
+    <span class="ohill${small ? ' small' : ''}"></span><img class="ochar${small ? ' small' : ''}" src="/assets/characters/${ch}.png" alt="">`;
+}
+function openOnb(step = 0) { OB.step = step; $('onb').classList.add('on'); renderOnb(); }
+async function onb(act) {
+  if (act === 'back') OB.step = Math.max(0, OB.step - 1);
+  else if (act === 'next' || act === 'solo') OB.step++;
+  else if (act === 'nick') { const v = ($('obNick').value || '').trim(); if (!v) return toast('이름을 적어 주세요'); OB.nick = v; await setProfile({ nick: v }); OB.step++; }
+  else if (act === 'join' || act === 'make') { toast('인증 그룹은 아직 이 앱에 없어요'); OB.step++; }   // 그룹은 서버가 필요하다
+  else if (act === 'agree') { await setProfile({ consent: true }); $('onb').classList.remove('on'); renderHome(); return; }
+  renderOnb();
 }
 
 // ---------- 이벤트 ----------
 document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.show) { const s = (await listScans()).find(x => String(x.id) === b.dataset.show); if (s) showResult(s); return; }
+  if (b.dataset.ob) return onb(b.dataset.ob);
+  if (b.dataset.why && CUR) {                     // 이유를 고르면 그 스캔에 붙여 둔다
+    CUR.why = CUR.why === b.dataset.why ? null : b.dataset.why;
+    await putScan(CUR);
+    showResult(CUR);
+    if (CUR.why) toast(CUR.why === 'none' ? '이유 없는 변화로 모아 둘게요' : '기록했어요');
+    return;
+  }
   if (b.dataset.detail && CUR?.r) return detail(b.dataset.detail);
   if (b.dataset.mode) { setMode(b.dataset.mode); document.querySelectorAll('.mode').forEach(x => x.setAttribute('aria-checked', x.dataset.mode === MODE)); return; }
   const a = b.dataset.act;
@@ -429,10 +566,19 @@ document.addEventListener('click', async e => {
   else if (a === 'scan') { if ($('sheet').classList.contains('on')) { closeSheet(); setTimeout(openScan, 140); } else openScan(); }
   else if (a === 'close') { closePage(true); go(document.querySelector('.tabs [aria-selected="true"]').dataset.tab); }
   else if (a === 'sheetClose') closeSheet();
-  else if (a === 'wipe') { if (confirm('이 기기의 측정 기록을 모두 지울까요?')) { await clearScans(); renderLog(); toast('기록을 지웠어요'); } }
+  else if (a === 'wipe') { if (confirm('이 기기의 측정 기록을 모두 지울까요?')) { await clearScans(); await refreshBase(); renderLog(); toast('기록을 지웠어요'); } }
+  else if (a === 'saveMe') {
+    const n = id => { const v = ($(id).value || '').trim(); return v === '' ? null : Number(v); };
+    await setProfile({ nick: ($('pNick').value || '').trim(), height: n('pH'), weight: n('pW'), birth_year: n('pY') });
+    toast('저장했어요');
+  }
+  else if (a === 'tutorial') openOnb(0);
+  else if (a === 'wipeAll') { if (confirm('기록과 내 정보를 모두 지울까요? 되돌릴 수 없어요.')) { await wipeAll(); await refreshBase(); renderMe(); toast('모두 지웠어요'); } }
 });
 
+document.body.dataset.tab = 'home';
 persistStorage();
+getProfile().then(p => { if (!p.consent) { OB.nick = p.nick || ''; openOnb(0); } });
 if ('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js', { scope: import.meta.env.BASE_URL });
 renderHome();
 if (!DEMO) loadFaceMesh().catch(() => { /* 촬영 화면에서 다시 불러오며 안내한다 */ });
