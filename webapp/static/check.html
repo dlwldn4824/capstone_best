@@ -863,7 +863,8 @@ function showResult(r) {
     metric("brain", "스트레스 지수", r.stress == null ? "–" : Math.round(r.stress), "", r.stress != null ? '<div class="gauge"><i style="left:' + r.stress + '%"></i></div>' : "", r.stress != null ? esc(r.zone) + (r.vs.stress != null ? " · " + vs("stress") : "") : "박동 간격 신호가 약해 보류") +
     metric("audio-waveform", "HRV (RMSSD)", r.rmssd ?? "–", r.rmssd != null ? "ms" : "", "", r.rmssd != null ? "SDNN " + r.sdnn + " ms · " + (vs("rmssd", " ms") || "높을수록 회복 잘 된 편") : '<span class="tag ' + hc[1] + '">' + hc[0] + "</span>") +
     metric("wind", "호흡", r.rr ?? "–", r.rr != null ? "회/분" : "", '<span class="tag ref" style="align-self:flex-start">참고값</span>', "안정 시 12–20") +
-    metric("activity", "리듬", r.irregular == null ? "보류" : r.irregular ? "불규칙" : "고름", "", "", r.irregular == null ? "신호 좋을 때만 판단해요" : r.irregular ? "한 번 더 재 보세요" : "박동 간격이 고르게 잡혔어요") +
+    // 리듬은 예전 엔진(vitals.js) 기록에만 있다. face 엔진은 계산하지 않으므로(irregular: null) 타일을 내지 않는다
+    (r.irregular == null ? "" : metric("activity", "리듬", r.irregular ? "불규칙" : "고름", "", "", r.irregular ? "한 번 더 재 보세요" : "박동 간격이 고르게 잡혔어요")) +
     metric("weight", "BMI", bmi ? bmi.bmi : "–", "", "", bmi ? bmi.zone + " (키 · 몸무게 입력값)" : '<button type="button" data-act="me" style="border:none; background:none; padding:0; color:var(--calm); font:inherit">내 정보에서 입력</button>') + "</div>";
   html += '<div class="card"><h2 class="ih">' + ic("clipboard-check") + "지금 해 볼 것</h2>" + r.tips.map((t) => {
     const icn = { breath: "wind", retry: "refresh-cw" }[t.action] || { sleep: "moon", caffeine: "coffee", mood: "heart", recovery: "moon", late: "moon", good: "brain", irregular: "triangle-alert", hr_high: "heart-pulse" }[t.id] || "info";
