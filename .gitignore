@@ -6,21 +6,25 @@ __pycache__/
 *.egg-info/
 .ipynb_checkpoints/
 
-data/raw/*
-data/cache/*
-data/processed/*
-data/interim/
+research/data/raw/*
+research/data/cache/*
+research/data/processed/*
+research/data/interim/
 *.pkl
 *.zip
-!data/raw/.gitkeep
-!data/cache/.gitkeep
-!data/processed/.gitkeep
+!research/data/raw/.gitkeep
+!research/data/cache/.gitkeep
+!research/data/processed/.gitkeep
+
+# 옮기기 전 자리(data/) — 로컬에 남은 데이터셋 · 기록 DB 가 올라가지 않게
+/data/
 
 # Exp 1 실행 산출물 — 스크립트가 다시 만든다
 outputs/
+research/outputs/
 
 # 자동 생성 문서 (07_nesy.py / 08_report.py 등이 생성)
-# 규칙의 원본은 src/nesy/rules.py 이다
+# 규칙의 원본은 research/src/nesy/rules.py 이다
 docs/research/DATA_AUDIT.md
 docs/research/BASELINE_RESULTS.md
 docs/research/ABLATION_RESULTS.md
@@ -29,12 +33,12 @@ docs/research/NEURAL_RESULTS.md
 docs/research/RULES.md
 docs/research/EXPERIMENT_LOG.md
 
-data/raw/nurse_stress/sessions/
+research/data/raw/nurse_stress/sessions/
 docs/research/NURSE_AUDIT.md
 docs/research/NURSE_RESULTS.md
-outputs/nurse_features.csv
-data/raw/wesad/
-outputs/wesad_hrv.csv
+research/outputs/nurse_features.csv
+research/data/raw/wesad/
+research/outputs/wesad_hrv.csv
 docs/research/WESAD_HRV.md
 
 # 웹앱 기록 DB · 개발용 인증서 — 개인 생체 기록이다

@@ -1,4 +1,4 @@
-"""포스터 그림 — 전부 우리 실험 결과(outputs/, data/raw/mcd_rppg)에서 그린다.
+"""포스터 그림 — 전부 우리 실험 결과(research/outputs/, research/data/raw/mcd_rppg)에서 그린다.
 
     python docs/presentation/poster/make_figures.py
 """
@@ -14,7 +14,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "research" / "src"))
 sys.path.insert(0, str(ROOT / "webapp"))
 from nesy import rppg as R  # noqa: E402
 
@@ -29,7 +29,7 @@ plt.rcParams.update({
 
 def fig_pipeline():
     """한 사람 20초: 얼굴 G 채널 → POS 맥파(정답 PPG 와 겹침) → 스펙트럼 최고점."""
-    d = np.load(ROOT / "data/raw/mcd_rppg/traces/1020_before.npz")
+    d = np.load(ROOT / "research/data/raw/mcd_rppg/traces/1020_before.npz")
     ok = d["face_ok"] & np.isfinite(d["rgb"]).all(1)
     t, rgb, ppg = d["t"][ok], d["rgb"][ok], d["ppg"][ok]
     m = (t >= 60) & (t < 80)
@@ -71,7 +71,7 @@ def fig_pipeline():
 
 
 def fig_gate():
-    gt = pd.read_csv(ROOT / "outputs/rppg_v1_v2_gate.csv")
+    gt = pd.read_csv(ROOT / "research/outputs/rppg_v1_v2_gate.csv")
     gt = gt[gt.snr_min.isin([-99, 0, 2, 4])]
     lab = {-99: "전체", 0: "≥0", 2: "≥2", 4: "≥4"}
     fig, ax = plt.subplots(1, 2, figsize=(10, 4.3), gridspec_kw={"wspace": 0.35})
@@ -92,7 +92,7 @@ def fig_gate():
 
 
 def fig_scatter():
-    w = pd.read_csv(ROOT / "outputs/rppg_v1_v2_windows.csv")
+    w = pd.read_csv(ROOT / "research/outputs/rppg_v1_v2_windows.csv")
     fig, ax = plt.subplots(1, 2, figsize=(10, 4.8), gridspec_kw={"wspace": 0.28}, sharey=True)
     for a, (v, title) in zip(ax, (("v1", "이전 앱 (MAE 12.5)"), ("v2", "rPPG-Toolbox 방식 (MAE 3.6)"))):
         okm = w[v + "_snr"] >= 0
@@ -109,7 +109,7 @@ def fig_scatter():
 
 
 def fig_complexion():
-    c = pd.read_csv(ROOT / "outputs/complexion_indices.csv").set_index("index")
+    c = pd.read_csv(ROOT / "research/outputs/complexion_indices.csv").set_index("index")
     fig, ax = plt.subplots(figsize=(6.4, 3.4))
     vals = [c.loc["a_cheek", "within_sd"], c.loc["a_rel", "within_sd"]]
     ax.barh([1, 0], vals, color=[BLUE_L, BLUE], height=0.55)

@@ -1,4 +1,4 @@
-// 얼굴 심박 v2 + 안색 — src/nesy/rppg.py 의 estimate_v2 · complexion 과 한 줄씩 대응한다.
+// 얼굴 심박 v2 + 안색 — research/src/nesy/rppg.py 의 estimate_v2 · complexion 과 한 줄씩 대응한다.
 //
 // 처리 순서는 rPPG-Toolbox(Liu et al., NeurIPS 2023)의 POS 평가와 같다. 그 저장소는
 // Responsible AI License 라 코드를 옮기지 않고 같은 단계 · 같은 값으로 새로 썼다.

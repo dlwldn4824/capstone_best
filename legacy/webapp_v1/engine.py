@@ -1,4 +1,4 @@
-"""웹앱 판정 엔진 — 저장된 하루 기록을 src/nesy 로 판정한다.
+"""웹앱 판정 엔진 — 저장된 하루 기록을 research/src/nesy 로 판정한다.
 
 연구 코드와 **같은 함수**를 쓴다 (homekit.rolling_z · apply_explanation,
 persistence.alerts). 웹앱용으로 따로 만든 판정 로직은 없다.
@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]       # legacy/webapp_v1/ → 저장소
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "research" / "src"))
 from nesy import homekit as H, persistence as P  # noqa: E402
 
 DB_PATH = ROOT / "data" / "app" / "app.db"
@@ -99,7 +99,7 @@ def today(now=None):
     return (now or dt.datetime.now()).date().isoformat()
 
 
-# --- 위험도 모델 (scripts/22_risk_model.py 가 학습) -------------------------------
+# --- 위험도 모델 (research/scripts/22_risk_model.py 가 학습) ----------------------
 # 판정은 규칙이 한다. 모델은 같은 날을 따로 본 '두 번째 의견' 으로만 보여준다.
 # 공개 데이터 사건 32건에서 규칙과 탐지율이 같았다 (docs/research/RISK_MODEL.md).
 def _load_model():
