@@ -4,7 +4,7 @@
 // 복사본을 만들지 않는 것이 요점이다. 두 벌이 갈라지면 한쪽만 고쳐져 데모가 거짓말을 하게 된다
 // (watch/web/README.md 가 같은 이유로 경고한다).
 export { loadFaceMesh, detect, TESSELATION, MP_VERSION } from './capture/facemesh.js';
-export { openCamera, closeCamera } from './capture/camera.js';
+export { openCamera, closeCamera, tryLockExposure } from './capture/camera.js';
 export { RoiSampler } from './capture/roi.js';
 export { framingIssue, measureFraming } from './capture/framing.js';
 export { analyze, liveEstimate, stableEnough, quickBpm, EARLY_STOP, WINDOW, HRV_GATE, ROIS } from './pipeline/index.js';

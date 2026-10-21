@@ -3,7 +3,7 @@
 // 흐름: (첫 실행) 온보딩 → 홈 → 준비 시트 → 촬영(자세 맞추기 → 30초) → 결과 → 이유 묻기 → 상세 시트. 기록 · 내 정보 탭.
 // 계산은 src/pipeline, 자세 판정은 src/capture/framing.js, 결과 표시 규칙은 src/ui/view.js.
 // 카메라 프레임 · 랜드마크는 메모리에서만 쓰고 저장하지 않는다.
-import { openCamera, closeCamera } from './capture/camera.js';
+import { openCamera, closeCamera, tryLockExposure } from './capture/camera.js';
 import { loadFaceMesh, detect, TESSELATION } from './capture/facemesh.js';
 import { RoiSampler } from './capture/roi.js';
 import { framingIssue, measureFraming } from './capture/framing.js';
@@ -160,7 +160,11 @@ async function openScan() {
   if (DEMO) return demoAlign();
   if (!navigator.mediaDevices || !window.isSecureContext) return fail('카메라를 열 수 없어요', 'https 주소에서 다시 열어 주세요');
   try {
-    cam.stream = (await openCamera($('video'))).stream;
+    const opened = await openCamera($('video'));
+    cam.stream = opened.stream;
+    // 자동 노출 · 화이트밸런스가 측정 내내 영상을 조정하면 ROI 색에 잡음이 섞여 맥박 SNR 이 깎인다.
+    // 지원되면 고정한다 (iOS Safari 는 대부분 거부한다 — 거부돼도 측정은 그대로 진행).
+    cam.exposure = await tryLockExposure(opened.track);
     scanEl().classList.add('cam-on');                           // 영상이 실제로 재생된 뒤에 떠오르게
     say('loading', '얼굴 인식 준비 중', { force: true });
     await loadFaceMesh();

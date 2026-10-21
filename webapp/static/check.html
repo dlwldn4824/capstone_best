@@ -389,7 +389,7 @@ body.home .top{display:none}
 </div>
 
 <nav class="tabs"><div role="tablist">
-  <button role="tab" aria-selected="true" data-tab="home" type="button" data-ic="scan-face">오늘</button>
+  <button role="tab" aria-selected="true" data-tab="home" type="button" data-ic="scan-face">홈</button>
   <button role="tab" aria-selected="false" data-tab="group" type="button" data-ic="users">그룹</button>
   <button role="tab" aria-selected="false" data-tab="log" type="button" data-ic="history">기록</button>
   <button role="tab" aria-selected="false" data-tab="me" type="button" data-ic="user">내 정보</button>
@@ -487,7 +487,7 @@ const TIPS = {
   rr: ["호흡", "맥파가 숨 따라 출렁이는 주기로 추정해요. 공개 데이터로 정확도를 확인하지 못해서 참고로만 보여 드리고 점수에는 넣지 않아요."],
   rhythm: ["리듬", "신호가 좋을 때만, 박동 간격이 갑자기 크게 바뀌는 비율을 봐요. '불규칙'이 며칠 반복되면 학교 보건실이나 병원에서 심전도로 확인해 보세요."],
   bmi: ["BMI", "입력한 키 · 몸무게로 계산해요. 대한비만학회 기준 18.5 · 23 · 25."],
-  signal: ["신호 등급", "맥박 신호가 잡음보다 얼마나 큰지(SNR)예요. 약하면 HRV · 스트레스는 보류하고 다시 재기를 권해요. 인증도 맥박이 잡혀야 돼요."],
+  signal: ["신호 등급", "맥박 신호가 잡음보다 얼마나 큰지(SNR)예요. 심박은 0dB만 넘으면 나오지만, HRV · 스트레스는 10dB를 넘어야 보여 드려요. 그 아래에서는 박동 간격이 실제보다 크게 읽혀서 숫자를 믿을 수 없어요. 폰을 세워 고정하고 얼굴 정면에 고른 빛을 두면 올라가요."],
   checkin: ["인증", "그룹의 인증 시간대 안에서 30초 측정을 하고 맥박이 잡히면 인증돼요. 그룹엔 인증 시각과 연속 일수만 보여요."],
 };
 const tipBtn = (k, light) => '<button type="button" class="qm' + (light ? " light" : "") + '" data-tip="' + k + '" aria-label="' + TIPS[k][0] + ' 설명">?</button>';
@@ -790,6 +790,8 @@ async function openScan() {
   try {
     cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio: false });
     const v = $("video"); v.srcObject = cam.stream; await v.play();
+    // 자동 노출 · 화이트밸런스를 고정해 ROI 색 잡음을 줄인다 (지원되는 기기에서만, 거부돼도 그대로 진행)
+    cam.exposure = await VF.tryLockExposure(cam.stream.getVideoTracks()[0]);
     scanEl().classList.add("cam-on");                    // 영상은 실제로 재생된 뒤에 떠오르게 (.scan video 가 opacity:0 으로 시작한다)
     center(null); say("noface", "얼굴을 원 안에 맞춰 주세요", { tip: "휴대폰을 세워 두면 맞추기 쉬워요", force: true });
     schedule();
@@ -848,7 +850,7 @@ function showResult(r) {
   }
   if ((r.checkins || []).some((c) => c.status === "ok")) html += '<p class="sub" style="padding:0 4px">그룹엔 인증 시각과 연속 일수만 보여요.</p>';
   html += '<div class="card"><div class="rhead">' + ring(r.score) + "<div><h2 style=\"font-size:18px; word-break:keep-all\">" + (r.score >= 75 ? "컨디션 좋아요" : r.score >= 55 ? "무난한 편이에요" : r.score != null ? "오늘은 쉬어 가요" : "점수 보류") +
-    '</h2><p class="sub">' + (r.vs.score != null ? "평소보다 " + sign(Math.round(r.vs.score)) + "점 · " : "") + '<span class="tag ' + cf[1] + '">' + cf[0] + "</span> " + tipBtn("signal") + '</p></div><img src="/assets/characters/' + charFor(r.score) + '.png" alt=""></div>' +
+    '</h2><p class="sub">' + (r.vs.score != null ? "평소보다 " + sign(Math.round(r.vs.score)) + "점 · " : "") + '<span class="tag ' + cf[1] + '">' + cf[0] + (r.snr == null ? "" : " " + r.snr.toFixed(1) + "dB") + "</span> " + tipBtn("signal") + '</p></div><img src="/assets/characters/' + charFor(r.score) + '.png" alt=""></div>' +
     '<div class="parts">' + PART.map(([k, n, w]) => { const v = r.parts[k]; return '<div class="p"><span>' + n + " <small>" + w + '%</small></span><div class="t"><i style="width:' + (v ?? 0) + '%"></i></div><span class="v num">' + (v ?? "–") + "</span></div>"; }).join("") +
     '</div><p class="sub">점수 = 스트레스(100 − 지수) 35% + HRV 20% + 심박(55–85 bpm) 15% + 생활(수면 · 카페인 · 기분) 30%. 신호가 약한 항목은 빼고 나머지로 다시 나눠요.</p></div>';
   if (r.before) {
