@@ -12,13 +12,13 @@ Homekit2020 은 승인이 필요해서, 바로 받을 수 있는 이 데이터�
 | 신호 | 심박(초 단위, 중앙 5초 간격) · 걸음(분) · 수면 단계(32명만) |
 | 날짜 | **개인정보 때문에 사람마다 옮겼다** (2023~2028년). 라벨도 같은 기준이다 |
 
-두 파일은 `data/raw/mishra/` 에 두면 된다 (`COVID-19-Wearables/` 로 압축 해제).
+두 파일은 `research/data/raw/mishra/` 에 두면 된다 (`COVID-19-Wearables/` 로 압축 해제).
 
 ```bash
-python scripts/20_mishra_persistence.py      # 처음엔 원자료를 읽어 data/cache 에 캐시 (수 분)
+python research/scripts/20_mishra_persistence.py      # 처음엔 원자료를 읽어 research/data/cache 에 캐시 (수 분)
 ```
 
-## 로더 (`src/nesy/mishra.py`)
+## 로더 (`research/src/nesy/mishra.py`)
 
 출력은 `homekit.build_day_table()` 이 받는 (day, night) 두 표다. 기준선·설명·보류·상한은
 Homekit 것을 그대로 쓴다.

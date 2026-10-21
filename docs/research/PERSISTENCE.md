@@ -1,6 +1,6 @@
 # 지속성 계층 — 만들었고, 이 데이터로는 검증되지 않는다
 
-`src/nesy/persistence.py` · `scripts/16_persistence.py` · 단위 테스트 12건
+`research/src/nesy/persistence.py` · `research/scripts/16_persistence.py` · 단위 테스트 12건
 
 ---
 

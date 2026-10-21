@@ -71,11 +71,11 @@ EDA 13 · ACC 10), 축소 feature 13 / 12 / 19개, XGBoost 93% / 91% / 84%,
 
    운동 프로토콜도 v1/v2 가 다르다 (Anaerobic: v1 = 30초 스프린트 3회 /
    v2 = 45초 4회). **하나의 태그 매핑으로 전체를 처리할 수 없다.**
-   → `configs/protocol.yaml` 이 `version_by_prefix` 로 이를 처리한다.
+   → `research/configs/protocol.yaml` 이 `version_by_prefix` 로 이를 처리한다.
 
 2. **제외 대상 피험자.** 원 논문이 분류 실험에서 뺀 것은
    `f07`(손목밴드 보호 커버 미제거), `f13`(착용 불량) 두 명이다.
-   → `configs/config.yaml` 의 `exclude.ml_excluded_subjects`.
+   → `research/configs/config.yaml` 의 `exclude.ml_excluded_subjects`.
 
 3. **품질 이슈가 기록된 세션** (`data_constraints.txt`): S02 스트레스 중복,
    f14 스트레스 2분할, S03·S07 유산소 불완전, S11 유산소 2분할,

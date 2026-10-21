@@ -6,7 +6,7 @@
     심박 · HRV(RMSSD · SDNN) · 스트레스 지수 · 불규칙 여부 · 호흡(참고) · BMI(입력)
 혈압 · 산소포화도 · 체온 · 피부나이는 일반 카메라로 검증할 수 없어 재지 않는다.
 
-계산 자체(박동 · HRV · 스트레스)는 브라우저 vitals.js 가 하고, 같은 계산이 src/nesy/vitals.py 에 있다.
+계산 자체(박동 · HRV · 스트레스)는 브라우저 vitals.js 가 하고, 같은 계산이 research/src/nesy/vitals.py 에 있다.
 이 파일은 점수(vitals.health_score) · 평소 대비 · 추천 문장 · 저장만 맡는다. 영상은 오지 않는다.
 """
 from __future__ import annotations
@@ -19,10 +19,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "research" / "src"))
 from nesy import vitals as V  # noqa: E402
 
-DB_PATH = ROOT / "data" / "app" / "check.db"
+DB_PATH = Path(__file__).resolve().parent / "data" / "check.db"
 BASE_DAYS, BASE_MIN = 14, 3
 KINDS = ("normal", "before_breath", "after_breath")
 

@@ -1,17 +1,17 @@
-# Vity 얼굴 체크 (`/face`) — 설계
+# Vity 얼굴 체크 (`/face`) 설계
 
 Vity(캡스톤, Team 삼삼오오)의 얼굴 카메라 부분 시연 PWA. 아이폰 Safari 전면 카메라로 30초 얼굴을 찍어 **심박 · 맥파 · 박동 간격(RMSSD) · 호흡 · 눈 깜빡임 · 머리 흔들림**을 기기 안에서 계산해 보여 준다. 화면 톤은 `webapp/static/check.html`(/check)을 따른다.
 코드는 [`webapp/face/`](../../webapp/face/) (vity-face-test@4994ea7 에서 옮겨 왔다). 이 문서의 경로는 `webapp/face/` 기준이다.
 
-`/check` 와는 계산 엔진이 다르다. `/check` 는 `webapp/static/vitals.js`(= `src/nesy/vitals.py`), `/face` 는 `webapp/face/src/pipeline/`.
-[CHECK_DESIGN.md](CHECK_DESIGN.md) 의 공개 데이터 검증(심박 0.33 bpm 등)은 `vitals.js` 엔진 결과이고 `/face` 에는 해당하지 않는다.
+`/check`도 이 엔진을 쓴다. `src/lib.js`를 라이브러리로 빌드한 `webapp/static/vity-face.js`(`npm run build:lib`)를 `/check`가 불러 쓴다.
+[CHECK_DESIGN.md](CHECK_DESIGN.md)의 공개 데이터 검증(심박 0.33 bpm 등)은 그 전 엔진(`webapp/static/vitals.js` = `research/src/nesy/vitals.py`) 결과라 이 엔진에는 해당하지 않는다.
 
 ## 절대 규칙
 - 카메라 프레임, ROI 픽셀, 얼굴 랜드마크는 **메모리에서만** 쓰고 저장하지 않는다. 서버로 보내지 않는다.
 - 외부 호스트에 요청하지 않는다. MediaPipe wasm · 모델은 같은 서버의 `/face/mediapipe/`에서 받는다 (빌드할 때 `scripts/sync-assets.mjs`가 채운다).
 - `src/pipeline/`은 UI를 모른다. 공개 인터페이스는 `analyze(samples) → Result`, `quickBpm(samples)`, `faceState(samples)`. 타입을 바꾸면 `tests/`도 바꾼다.
 - 수정 후 `npm --prefix webapp/face test`가 통과해야 한다.
-- 화면에 보여 주는 숫자는 `src/ui/evidence.js`에 근거(열어 본 출처)가 있어야 한다. 스트레스 지수(Baevsky SI), 피부색, SpO2, 혈압, 표정→기분은 근거가 없어 보여 주지 않는다.
+- `/face` 화면에 보여 주는 숫자는 `src/ui/evidence.js`에 근거(열어 본 출처)가 있어야 한다. 스트레스 지수(Baevsky SI), 피부색, SpO2, 혈압, 표정→기분은 근거가 없어 `/face`에는 보여 주지 않는다. `/check`는 팀 설계([CHECK_DESIGN.md](CHECK_DESIGN.md))대로 HRV 기준(SNR ≥ 10 dB, 이웃 쌍 ≥ 20)을 넘은 측정에만 스트레스 지수를 보여 준다 (`src/pipeline/metrics.js`).
 - 문구: 토스 톤. 짧게, 존댓말 "~해요". 면책 나열·"~하지 않는 것" 목록·placeholder 문구를 쓰지 않는다.
 
 ## 주소와 파일
@@ -52,7 +52,7 @@ src/store/db.js          IndexedDB(scans, kv)
 src/debug/synth.js       합성 Sample[] (간섭 · 구멍 · 고조파 옵션)
 scripts/robustness/      합성 견고성 감사 스크립트와 결과(results_before.md / results_after.md)
 scripts/sync-assets.mjs  위 "주소와 파일"
-tests/legacy_vitals_parity.test.js  /check 의 rppg2.js + vitals.js 가 tests/test_vitals.py 기준값을 내는지 (엔진 대응 확인용)
+tests/legacy_vitals_parity.test.js  /check 의 rppg2.js + vitals.js 가 webapp/tests/test_vitals.py 기준값을 내는지 (엔진 대응 확인용)
 public/sw.js             범위 /face/
 Dockerfile, nginx.conf   단독 Cloud Run 정적 서빙(포트 8080, / → /face/)
 ```
@@ -85,7 +85,7 @@ FaceState = { durationSec, blinkPerMin, blinks, eyeClosedRatio, yawns, headMoveP
 
 샘플이 8초 분량 미만이면 품질 표는 '얼굴이 잡힌 시간' 한 줄만 보여 준다. faceState 의 시간 · 빈도는 얼굴이 잡혀 있던 시간 기준(0.25초 넘는 구멍 제외).
 
-## 앱이 하려는 말 — 평소와 다른가 (`src/pipeline/baseline.js`)
+## 앱이 하려는 말: 평소와 다른가 (`src/pipeline/baseline.js`)
 심박 한 번의 값은 사람마다 달라 그 자체로 아무 말도 못 한다. 그래서 화면의 첫 줄은 숫자가 아니라 **평소 대비**다.
 
 | | |
@@ -97,12 +97,12 @@ FaceState = { durationSec, blinkPerMin, blinks, eyeClosedRatio, yawns, headMoveP
 | 이유 묻기 | 평소와 다르면 움직임 · 커피 · 잠 · 긴장 · 몸 · **짚이는 게 없어요** 중에서 고른다 (`scan.why`) |
 | 쌓이는 것 | `why === 'none'` 인 날만 '설명되지 않은 변화'로 센다. 이어지면 기록 탭 맨 위에 알린다 |
 
-말하지 않는 것: **스트레스 지수 · 안색 · 긴장도.** 근거가 없다 (`webapp/face/CLAUDE.md`).
+`/face`가 말하지 않는 것: **스트레스 지수 · 안색 · 긴장도.** 근거가 없다 (`webapp/face/CLAUDE.md`).
 이번 측정값은 자기 평소값에 넣지 않는다(`finish()`에서 자기 id 를 뺀다).
 
 ## 화면
 탭은 홈 · 기록 · 내 정보 세 개다. 첫 실행이면 온보딩 5단계(`check.html` 의 컷씬을 그대로 가져옴)가 뜨고,
-동의해야 들어간다. 그룹 단계는 `check.py` 서버가 있어야 도는 기능이라 안내만 하고 넘어간다 — 이 앱은 백엔드가 없다.
+동의해야 들어간다. 그룹 단계는 `check.py` 서버가 있어야 도는 기능이라 안내만 하고 넘어간다. 이 앱은 백엔드가 없다.
 홈 하단 바 위 손잡이(`.peek`)를 누르거나 홈에서 위로 쓸면 준비 시트가 열린다.
 
 ## 품질 기준
@@ -126,7 +126,7 @@ FaceState = { durationSec, blinkPerMin, blinks, eyeClosedRatio, yawns, headMoveP
 | 지금 기준, 전체 30초 | 91% | 91% | 0% |
 | 지금 기준 + 구간 선택 | 95% | 95% | 0% |
 
-거짓 통과 0% 가 조건이다. 구간 선택은 창을 여러 개 훑어 제일 좋은 것을 고르는 일이라 우연히 걸릴 기회를 준다 —
+거짓 통과 0% 가 조건이다. 구간 선택은 창을 여러 개 훑어 제일 좋은 것을 고르는 일이라 우연히 걸릴 기회를 준다.
 합의 조건(같은 bpm 구간 2개 이상)이 없으면 **맥박 없는 신호가 7% 통과했다**(합성 100회). 합의 조건과 5초 간격으로 0% 로 돌아왔다.
 구간을 쓴 스캔은 `result.window = { startSec, endSec }` 가 차고, 화면 품질 표에 '쓴 구간'이 적히며, 15초라 박동 간격(HRV)은 보류된다.
 **발표 자료의 품질 기준 숫자도 같이 고쳐야 한다.**

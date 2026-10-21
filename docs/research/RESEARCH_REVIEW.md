@@ -29,7 +29,7 @@ ACC 를 넣는 순간 오분류가 0 이 된다. **여기서 NeSy 가 더 줄일
 
 **대응 (셋 다 할 것).**
 
-1. **Day 5 에 실제 오분류 개수를 먼저 세라.** `outputs/tables/errors_baseline.csv`
+1. **Day 5 에 실제 오분류 개수를 먼저 세라.** `research/outputs/tables/errors_baseline.csv`
    에 Stress↔Exercise 오류가 10건 미만이면, "오분류 감소"를 주 결과로
    잡는 것은 그 시점에 포기해야 한다. 이건 Day 12 가 아니라 **Day 5 의
    의사결정 지점**이다.
@@ -103,7 +103,7 @@ ACC 를 넣는 순간 오분류가 0 이 된다. **여기서 NeSy 가 더 줄일
 **대응 — 이미 코드에 반영했다.**
 `evaluate.per_subject_metrics()` + `evaluate.paired_test()` (Wilcoxon
 signed-rank, 효과 크기 rank-biserial 포함). `07_nesy.py` 가
-`outputs/tables/significance.csv` 를 생성한다. p 값과 함께 median 차이,
+`research/outputs/tables/significance.csv` 를 생성한다. p 값과 함께 median 차이,
 개선된 피험자 수를 반드시 같이 보고한다.
 
 ## 6. Threshold 를 결과 보고 고르면 과적합이다
