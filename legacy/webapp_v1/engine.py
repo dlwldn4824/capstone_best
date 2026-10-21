@@ -5,7 +5,7 @@ persistence.alerts). 웹앱용으로 따로 만든 판정 로직은 없다.
 
 하루 = 깨어난 날. 아침에 묻는 "어제 이런 일 있었나요?" 는 그 밤을 설명한다.
 
-저장소는 SQLite 한 파일 (data/app/app.db, git 제외).
+저장소는 SQLite 한 파일 (legacy/webapp_v1/data/app.db, git 제외).
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]       # legacy/webapp_v1/ → 저장�
 sys.path.insert(0, str(ROOT / "research" / "src"))
 from nesy import homekit as H, persistence as P  # noqa: E402
 
-DB_PATH = ROOT / "data" / "app" / "app.db"
+DB_PATH = Path(__file__).resolve().parent / "data" / "app.db"
 MODEL_PATH = Path(__file__).resolve().parent / "model" / "risk_v1.json"
 
 Z_THRESH = 2.0
