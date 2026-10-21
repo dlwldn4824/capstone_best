@@ -11,7 +11,8 @@
     "preview": "vite preview --host",
     "test": "vitest run",
     "predeploy": "node scripts/sync-assets.mjs",
-    "deploy": "gcloud run deploy vity-face --source . --project vity-face-kw2026 --region asia-northeast3 --allow-unauthenticated --memory 256Mi --max-instances 2"
+    "deploy": "gcloud run deploy vity-face --source . --project vity-face-kw2026 --region asia-northeast3 --allow-unauthenticated --memory 256Mi --max-instances 2",
+    "build:lib": "vite build --config vite.lib.config.js"
   },
   "devDependencies": {
     "vite": "^6.0.0",

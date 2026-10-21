@@ -93,10 +93,19 @@ body{word-break:keep-all; overflow-wrap:break-word}   /* 한국어는 낱말 단
 .note{font-size:12px; color:var(--muted); line-height:1.6; padding:0 4px}
 
 /* 기록 */
-.rec{display:grid; grid-template-columns:3.4em minmax(0,1fr) auto; gap:10px; align-items:center; min-height:56px; border-bottom:1px solid var(--line)}
+/* 기록 — face UI (webapp/face/src/style.css) */
+.log-h{font-size:26px; font-weight:800; letter-spacing:-.02em; padding:12px 4px 4px}
+#logList .empty{display:flex; flex-direction:column; align-items:center; gap:12px; padding:48px 20px; text-align:center; color:var(--ink2)}
+#logList .empty img{width:120px; height:120px; object-fit:contain}
+#logList .empty p{margin:0}
+.day{background:var(--surface); border-radius:16px; padding:4px 20px}
+.day h3{margin:0; font-size:14px; color:var(--muted); font-weight:600; padding:14px 0 2px}
+.rec{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 12px; align-items:center; width:100%;
+  min-height:68px; border:none; border-bottom:1px solid var(--line); background:none; text-align:left; padding:12px 0}
 .rec:last-child{border-bottom:none}
-.rec .s{font-size:22px; font-weight:800} .rec .n{font-size:13px; color:var(--muted)}
-.day h3{margin:4px 4px 0; font-size:14px; color:var(--muted); font-weight:600}
+.rec b{font-size:18px; font-weight:800} .rec b small{font-size:13px; color:var(--muted); font-weight:600; margin-left:2px}
+.rec .n{font-size:13px; color:var(--muted)}
+.rec .tag{grid-row:1 / 3; grid-column:2}
 
 /* 내 정보 */
 label.f{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--ink2); flex:1 1 0}
@@ -123,15 +132,8 @@ input.f{width:100%; min-height:48px; border-radius:12px; border:1.5px solid var(
 .mem b{font-size:15px; font-weight:600} .mem .n{font-size:12px; color:var(--muted)}
 .ckin{display:flex; align-items:center; gap:8px; border-radius:12px; padding:10px 12px; font-size:13px; font-weight:600}
 .ckin.ok{background:var(--calm-soft); color:var(--calm-ink)} .ckin.no{background:var(--surface2); color:var(--ink2)}
-.study{border:1.5px solid var(--calm)}
-.study .k{font-size:12px; font-weight:700; color:var(--calm)}
 .code{font-size:20px; font-weight:800; letter-spacing:.12em}
 input.t{min-height:48px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); padding:0 10px; font-size:16px; color:var(--ink); width:100%; box-sizing:border-box}
-.timer{position:fixed; inset:0; z-index:46; background:var(--ground); display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:24px}
-.timer.on{display:flex}
-.timer .tt{font-size:72px; font-weight:800; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
-.timer .ph{font-size:20px; font-weight:700}
-.timer .btn{max-width:360px}
 /* 홈 — 파란 히어로 + 겹치는 패널 (heare 참고) */
 body.home .top{display:none}
 .band{position:relative; margin:-16px -16px 0; padding:max(20px, env(safe-area-inset-top)) 20px 70px; background:var(--calm); color:#FFFFFF; overflow:hidden; min-height:300px; box-sizing:border-box}
@@ -140,7 +142,7 @@ body.home .top{display:none}
 .bandBig{position:relative; z-index:2; margin:14px 0 0; font-size:28px; font-weight:700; line-height:1.36; max-width:62%; letter-spacing:-.02em}
 .bandBig em{font-style:normal; color:#FFE27A}
 .bandSmall{position:relative; z-index:2; margin:10px 0 0; font-size:15px; line-height:1.5; opacity:.92; max-width:60%}
-.bandChar{position:absolute; right:-4px; bottom:30px; width:168px; height:168px; object-fit:contain; z-index:1; animation:bob 3s ease-in-out infinite}
+.bandChar{position:absolute; right:6px; bottom:30px; width:168px; height:168px; object-fit:contain; z-index:1; animation:bob 3s ease-in-out infinite}
 .hill{position:absolute; left:-15%; right:-15%; bottom:-130px; height:210px; border-radius:50%; background:rgba(255,255,255,.18)}
 @keyframes bob{50%{transform:translateY(-6px)}}
 .panel{position:relative; z-index:3; margin:-40px 0 0; background:var(--surface); border-radius:22px; padding:16px; display:flex; flex-direction:column; gap:12px; box-shadow:0 -6px 20px rgba(21,32,51,.06)}
@@ -170,6 +172,11 @@ body.home .top{display:none}
 .glist img{width:56px; height:56px; object-fit:contain; background:var(--calm-soft); border-radius:14px}
 .glist b{font-size:16px} .glist .n{display:block; font-size:12px; color:var(--muted); margin-top:2px}
 .glist > svg{color:var(--muted)}
+.gpick{display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:12px; align-items:center; width:100%; text-align:left;
+  background:var(--surface2); border:none; border-radius:14px; padding:16px; color:var(--ink); min-height:72px}
+.gpick b{display:block; font-size:16px; font-weight:700}
+.gpick span span{display:block; font-size:13px; color:var(--muted); margin-top:2px}
+.gpick > svg:first-child{color:var(--calm)} .gpick > svg:last-child{color:var(--muted)}
 .gadd{min-height:96px; border:2px dashed var(--line); border-radius:16px; background:transparent; color:var(--calm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; font-size:15px; font-weight:600; cursor:pointer}
 .gadd:disabled{color:var(--muted); cursor:default}
 .wzhead{display:flex; align-items:center; gap:10px}
@@ -205,31 +212,107 @@ body.home .top{display:none}
 .onb .bubble{align-self:flex-start; background:#FFFFFF; color:#152033; border-radius:16px 16px 16px 4px; padding:10px 14px; font-weight:700; margin-top:6px}
 .onb .ochoice{display:flex; flex-direction:column; gap:8px}
 /* 스캔 */
-.scan{position:fixed; inset:0; background:#0E1312; color:#EEF2F0; display:none; flex-direction:column; z-index:40}
-.scan.on{display:flex}
-.scan .in{max-width:480px; width:100%; margin:0 auto; flex:1; display:flex; flex-direction:column; gap:14px; padding:max(16px, env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
-.scan .bar{display:flex; justify-content:space-between; align-items:center; gap:12px; font-weight:600}
-.scan .x{width:44px; height:44px; border-radius:99px; border:none; background:#202927; color:#EEF2F0; display:grid; place-items:center}
-.cam{position:relative; border-radius:20px; overflow:hidden; background:#1A2220; aspect-ratio:3/4}
-.cam video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1)}
-.cam > svg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
-.cam #guide{transition:stroke .3s} .cam.found #guide{stroke:#4DB8A6; stroke-dasharray:none; stroke-opacity:1}
-.cam #scanl{opacity:0} .cam.scanning #scanl{opacity:1; animation:sweep 2.4s ease-in-out infinite alternate}
-@keyframes sweep{from{transform:translateY(57px)} to{transform:translateY(373px)}}
-.live{position:absolute; left:12px; top:12px; display:flex; align-items:center; gap:6px; background:rgba(14,19,18,.65); border-radius:8px; padding:6px 10px 6px 8px; font-size:12px; opacity:0; transition:opacity .3s}
-.cam.scanning .live{opacity:1}
-.live b{font-size:18px; font-weight:800; min-width:2em; text-align:right}
+/* ===== 촬영 — webapp/face/src/style.css 에서 가져옴 (화면도 face 것을 쓴다) =====
+   face 팔레트에 기대는 값만 .scan 안으로 좁혀 둔다. check 의 색은 건드리지 않는다. */
+.scan{--brand:#1A6DFF; --ink:#191F28; --dim:rgba(0,0,0,.64); --warn-on-dark:#FFC94D;
+  --t-fast:.15s; --t-mid:.25s; --d-swap:.14s;
+  --sat:env(safe-area-inset-top); --sab:env(safe-area-inset-bottom);
+  --ease-out:cubic-bezier(.2,.8,.2,1); --ease-in:cubic-bezier(.4,0,1,1); --spring:cubic-bezier(.34,1.56,.64,1)}
+
+:root{ --warn-on-dark:#FFC94D; --dim:rgba(0,0,0,.64); --t-fast:.15s; --t-mid:.25s }
+.scan{position:fixed; inset:0; z-index:40; background:#000; display:none; overflow:hidden; color:#fff}
+.scan.on{display:block}
+.scan video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1)}
+.face-overlay{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+.scan-ui{position:relative; height:100%; max-width:480px; margin:0 auto; display:grid; grid-template-rows:auto auto auto auto 1fr;
+  padding:calc(4px + var(--sat)) 20px calc(20px + var(--sab))}
+.scan-top{position:relative; z-index:2; display:grid; grid-template-columns:44px 1fr 44px; align-items:center; min-height:52px}
+.scan-x{width:44px; height:44px; border-radius:99px; border:none; background:rgba(255,255,255,.14); color:#fff; display:grid; place-items:center; transition:background var(--t-fast)}
+.scan-x:active{background:rgba(255,255,255,.28)}
+.scan-step{justify-self:center; font-size:14px; font-weight:600; color:rgba(255,255,255,.8); letter-spacing:-.01em}
+
+/* 안내: 두 줄 높이를 미리 잡아 두어 문구가 바뀌어도 타원이 움직이지 않게 */
+.scan-msg{position:relative; z-index:2; min-height:72px; display:flex; align-items:flex-end; justify-content:center; padding:12px 8px 20px; text-align:center}
+.hint{display:inline-flex; align-items:flex-start; gap:6px; font-size:22px; font-weight:800; line-height:1.36; letter-spacing:-.02em}
+.hint-ic{display:none; margin-top:4px}
+.scan.warn .hint{color:var(--warn-on-dark)} .scan.warn .hint-ic{display:inline-flex}
+
+.oval-wrap{position:relative; display:grid; place-items:start center; min-height:0}
+.oval{position:relative; width:min(74vw, 300px, calc((100svh - 360px) * .77)); aspect-ratio:100/130; border-radius:50%; box-shadow:0 0 0 200vmax var(--dim)}
+.oval > svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible}   /* 테두리 SVG만. 안쪽 아이콘 SVG에 걸리면 체크가 타원 크기로 늘어난다 */
+.oval ellipse, .oval path{fill:none; stroke-width:1.4}   /* viewBox 단위: 타원 폭 300px 기준 약 4px */
+.oval .track{stroke:rgba(255,255,255,.6); transition:stroke var(--t-mid)}
+.oval #ring{stroke:#fff; stroke-linecap:round; opacity:0; transition:opacity var(--t-fast), stroke var(--t-mid)}
+.scan.ready .oval .track{stroke:var(--brand)}
+.scan.ready .oval #ring, .scan.measuring .oval #ring, .scan.done .oval #ring{opacity:1}
+.scan.measuring .oval .track{stroke:rgba(255,255,255,.28)}
+.scan.measuring .oval #ring, .scan.done .oval #ring{stroke:var(--brand)}
+.scan.warn .oval .track{stroke:var(--warn-on-dark)}
+.oval-center{position:absolute; inset:0; display:grid; place-items:center; pointer-events:none}
+.spinner{width:36px; height:36px; border-radius:50%; border:3px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.done-ic{width:72px; height:72px; border-radius:50%; background:var(--brand); display:grid; place-items:center}
+
+.scan-foot{position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:16px; padding-top:24px; min-height:150px}
+.scan .tip{font-size:15px; color:rgba(255,255,255,.82); text-align:center; line-height:1.5; max-width:300px; min-height:22px}
+.meter{display:flex; align-items:center; gap:12px}
+.count{display:flex; align-items:baseline; gap:2px; font-variant-numeric:tabular-nums}
+.count b{font-size:44px; font-weight:800; letter-spacing:-.03em; line-height:1}
+.count small{font-size:17px; font-weight:700; color:rgba(255,255,255,.72)}
+.live{display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.95); color:var(--ink); border-radius:99px; padding:8px 14px; font-size:13px; font-weight:600}
+.live b{font-size:18px; font-weight:800; min-width:1.6em; text-align:right}
 .live .heart{animation:beat .85s ease-in-out infinite}
 @keyframes beat{0%,100%{transform:scale(1)} 15%{transform:scale(1.25)} 30%{transform:scale(.95)} 45%{transform:scale(1.1)}}
-.wave{position:absolute; left:0; right:0; bottom:0; width:100%; height:64px; background:linear-gradient(transparent, rgba(14,19,18,.7)); opacity:0}
-.cam.scanning .wave{opacity:1}
-.steps{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px}
-.steps li{border-radius:8px; background:#1A2220; color:#7C8A85; font-size:12px; font-weight:600; text-align:center; padding:8px 4px; transition:background .3s, color .3s}
-.steps li.doing{color:#EEF2F0} .steps li.ok{background:#16302B; color:#BFE6DE}
-.steps li.ok::before{content:"✓ "}
-.hint{font-size:18px; font-weight:700; text-align:center; min-height:26px; margin:0}
-.hint2{font-size:13px; color:#A9B6B1; text-align:center; margin:0}
-.scan .btn{background:#EEF2F0; color:#0E1312}
+.btn.light{background:#fff; color:var(--ink); max-width:320px}
+.btn.light:active{background:#E5E8EB}
+
+
+/* 촬영: 검은 화면이 열리고, 카메라가 실제로 재생되면 영상이 떠오르고, 타원이 살짝 커지며 자리 잡는다 */
+.scan.on{animation:fadeIn .28s var(--ease-out)}
+.scan video{opacity:0; transition:opacity .45s var(--ease-out)}
+.scan.cam-on video{opacity:1}
+.scan.entering .oval{animation:ovalIn .5s var(--ease-out)}
+@keyframes ovalIn{from{transform:scale(.92); opacity:0}}
+.scan.leaving{animation:fadeOut .3s var(--ease-in) forwards}
+
+/* 안내 문구: 위로 사라지고 아래에서 올라온다. 글자 · 색 · 아이콘 · 팁이 함께 바뀐다 */
+.scan-msg .hint, .scan .tip{transition:opacity var(--d-swap) var(--ease-in), transform var(--d-swap) var(--ease-in), color .25s}
+.scan-msg.out .hint{opacity:0; transform:translateY(-8px)}
+.scan-foot.out .tip{opacity:0}
+.scan-msg.in .hint{animation:hintIn .26s var(--ease-out)}
+.scan-foot.in .tip{animation:fadeIn .26s var(--ease-out)}
+@keyframes hintIn{from{opacity:0; transform:translateY(10px)}}
+
+/* 타원 테두리 · 링 */
+.oval .track{transition:stroke .3s var(--ease-out)}
+.oval #ring{transition:opacity .2s var(--ease-out), stroke .3s var(--ease-out)}
+.scan.retract .oval #ring{transition:stroke-dasharray .3s var(--ease-out), opacity .3s var(--ease-out)}
+.scan.locked .oval{animation:lockPulse .42s var(--spring)}
+.scan.locked .oval #ring{opacity:0; transition:opacity .16s var(--ease-in)}
+@keyframes lockPulse{40%{transform:scale(1.035)}}
+
+/* 실시간 심박 · 완료 체크: 튀어나오듯 */
+.live:not([hidden]){animation:popIn .38s var(--spring)}
+.done-ic{animation:popIn .45s var(--spring)}
+.scan.done .oval{animation:lockPulse .45s var(--spring)}
+@keyframes popIn{from{transform:scale(.6); opacity:0}}
+.spinner{animation:spin .8s linear infinite}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important; transition:none !important}
+  .spinner{animation:spin 1.6s linear infinite !important}   /* 로딩 표시는 움직여야 뜻이 전달된다 */
+}
+
+
+
+/* 내 정보 — 설명은 접어 두고, 궁금할 때 펼친다 */
+.fold{display:block}
+.fold > summary{display:flex; align-items:center; cursor:pointer; list-style:none}
+.fold > summary::-webkit-details-marker{display:none}
+.fold > summary::after{content:""; margin-left:auto; width:8px; height:8px; border-right:2px solid var(--muted); border-bottom:2px solid var(--muted); transform:rotate(45deg) translate(-2px,-2px); transition:transform .2s}
+.fold[open] > summary::after{transform:rotate(-135deg)}
+.fold > summary h2{margin:0}
+.fold > *:not(summary){margin-top:10px}
 
 /* 호흡 */
 .breath{position:fixed; inset:0; z-index:45; background:var(--ground); display:none; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:24px}
@@ -246,27 +329,12 @@ body.home .top{display:none}
 .consent img{width:96px; height:96px; object-fit:contain}
 .consent h1{margin:0; font-size:26px; font-weight:700}
 .consent ul{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px; font-size:15px; line-height:1.6}
-.cam .mesh{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
-.cam.meshon #ov, .cam.meshon #scan, .cam.meshon #scanl, .cam.meshon #guide{display:none}
-/* 측정 화면 — 앱과 같은 밝은 화면 · 같은 강조색 (다크 모드는 app.css 변수 그대로) */
-.sheet, .scan{background:var(--ground); color:var(--ink)}
-.sheet .x, .scan .x{background:var(--surface); color:var(--ink); border:1px solid var(--line)}
+/* 시트 — 앱과 같은 밝은 화면 (촬영 화면은 face 스타일을 그대로 쓴다) */
+.sheet{background:var(--ground); color:var(--ink)}
+.sheet .x{background:var(--surface); color:var(--ink); border:1px solid var(--line)}
 .sheet .x svg path{stroke:var(--ink)}
-.cam{background:var(--surface2); box-shadow:0 0 0 1px var(--line)}
-.cam svg .frame{stroke:var(--line)}
-.cam #ring{stroke:var(--calm)}
-.cam #guide{stroke:var(--muted)}
-.cam.found #guide{stroke:var(--calm)}
-.hint{color:var(--ink)} .hint2{color:var(--muted)}
-.sheet .btn, .scan .btn{background:var(--btn); color:var(--btn-ink)}
+.sheet .btn{background:var(--btn); color:var(--btn-ink)}
 .sheet .btn.ghost{background:transparent; color:var(--ink); border-color:var(--line)}
-.steps li{background:var(--surface); color:var(--muted); box-shadow:0 0 0 1px var(--line) inset}
-.steps li.doing{color:var(--ink); box-shadow:0 0 0 1.5px var(--calm) inset}
-.steps li.doing i{border-color:var(--calm); border-right-color:transparent}
-.steps li.ok{background:var(--calm-soft); color:var(--calm-ink); box-shadow:none}
-.steps li.ok i{background:var(--calm); border-color:var(--calm); color:var(--btn-ink)}
-.live{background:rgba(255,255,255,.92); color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.wave{background:linear-gradient(transparent, rgba(255,255,255,.8))}
 </style>
 </head>
 <body>
@@ -275,7 +343,7 @@ body.home .top{display:none}
 
   <section class="view on" id="v-home"></section>
   <section class="view" id="v-group"></section>
-  <section class="view" id="v-log"><div class="card"><h2 class="ih" data-ic="history">기록</h2><p class="sub">측정할 때마다 남아요. 평소 값은 최근 14일, 신호가 괜찮았던 측정 3번 이상으로 잡아요.</p></div><div id="logList" style="display:flex; flex-direction:column; gap:12px"></div></section>
+  <section class="view" id="v-log"><h1 class="log-h">기록</h1><div id="logList" style="display:flex; flex-direction:column; gap:12px"></div></section>
   <section class="view" id="v-me">
     <div class="card">
       <h2 class="ih" data-ic="user">내 정보</h2>
@@ -284,44 +352,44 @@ body.home .top{display:none}
       <p class="sub" id="bmiTxt"></p>
       <button class="btn small" id="saveMe" type="button">저장</button>
     </div>
-    <div class="card">
-      <h2 class="ih" data-ic="clipboard-check">재는 것</h2>
+    <details class="card fold">
+      <summary><h2 class="ih" data-ic="clipboard-check">측정 항목</h2></summary>
       <div class="kv"><span>심박</span><span>얼굴 피부색의 미세한 주기 변화 (rPPG)</span></div>
       <div class="kv"><span>HRV · 스트레스</span><span>박동 간격의 흔들림 (RMSSD · Baevsky 지수)</span></div>
       <div class="kv"><span>리듬</span><span>박동 간격이 갑자기 크게 바뀌는 비율</span></div>
       <div class="kv"><span>호흡 (참고)</span><span>맥파가 숨에 따라 출렁이는 주기</span></div>
       <div class="kv"><span>BMI</span><span>입력한 키 · 몸무게</span></div>
-    </div>
-    <div class="card">
-      <h2 class="ih" data-ic="shield-check">일부러 재지 않는 것</h2>
+    </details>
+    <details class="card fold">
+      <summary><h2 class="ih" data-ic="shield-check">재지 않는 항목</h2></summary>
       <div class="kv"><span>혈압</span><span>개인별 커프 보정 없이는 카메라로 검증된 방법이 없어요</span></div>
       <div class="kv"><span>산소포화도</span><span>적색 · 적외선 두 빛이 필요해요. 폰 카메라 RGB 로는 부정확해요</span></div>
       <div class="kv"><span>체온</span><span>열화상 카메라가 필요해요</span></div>
       <div class="kv"><span>피부나이</span><span>검증할 공개 기준이 없어요</span></div>
-    </div>
-    <div class="card">
-      <h2 class="ih" data-ic="info">얼마나 맞나요</h2>
+    </details>
+    <details class="card fold">
+      <summary><h2 class="ih" data-ic="info">정확도</h2></summary>
       <p class="sub">공개 데이터 MCD-rPPG 100명 · 30초 창 1,001개, 손끝 맥박 센서와 비교 (신호 좋은 창 기준)</p>
       <div class="kv"><span>심박</span><span>평균 오차 0.3 bpm</span></div>
       <div class="kv"><span>RMSSD</span><span>오차 중앙값 7.5 ms · 상관 0.56</span></div>
       <div class="kv"><span>스트레스 지수</span><span>상관 0.72 · 같은 구간 58%</span></div>
       <div class="kv"><span>호흡</span><span>정답 없음 · 참고로만 보여줘요</span></div>
       <p class="sub">의료기기가 아니에요. 진단이 아니라 내 컨디션을 비교해 보는 용도예요.</p>
-    </div>
-    <div class="card">
-      <h2 class="ih" data-ic="sunrise">아침 · 공부 · 밤 루틴 기록</h2>
+    </details>
+    <details class="card fold">
+      <summary><h2 class="ih" data-ic="sunrise">거울 기록</h2></summary>
       <p class="sub">세 루틴마다 15초씩 재고, 평소와 다르면 이유를 한 번 묻는 거울 기록이에요. 시험기간 리포트도 거기서 볼 수 있어요.</p>
       <a class="btn small ghost" href="/">거울 기록 열기</a>
-    </div>
+    </details>
     <div class="card">
-      <h2 class="ih" data-ic="refresh-cw">시연 · 지우기</h2>
+      <h2 class="ih" data-ic="refresh-cw">데이터 관리</h2>
       <div class="row"><button class="btn small ghost" id="demoBtn" type="button">시연 기록 채우기</button><button class="btn small ghost" id="resetBtn" type="button">기록 지우기</button></div>
     </div>
   </section>
 </div>
 
 <nav class="tabs"><div role="tablist">
-  <button role="tab" aria-selected="true" data-tab="home" type="button" data-ic="heart-pulse">오늘</button>
+  <button role="tab" aria-selected="true" data-tab="home" type="button" data-ic="scan-face">홈</button>
   <button role="tab" aria-selected="false" data-tab="group" type="button" data-ic="users">그룹</button>
   <button role="tab" aria-selected="false" data-tab="log" type="button" data-ic="history">기록</button>
   <button role="tab" aria-selected="false" data-tab="me" type="button" data-ic="user">내 정보</button>
@@ -339,32 +407,42 @@ body.home .top{display:none}
 </div></div>
 
 <!-- 결과 -->
+<div class="sheetbg" id="gsheet"><div class="in" id="gsheetIn"></div></div>
 <div class="sheetbg" id="res"><div class="in" id="resIn"></div></div>
 
 <!-- 스캔 -->
-<div class="scan" id="scan"><div class="in">
-  <div class="bar"><button class="x" id="scanX" type="button" aria-label="닫기" data-ic="x"></button><span id="scanTitle">30초 측정</span><span style="width:44px"></span></div>
-  <div class="cam" id="camBox">
-    <video id="video" playsinline muted></video>
-      <canvas class="mesh" id="meshc" aria-hidden="true"></canvas>
-    <canvas class="wave" id="wave" width="600" height="128"></canvas>
-    <svg viewBox="0 0 300 400" aria-hidden="true">
-      <defs><clipPath id="fc"><ellipse cx="150" cy="185" rx="98" ry="128"></ellipse></clipPath>
-        <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DBBFF" stop-opacity="0"></stop><stop offset=".8" stop-color="#9DBBFF" stop-opacity=".28"></stop><stop offset="1" stop-color="#FFFFFF" stop-opacity=".95"></stop></linearGradient></defs>
-      <ellipse id="guide" cx="150" cy="185" rx="98" ry="128" fill="none" stroke="#EEF2F0" stroke-opacity=".55" stroke-width="2" stroke-dasharray="6 8"></ellipse>
-      <g id="ov"></g>
-      <g clip-path="url(#fc)"><rect id="scanl" x="0" y="-60" width="300" height="60" fill="url(#sg)"></rect></g>
-      <rect x="6" y="6" width="288" height="388" rx="18" fill="none" class="frame" stroke="#D9E1EC" stroke-width="6"></rect>
-      <rect id="ring" x="6" y="6" width="288" height="388" rx="18" fill="none" stroke="#4DB8A6" stroke-width="6" pathLength="100" stroke-dasharray="0 100" stroke-linecap="round"></rect>
-    </svg>
-    <div class="live"><svg class="heart" width="16" height="16" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z" fill="#FF6B7A"></path></svg><b id="liveBpm">··</b><span id="liveUnit">모으는 중</span></div>
+<!-- 촬영: 전체 화면 카메라 + 타원 가이드. 위: 지금 할 일 한 줄 / 가운데: 타원 / 아래: 팁 · 남은 시간 · 실시간 심박 -->
+<div class="scan" id="scan" role="dialog" aria-modal="true" aria-label="얼굴 촬영">
+  <video id="video" playsinline muted></video>
+  <canvas class="face-overlay" id="faceCv" aria-hidden="true"></canvas>
+  <div class="scan-ui">
+    <header class="scan-top">
+      <button class="scan-x" id="scanX" type="button" aria-label="촬영 닫기" data-ic="x"></button>
+      <span class="scan-step" id="scanStep">자세 맞추기</span>
+      <span aria-hidden="true"></span>
+    </header>
+    <div class="scan-msg" id="scanMsg" aria-live="polite" aria-atomic="true">
+      <p class="hint" id="hint"><span class="hint-ic" id="hintIc" aria-hidden="true"></span><span id="hintText">카메라를 켜는 중</span></p>
+    </div>
+    <div class="oval-wrap">
+      <div class="oval" id="oval">
+        <svg viewBox="0 0 100 130" preserveAspectRatio="none" aria-hidden="true">
+          <ellipse class="track" cx="50" cy="65" rx="49" ry="64"></ellipse>
+          <path id="ring" d="M50 1 A49 64 0 1 1 49.99 1" pathLength="100" stroke-dasharray="0 100"></path>
+        </svg>
+        <div class="oval-center" id="ovalCenter" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div class="scan-foot" id="scanFoot">
+      <p class="tip" id="tip"></p>
+      <div class="meter" id="meter" hidden>
+        <p class="count"><b id="count">30</b><small>초</small></p>
+        <div class="live" id="live" hidden><svg class="heart" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z" fill="#FF6B7A"></path></svg><b id="liveBpm">··</b><span>bpm</span></div>
+      </div>
+      <button class="btn light" id="scanRetry" type="button" hidden>다시 시도</button>
+    </div>
   </div>
-  <ol class="steps"><li data-s="face">얼굴</li><li data-s="pulse">맥박</li><li data-s="hrv">박동 간격</li><li data-s="save">분석</li></ol>
-  <p class="hint" id="hint">얼굴을 화면 가운데에 두세요</p>
-  <p class="hint2" id="hint2">영상은 이 기기 안에서 숫자로만 바뀌고 저장되지 않아요.</p>
-  <div style="flex:1"></div>
-  <button class="btn" id="startBtn" type="button">바로 시작</button>
-</div><canvas id="canvas" width="320" height="426" hidden></canvas></div>
+</div>
 
 <!-- 1분 호흡 -->
 <div class="breath" id="breath">
@@ -376,22 +454,11 @@ body.home .top{display:none}
 </div>
 
 <!-- 공부 타이머 -->
-<div class="timer" id="timer" role="dialog" aria-label="공부 타이머">
-  <img src="/assets/characters/coffee.png" alt="" style="width:96px; height:96px; object-fit:contain">
-  <span class="ph" id="tmPh">집중</span>
-  <span class="tt" id="tmT">25:00</span>
-  <span class="sub" id="tmSub">1번째 · 25분 집중 · 5분 휴식</span>
-  <button class="btn" type="button" id="tmPause">일시정지</button>
-  <button class="btn ghost small" type="button" id="tmStop">그만하기</button>
-</div>
 
 <div class="onb" id="onb" role="dialog" aria-modal="true" aria-label="시작하기"></div>
 <div class="tipPop" id="tipPop" role="tooltip" hidden></div>
 <div class="toast" id="toast"></div>
 
-<script src="/rppg2.js"></script>
-<script src="/vitals.js"></script>
-<script src="/facemesh.js"></script>
 <script src="/meshdraw.js"></script>
 <script>
 "use strict";
@@ -420,8 +487,7 @@ const TIPS = {
   rr: ["호흡", "맥파가 숨 따라 출렁이는 주기로 추정해요. 공개 데이터로 정확도를 확인하지 못해서 참고로만 보여 드리고 점수에는 넣지 않아요."],
   rhythm: ["리듬", "신호가 좋을 때만, 박동 간격이 갑자기 크게 바뀌는 비율을 봐요. '불규칙'이 며칠 반복되면 학교 보건실이나 병원에서 심전도로 확인해 보세요."],
   bmi: ["BMI", "입력한 키 · 몸무게로 계산해요. 대한비만학회 기준 18.5 · 23 · 25."],
-  study: ["오늘의 공부 모드", "점수 · 긴장도 · 잔 시간 · 지금 시각으로 골라요. 75점 이상이고 긴장이 낮으면 50분 집중, 55점 미만 · 긴장 70 이상 · 잠 5시간 미만이면 15분씩 가볍게, 그 밖엔 25분 + 5분."],
-  signal: ["신호 등급", "맥박 신호가 잡음보다 얼마나 큰지(SNR)예요. 약하면 HRV · 스트레스는 보류하고 다시 재기를 권해요. 인증도 맥박이 잡혀야 돼요."],
+  signal: ["신호 등급", "맥박 신호가 잡음보다 얼마나 큰지(SNR)예요. 심박은 0dB만 넘으면 나오지만, HRV · 스트레스는 10dB를 넘어야 보여 드려요. 그 아래에서는 박동 간격이 실제보다 크게 읽혀서 숫자를 믿을 수 없어요. 폰을 세워 고정하고 얼굴 정면에 고른 빛을 두면 올라가요."],
   checkin: ["인증", "그룹의 인증 시간대 안에서 30초 측정을 하고 맥박이 잡히면 인증돼요. 그룹엔 인증 시각과 연속 일수만 보여요."],
 };
 const tipBtn = (k, light) => '<button type="button" class="qm' + (light ? " light" : "") + '" data-tip="' + k + '" aria-label="' + TIPS[k][0] + ' 설명">?</button>';
@@ -478,7 +544,7 @@ function renderHome() {
   else if (todayL) { big = "오늘 컨디션은<br><em>" + todayL.score + "점</em>이에요"; small = (todayL.vs.score != null ? "평소보다 " + sign(Math.round(todayL.vs.score)) + "점 · " : "") + todayL.at.slice(11, 16) + " 측정"; }
   else { big = "오늘은 아직<br><em>측정 전</em>이에요"; small = "밝은 곳에서 30초면 돼요"; }
   if (G && G.my_streak) small += " · " + G.my_streak + "일 연속 인증";
-  const band = '<div class="band"><div class="bandTop"><span class="d">' + DAY(S.today) + " · Vity 체크</span>" + tipBtn("score", true) + "</div>" +
+  const band = '<div class="band"><div class="bandTop"><span class="d">' + DAY(S.today) + "</span>" + tipBtn("score", true) + "</div>" +
     '<p class="bandBig">' + big + '</p><p class="bandSmall">' + small + "</p>" +
     '<img class="bandChar" src="/assets/characters/' + ch + '.png" alt=""><span class="hill"></span></div>';
 
@@ -489,8 +555,7 @@ function renderHome() {
     body = L ? '<div class="grid2">' +
       cardM("heart-pulse", "심박", Math.round(L.hr), "bpm", L.vs.hr != null ? "평소 " + sign(L.vs.hr) : "", "hr") +
       cardM("brain", "스트레스", L.stress == null ? "–" : Math.round(L.stress), "", esc(L.zone || "보류"), "stress", L.stress) +
-      cardM("audio-waveform", "HRV", L.rmssd ?? "–", L.rmssd != null ? "ms" : "", L.vs.rmssd != null ? "평소 " + sign(L.vs.rmssd) : "", "hrv") +
-      cardM("book-open", "공부 모드", L.study ? esc(L.study.title) : "–", "", L.study ? L.study.focus + "분 + " + L.study.rest + "분" : "", "study") + "</div>" +
+      cardM("audio-waveform", "HRV", L.rmssd ?? "–", L.rmssd != null ? "ms" : "", L.vs.rmssd != null ? "평소 " + sign(L.vs.rmssd) : "", "hrv") + "</div>" +
       (todayL ? "" : '<p class="sub">마지막 측정 ' + DAY(L.day) + " " + L.at.slice(11, 16) + "</p>")
       : '<p class="sub">아직 측정이 없어요. 아래 버튼으로 첫 측정을 해 보세요.</p>';
   } else if (homeTab === "week") {
@@ -509,19 +574,16 @@ function renderHome() {
   const parts = [band, '<div class="panel">' + tabs + body + cta + "</div>"];
   const leftOf = (g) => (g.me_done ? "나 인증 완료" : g.phase === "open" ? "마감까지 " + fmtMin(g.left_min) : g.phase === "before" ? fmtMin(g.left_min) + " 뒤 시작" : "오늘 인증 끝");
   if (G) {
-    const left = G.phase === "open" ? "마감까지 " + fmtMin(G.left_min) : G.phase === "before" ? fmtMin(G.left_min) + " 뒤 시작" : "오늘 인증 끝";
-    parts.push('<button class="card gcard" type="button" data-gopen="' + G.code + '"><img src="/assets/characters/' + (G.icon || "calm") + '.png" alt=""><span style="display:flex; flex-direction:column; gap:8px; min-width:0">' +
-      '<span style="display:flex; justify-content:space-between; align-items:center; gap:8px"><b style="font-size:16px">' + esc(G.name) + '</b><span class="tag ' + (G.me_done ? "good" : G.phase === "open" ? "warn" : "") + '">' + (G.me_done ? "나 인증 완료" : left) + "</span></span>" +
-      '<span style="display:flex; gap:4px; align-items:center">' + G.members.map((m) => '<span class="av' + (m.at ? " on" : "") + '" style="width:28px; height:28px; font-size:10px">' + esc(m.nick.slice(0, 2)) + "</span>").join("") +
-      '<span class="sub" style="margin-left:auto">' + G.done + "/" + G.total + "</span></span></span></button>");
-    if (GS.length > 1) parts.push('<div class="card" style="gap:4px; padding:8px 14px">' + GS.slice(1).map((g) =>
-      '<button class="glist" type="button" data-gopen="' + g.code + '" style="padding:8px 0; grid-template-columns:40px minmax(0,1fr) auto"><img src="/assets/characters/' + (g.icon || "calm") + '.png" alt="" style="width:40px; height:40px; border-radius:10px">' +
-      "<span><b style=\"font-size:14px\">" + esc(g.name) + '</b><span class="n">' + g.start + "–" + g.end + " · " + g.done + "/" + g.total + '</span></span><span class="tag ' + (g.me_done ? "good" : g.phase === "open" ? "warn" : "") + '">' + leftOf(g) + "</span></button>").join("") + "</div>");
+    // 그룹 탭과 같은 줄 모양(.glist)으로 맞춘다 — 같은 것을 두 가지로 그리지 않는다
+    parts.push('<div class="card" style="gap:8px">' + GS.map((g) =>
+      '<button class="glist" type="button" data-gopen="' + g.code + '"><img src="/assets/characters/' + (g.icon || "calm") + '.png" alt="">' +
+      "<span><b>" + esc(g.name) + '</b><span class="n">매일 ' + g.start + "–" + g.end + " · " + g.done + "/" + g.total + "</span></span>" +
+      '<span class="tag ' + (g.me_done ? "good" : g.phase === "open" ? "warn" : "") + '">' + leftOf(g) + "</span></button>").join("") + "</div>");
   } else {
     parts.push('<button class="card gcard" type="button" data-act="group"><img src="/assets/characters/sleep.png" alt=""><span><b style="font-size:16px">친구들과 기상 인증 하기</b><br><span class="sub">그룹을 만들거나 초대 코드로 들어가요</span></span></button>');
   }
-  if (todayL && todayL.study) parts.push(studyCard(todayL.study, false));
-  parts.push('<div class="card"><h2 class="ih">' + ic("info") + '잘 재려면</h2><p class="sub">밝은 곳에서 얼굴 정면 · 30초 동안 말하지 않기 · 방금 뛰었다면 3분 쉬고 재기. 시험 직전, 공부 시작 전, 자기 전에 재 보면 차이가 잘 보여요.</p></div>');
+  // 카드가 아니라 흐린 주의 문구로 (화면의 주인공이 아니다)
+  parts.push('<p class="note">잘 재려면 — 밝은 곳에서 얼굴 정면 · 30초 동안 말하지 않기 · 방금 뛰었다면 3분 쉬고 재기. 시험 직전, 공부 시작 전, 자기 전에 재 보면 차이가 잘 보여요.</p>');
   $("v-home").innerHTML = parts.join("");
 }
 
@@ -547,118 +609,219 @@ $("preCancel").onclick = () => $("pre").classList.remove("on");
 $("preGo").onclick = () => { try { localStorage.setItem("vity.check.pre", JSON.stringify(PRE)); } catch (e) { /* 무시 */ } $("pre").classList.remove("on"); openScan(); };
 
 // ---------- 스캔 ----------
-const SECS = 30;
-let cam = { stream: null, raf: 0, frames: [], running: false, t0: 0, readySince: 0, lastT: -1, mesh: true };
-const live = { at: 0, pulse: 0 };
-function ringP(f) { $("ring").setAttribute("stroke-dasharray", Math.max(0, Math.min(100, f * 100)) + " 100"); }
-function stepSet(n, st) { const li = document.querySelector('.steps [data-s="' + n + '"]'); if (li) li.className = st || ""; }
-function toView(nx, ny) {
-  const v = $("video"), vw = v.videoWidth || 640, vh = v.videoHeight || 480, sc = Math.max(300 / vw, 400 / vh), dw = vw * sc, dh = vh * sc;
-  return [300 - ((300 - dw) / 2 + nx * dw), (400 - dh) / 2 + ny * dh];
+// 화면도 계산도 webapp/face 것을 쓴다. 이 아래는 face/src/main.js 의 촬영 부분을 옮긴 것이고,
+// 계산 · 품질 판정은 /vity-face.js (face/src 의 라이브러리 빌드)를 부른다. 여기에 복사해 두지 않는다.
+const SECS = 30, HOLD_MS = 1000, SHAKE_MS = 500, RELEASE_MS = 300, SWAP_MS = 350;
+let cam = { stream: null, raf: 0, phase: "off", t0: 0, readySince: 0, badSince: 0, lastT: -1,
+            samples: [], nose: [], mediaUp: 0, lastMedia: null, f0: null, lastSample: 0, lastDraw: null };
+const live = { at: 0, bpm: NaN };
+let VF = null, sampler = null, overlay = null;
+const loadVF = async () => (VF ||= await import("/vity-face.js"));
+
+const scanEl = () => $("scan");
+const ICON_WARN = () => ic("triangle-alert", 22);
+const shown = { key: null, text: "", tip: "", warn: false, pending: null, pendingSince: 0 };
+let swapTimer = 0;
+
+// 안내 한 줄(위) · 팁(아래). 프레임마다 흔들리는 판정이 글자를 깜빡이게 하지 않도록 SWAP_MS 동안 이어질 때만 바꾼다.
+function say(key, text, { tip = "", warn = false, force = false } = {}) {
+  const now = performance.now();
+  if (key !== shown.key && !force) {
+    if (shown.pending !== key) { shown.pending = key; shown.pendingSince = now; return; }
+    if (now - shown.pendingSince < SWAP_MS) return;
+  }
+  shown.pending = null;
+  if (key === shown.key && text === shown.text && tip === shown.tip && warn === shown.warn) return;
+  const first = shown.key === null;
+  Object.assign(shown, { key, text, tip, warn });
+  const msg = $("scanMsg"), foot = $("scanFoot");
+  const apply = () => {
+    $("hintText").textContent = text; $("hintIc").innerHTML = warn ? ICON_WARN() : ""; $("tip").textContent = tip;
+    scanEl().classList.toggle("warn", warn);
+    msg.classList.remove("out", "in"); foot.classList.remove("out", "in");
+    void msg.offsetWidth;
+    msg.classList.add("in"); foot.classList.add("in");
+  };
+  clearTimeout(swapTimer);
+  if (first) return apply();
+  msg.classList.add("out"); foot.classList.add("out");
+  swapTimer = setTimeout(apply, 140);
 }
-const FIXED = { fh: [[0.42, 0.22], [0.58, 0.22], [0.58, 0.29], [0.42, 0.29]], l: [[0.31, 0.47], [0.42, 0.47], [0.42, 0.56], [0.31, 0.56]], r: [[0.58, 0.47], [0.69, 0.47], [0.69, 0.56], [0.58, 0.56]] };
-// 얼굴 메시를 그대로 보여준다 (메시를 못 불러오면 예전처럼 고정 영역 상자)
-function paintFace(f, now) {
-  const lm = cam.mesh && f && f.face ? FACE.lastLandmarks() : null;
-  $("camBox").classList.toggle("meshon", !!lm);
-  if (lm) { $("ov").innerHTML = ""; MESH.draw($("meshc"), $("video"), { lm, tess: FACE.tessellation(), polys: FACE.lastPolys(), scanning: cam.running, pulse: live.pulse, t: now }); }
-  else { MESH.clear($("meshc")); drawRois(f); }
+function flash(cls, ms) { const el = scanEl(); el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), ms); }
+function scanRing(f) { $("ring").setAttribute("stroke-dasharray", Math.max(0, Math.min(100, f * 100)).toFixed(1) + " 100"); }
+function center(kind) { $("ovalCenter").innerHTML = kind === "spin" ? '<span class="spinner"></span>' : kind === "done" ? '<span class="done-ic">' + ic("check", 36) + "</span>" : ""; }
+function setPhaseUI(phase) {
+  const el = scanEl();
+  el.classList.toggle("measuring", phase === "measure");
+  el.classList.toggle("done", phase === "done");
+  if (phase !== "align") el.classList.remove("ready");
+  $("scanStep").textContent = phase === "measure" ? "측정 중" : phase === "done" ? "분석" : "자세 맞추기";
+  $("meter").hidden = phase !== "measure";
 }
-function drawRois(f) {
-  const g = $("ov"); if (!f || !f.face) { g.innerHTML = ""; return; }
-  const polys = cam.mesh ? FACE.lastPolys() : FIXED; if (!polys) return;
-  const op = cam.running ? 0.14 + 0.3 * live.pulse : 0.1;
-  g.innerHTML = Object.values(polys).map((p) => '<polygon points="' + p.map(([x, y]) => toView(x, y).map((n) => n.toFixed(1)).join(",")).join(" ") + '" fill="' + ACCENT() + '" fill-opacity="' + op.toFixed(2) + '" stroke="#FFFFFF" stroke-width="1.6"></polygon>').join("");
+function fail(text, tip) { center(null); say("fail", text, { tip, warn: true, force: true }); $("scanRetry").hidden = false; }
+$("scanRetry").onclick = () => { stopCam(); openScan(); };
+
+// 정규화 랜드마크 → 화면 px (video 는 object-fit: cover, 좌우 반전)
+function screenMapper(video) {
+  const b = video.getBoundingClientRect(), vw = video.videoWidth || 640, vh = video.videoHeight || 480;
+  const sc = Math.max(b.width / vw, b.height / vh), dw = vw * sc, dh = vh * sc, ox = (b.width - dw) / 2, oy = (b.height - dh) / 2;
+  return (x, y) => [b.left + b.width - (ox + x * dw), b.top + oy + y * dh];
 }
-function liveWave() {
-  const fr = cam.frames.filter((f) => f.face); if (fr.length < 24) return null;
-  const tEnd = fr[fr.length - 1].t, w = fr.filter((f) => f.t > tEnd - 4000), n = w.length;
-  const cn = w.map((f) => { let r = 0, g = 0, b = 0, k = 0; for (const q of w) if (Math.abs(q.t - f.t) <= 800) { r += q.rgb[0]; g += q.rgb[1]; b += q.rgb[2]; k++; } return [f.rgb[0] / (r / k) - 1, f.rgb[1] / (g / k) - 1, f.rgb[2] / (b / k) - 1]; });
-  const s1 = cn.map((c) => c[1] - c[2]), s2 = cn.map((c) => c[1] + c[2] - 2 * c[0]);
-  const sd = (v) => { const m = v.reduce((a, x) => a + x, 0) / v.length; return Math.sqrt(v.reduce((a, x) => a + (x - m) ** 2, 0) / v.length) || 1e-9; };
-  const al = sd(s1) / sd(s2); let h = s1.map((x, i) => x + al * s2[i]);
-  h = h.map((x, i) => (h[Math.max(0, i - 1)] + x + h[Math.min(n - 1, i + 1)]) / 3);
-  const m = h.reduce((a, x) => a + x, 0) / n, s = sd(h);
-  return { t: w.map((f) => f.t), x: h.map((x) => (x - m) / s), tEnd };
-}
-function drawWave(wv) {
-  const c = $("wave"), ctx = c.getContext("2d"), W = c.width, H = c.height; ctx.clearRect(0, 0, W, H); if (!wv) return;
-  const px = (t) => W - ((wv.tEnd - t) / 4000) * W, py = (x) => H * 0.55 - Math.max(-2.5, Math.min(2.5, x)) * H * 0.16;
-  ctx.lineWidth = 4; ctx.strokeStyle = ACCENT(); ctx.beginPath(); wv.t.forEach((t, i) => (i ? ctx.lineTo(px(t), py(wv.x[i])) : ctx.moveTo(px(t), py(wv.x[i])))); ctx.stroke();
-  live.pulse = Math.max(0, Math.min(1, (wv.x[wv.x.length - 1] + 1.5) / 3));
-}
-function liveEst(now) {
-  if (now - live.at < 1000) return; live.at = now;
-  const fr = cam.frames.filter((f) => f.face), el = (now - cam.t0) / 1000;
-  const e = fr.length > 60 ? RPPG2.estimate(fr.map((f) => ({ t: f.t, rgb: f.rgb }))) : null;
-  if (e && e.snr >= 0) { $("liveBpm").textContent = Math.round(e.bpm); $("liveUnit").textContent = "bpm"; document.querySelector(".live .heart").style.animationDuration = (60 / e.bpm).toFixed(2) + "s"; stepSet("pulse", "ok"); }
-  else { $("liveBpm").textContent = "··"; $("liveUnit").textContent = el < 8 ? "모으는 중" : "신호 찾는 중"; stepSet("pulse", "doing"); }
-  stepSet("hrv", el >= 15 ? (e && e.snr >= 0 ? "ok" : "doing") : el >= 8 ? "doing" : "");
-}
-function sampleFixed(video, canvas, t) {
-  const W = canvas.width, H = canvas.height, ctx = canvas.getContext("2d", { willReadFrequently: true }); ctx.drawImage(video, 0, 0, W, H);
-  const box = (x, y, w, h) => { const d = ctx.getImageData(x * W, y * H, w * W, h * H).data; let r = 0, g = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; } const n = d.length / 4; return [r / n, g / n, b / n]; };
-  const a = box(0.42, 0.22, 0.16, 0.07), l = box(0.31, 0.47, 0.11, 0.09), r = box(0.58, 0.47, 0.11, 0.09), rgb = [0, 1, 2].map((k) => (a[k] + l[k] + r[k]) / 3);
-  return { t, face: true, rgb, lum: 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2], nose: [0, 0], skip: false };
+function ovalRect() { const b = $("oval").getBoundingClientRect(); return { cx: b.left + b.width / 2, cy: b.top + b.height / 2, rx: b.width / 2, ry: b.height / 2 }; }
+
+// 최근 0.5초 코끝 흔들림 / 얼굴 폭
+function shakeOf(now, lm, vw, vh) {
+  const fw = Math.hypot((lm[454].x - lm[234].x) * vw, (lm[454].y - lm[234].y) * vh) || 1;
+  cam.nose.push({ t: now, x: lm[1].x * vw / fw, y: lm[1].y * vh / fw });
+  while (cam.nose.length && now - cam.nose[0].t > SHAKE_MS) cam.nose.shift();
+  const mx = cam.nose.reduce((a, p) => a + p.x, 0) / cam.nose.length, my = cam.nose.reduce((a, p) => a + p.y, 0) / cam.nose.length;
+  return Math.max(...cam.nose.map((p) => Math.hypot(p.x - mx, p.y - my)));
 }
 
+// 프레임의 실제 시각(mediaTime)으로 샘플 시각을 잡는다. rAF 시각은 화면 갱신 시각이라 박동 간격에 흔들림이 섞인다.
+const RVFC = typeof HTMLVideoElement !== "undefined" && "requestVideoFrameCallback" in HTMLVideoElement.prototype;
+function schedule() {
+  const v = $("video");
+  if (RVFC) cam.raf = v.requestVideoFrameCallback((now, meta) => loop(now, meta.mediaTime * 1000));
+  else cam.raf = requestAnimationFrame((now) => loop(now, null));
+}
+function loop(now, frameMs) {
+  if (cam.phase !== "align" && cam.phase !== "measure") return;
+  const v = $("video");
+  if (v.readyState >= 2 && (RVFC || v.currentTime !== cam.lastT)) {
+    cam.lastT = v.currentTime;
+    const vw = v.videoWidth || 640, vh = v.videoHeight || 480;
+    const det = VF.detect(v, performance.now());
+    let fr = VF.framingIssue({ found: false }), roi = null;
+    if (det) {
+      roi = sampler.sample(v, det.landmarks, vw, vh);
+      const pos = VF.measureFraming(det.landmarks, screenMapper(v), ovalRect());
+      fr = VF.framingIssue({ found: true, ...pos, pose: det.pose, brightness: roi.brightness, shake: shakeOf(now, det.landmarks, vw, vh), mouthOpen: det.mouthOpen });
+    } else cam.nose = [];
+    const map = screenMapper(v), oval = ovalRect();
+    cam.lastDraw = det ? { lm: det.landmarks, map, oval } : null;
+    overlay.draw({ phase: cam.phase, lm: det?.landmarks || null, map, oval, now, bpm: live.bpm });
+    if (frameMs != null && cam.phase === "align") { cam.mediaUp = frameMs > (cam.lastMedia ?? -1) ? cam.mediaUp + 1 : 0; cam.lastMedia = frameMs; }
+    if (cam.phase === "align") align(fr, now);
+    else measure(det && roi.valid ? det : null, roi, fr, now, cam.mediaUp >= 10 && frameMs != null ? frameMs : now);
+  }
+  if (cam.phase === "measure") tick(performance.now());
+  if (cam.phase === "align" || cam.phase === "measure") schedule();
+}
+
+// 자세 맞추기: 맞으면 타원이 파랗게 바뀌고 링이 1초 동안 차오른다. 잠깐 틀어지는 동안은 링을 멈춰 둔다.
+function align(fr, now) {
+  if (fr.ok) cam.badSince = 0; else cam.badSince ||= now;
+  const holding = cam.readySince && (fr.ok || now - cam.badSince < RELEASE_MS);
+  if (!fr.ok && !holding) {
+    if (cam.readySince) { cam.readySince = 0; scanEl().classList.add("retract"); scanRing(0); scanEl().classList.remove("ready"); }
+    say(fr.issue, fr.text, { tip: fr.issue === "noface" ? "휴대폰을 세워 두면 맞추기 쉬워요" : "" });
+    return;
+  }
+  if (!cam.readySince) {
+    cam.readySince = now; scanEl().classList.remove("retract"); scanEl().classList.add("ready");
+    say("ready", "좋아요, 그대로 있어 주세요", { tip: "곧 시작해요", force: true });
+  }
+  if (!fr.ok) return;
+  scanRing((now - cam.readySince) / HOLD_MS);
+  if (now - cam.readySince >= HOLD_MS) startMeasure();
+}
+function startMeasure() {
+  Object.assign(cam, { phase: "measure", samples: [], t0: performance.now(), f0: null, lastSample: performance.now() });
+  live.at = 0;
+  flash("locked", 420);
+  setTimeout(() => { if (cam.phase === "measure") { scanRing(0); setPhaseUI("measure"); } }, 180);
+  $("count").textContent = SECS;
+  if (navigator.vibrate) navigator.vibrate(20);
+  say("breathe", "그대로 편하게 숨 쉬세요", { tip: "말하지 말고 화면을 봐 주세요", force: true });
+}
+function measure(det, roi, fr, now, frameMs) {
+  cam.f0 ??= frameMs;
+  if (det) {
+    cam.lastSample = now;
+    cam.samples.push({ t: Math.round((frameMs - cam.f0) * 10) / 10, forehead: roi.forehead, lcheek: roi.lcheek, rcheek: roi.rcheek,
+      faceWidth: roi.faceWidth, faceCenter: roi.faceCenter, brightness: roi.brightness, blink: det.blink, mouthOpen: det.mouthOpen });
+  }
+  if (!det) say("lost", "얼굴이 원 밖으로 나갔어요", { tip: "원 안으로 돌아오면 이어서 재요", warn: true });
+  else if (fr.issue === "mouth") say("mouth", "말하지 말고 그대로 있어 주세요", { warn: true });
+  else if (!fr.ok) say(fr.issue, fr.text, { warn: true });
+  else say("breathe", "그대로 편하게 숨 쉬세요", { tip: "말하지 말고 화면을 봐 주세요" });
+}
+function tick(now) {
+  const el = (now - cam.t0) / 1000;
+  if (scanEl().classList.contains("measuring")) scanRing(el / SECS);
+  $("count").textContent = Math.max(0, Math.ceil(SECS - el));
+  if (now - live.at > 1000) {
+    live.at = now;
+    const fresh = now - (cam.lastSample ?? 0) < 1500;
+    const q = fresh ? VF.liveEstimate(cam.samples) : { bpm: NaN, snrDb: -Infinity };
+    const show = Number.isFinite(q.bpm) && q.snrDb >= 0;
+    $("live").hidden = !show;
+    live.bpm = show ? q.bpm : NaN;
+    if (show) { $("liveBpm").textContent = Math.round(q.bpm); document.querySelector(".live .heart").style.animationDuration = (60 / q.bpm).toFixed(2) + "s"; }
+  }
+  // check 는 30초를 다 잰다 — 컨디션 점수가 박동 간격(HRV)에 기대기 때문에 조기 종료를 쓰지 않는다
+  if (el >= SECS) finish();
+}
+function stopCam() {
+  cancelAnimationFrame(cam.raf);
+  const v = $("video"); if (RVFC && v.cancelVideoFrameCallback) v.cancelVideoFrameCallback(cam.raf);
+  if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop());
+  cam.stream = null;
+}
+function closeScan() { cam.phase = "off"; stopCam(); clearTimeout(swapTimer); scanEl().className = "scan"; if (overlay) overlay.reset(); }
+
 async function openScan() {
-  cam.frames = []; cam.running = false; cam.readySince = 0;
-  $("scanTitle").textContent = NEXT.kind === "after_breath" ? "호흡 뒤 다시 재기" : "30초 측정";
-  $("scan").classList.add("on"); ringP(0); $("camBox").className = "cam"; $("ov").innerHTML = ""; drawWave(null);
-  ["face", "pulse", "hrv", "save"].forEach((s) => stepSet(s, "")); stepSet("face", "doing");
-  $("hint").textContent = "얼굴을 화면 가운데에 두세요"; $("startBtn").disabled = false; $("startBtn").textContent = "바로 시작";
-  if (!navigator.mediaDevices || !window.isSecureContext) { $("hint").textContent = "카메라는 https 주소에서 열 수 있어요"; $("startBtn").disabled = true; return; }
+  Object.assign(cam, { phase: "align", samples: [], nose: [], readySince: 0, badSince: 0, lastT: -1, mediaUp: 0, lastMedia: null, lastDraw: null });
+  Object.assign(shown, { key: null, text: "", tip: "", warn: false, pending: null });
+  clearTimeout(swapTimer);
+  scanEl().className = "scan on"; flash("entering", 520);
+  setPhaseUI("align"); scanRing(0); center("spin"); live.bpm = NaN;
+  $("live").hidden = true; $("scanRetry").hidden = true;
+  say("loading", "카메라를 켜는 중", { force: true });
+  if (!navigator.mediaDevices || !window.isSecureContext) return fail("카메라는 https 주소에서 열 수 있어요", "휴대폰에서는 서버를 --https 로 켜 주세요");
+  try {
+    await loadVF(); await VF.loadFaceMesh();
+    sampler ||= new VF.RoiSampler(160, 120);
+    overlay ||= VF.createOverlay($("faceCv"), { tess: VF.TESSELATION, brand: ACCENT() });
+    overlay.reset();
+  } catch (e) {
+    return fail("얼굴 모델을 불러오지 못했어요", "cd webapp/face && npm ci && npm run build && npm run build:lib");
+  }
   try {
     cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio: false });
     const v = $("video"); v.srcObject = cam.stream; await v.play();
-    try { $("hint2").textContent = "얼굴 메시 준비 중…"; await FACE.init(); cam.mesh = true; } catch (e) { cam.mesh = false; }
-    $("hint2").textContent = "영상은 이 기기 안에서 숫자로만 바뀌고 저장되지 않아요.";
-    const c = $("canvas"); c.width = 320; c.height = Math.round(320 * v.videoHeight / v.videoWidth) || 240;
-    cam.raf = requestAnimationFrame(loop);
-  } catch (err) { $("hint").textContent = { NotAllowedError: "카메라 권한을 허용해 주세요", NotFoundError: "카메라를 찾지 못했어요" }[err.name] || err.message; $("startBtn").disabled = true; }
-}
-function loop() {
-  if (!$("scan").classList.contains("on") || !cam.stream) return;
-  const v = $("video"), now = performance.now();
-  if (v.readyState >= 2 && v.currentTime !== cam.lastT) {
-    cam.lastT = v.currentTime;
-    let f; try { f = cam.mesh ? FACE.sample(v, $("canvas"), now) : sampleFixed(v, $("canvas"), now); } catch (e) { f = { t: now, face: false }; }
-    paintFace(f, now);
-    if (cam.running) { cam.frames.push(f); drawWave(liveWave()); $("hint2").textContent = !f.face ? "얼굴이 화면 밖으로 나갔어요" : f.skip ? "눈 뜨고 말하지 말아 주세요" : "그대로 편하게 숨 쉬세요"; }
-    else {
-      const ok = f.face && f.lum >= FACE.Q.lumLo && f.lum <= FACE.Q.lumHi && !f.skip;
-      cam.readySince = ok ? (cam.readySince || now) : 0;
-      $("camBox").classList.toggle("found", !!f.face); stepSet("face", f.face ? "ok" : "doing");
-      $("hint").textContent = !f.face ? "얼굴을 화면 가운데에 두세요" : f.lum < FACE.Q.lumLo ? "조금 더 밝은 곳이 좋아요" : f.lum > FACE.Q.lumHi ? "빛이 너무 세요" : "좋아요, 그대로 있어 주세요";
-      if (ok && now - cam.readySince > 600) start();
-    }
+    // 자동 노출 · 화이트밸런스를 고정해 ROI 색 잡음을 줄인다 (지원되는 기기에서만, 거부돼도 그대로 진행)
+    cam.exposure = await VF.tryLockExposure(cam.stream.getVideoTracks()[0]);
+    scanEl().classList.add("cam-on");                    // 영상은 실제로 재생된 뒤에 떠오르게 (.scan video 가 opacity:0 으로 시작한다)
+    center(null); say("noface", "얼굴을 원 안에 맞춰 주세요", { tip: "휴대폰을 세워 두면 맞추기 쉬워요", force: true });
+    schedule();
+  } catch (err) {
+    fail({ NotAllowedError: "카메라 권한을 허용해 주세요", NotFoundError: "카메라를 찾지 못했어요" }[err.name] || err.message, "");
   }
-  if (cam.running) { const el = (now - cam.t0) / 1000; ringP(el / SECS); $("hint").textContent = Math.max(0, Math.ceil(SECS - el)) + "초"; liveEst(now); if (el >= SECS) return finish(); }
-  cam.raf = requestAnimationFrame(loop);
 }
-function start() {
-  if (cam.running || !cam.stream) return;
-  cam.running = true; cam.frames = []; cam.t0 = performance.now(); live.at = 0;
-  $("startBtn").disabled = true; $("startBtn").textContent = "그대로 있어 주세요"; $("camBox").classList.add("found", "scanning"); stepSet("face", "ok");
-}
-function stopCam() { cancelAnimationFrame(cam.raf); if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop()); cam.stream = null; }
-$("startBtn").onclick = start;
-$("scanX").onclick = () => { cam.running = false; stopCam(); $("scan").classList.remove("on"); };
+
+$("scanX").onclick = closeScan;
 
 async function finish() {
-  cam.running = false; cancelAnimationFrame(cam.raf);
-  const frames = cam.frames; $("camBox").classList.remove("scanning"); ringP(1);
-  stepSet("save", "doing"); $("hint").textContent = "분석하는 중"; $("hint2").textContent = "30초 전체로 박동을 하나씩 찾고 있어요";
-  await new Promise((r) => setTimeout(r, 60));
-  const faced = frames.filter((f) => f.face);
-  const m = faced.length > 120 ? VITALS.analyze(faced.map((f) => ({ t: f.t, rgb: f.rgb }))) : null;
-  const q = FACE.quality(frames, m ? { snr: m.snr } : null);
-  stepSet("save", "ok"); stopCam(); $("scan").classList.remove("on");
-  if (!m || q.why === "face" || q.why === "light" || q.why === "move") {
-    return showRetry({ face: "얼굴이 잘 보이지 않았어요.", light: "조금 더 밝은 곳에서 다시 재 주세요.", move: "고개를 가만히 두고 말하지 말아 주세요." }[q.why] || "신호를 충분히 못 모았어요.");
+  if (cam.phase !== "measure") return;                 // 두 번 불려도 한 번만
+  cam.phase = "done"; stopCam(); clearTimeout(swapTimer);
+  scanEl().classList.add("retract"); scanRing(1);
+  setPhaseUI("done"); center("done"); $("live").hidden = true;
+  if (cam.lastDraw) {                                   // 측정 영역이 사라지는 0.3초
+    const t0 = performance.now(), fade = () => { const n = performance.now(); overlay.draw({ phase: "done", ...cam.lastDraw, now: n, bpm: NaN }); if (n - t0 < 300) requestAnimationFrame(fade); };
+    requestAnimationFrame(fade);
   }
-  const metrics = Object.fromEntries(Object.entries(m).filter(([k]) => !k.startsWith("_")));
+  say("done", "다 됐어요", { tip: "결과를 정리하고 있어요", force: true });
+  if (navigator.vibrate) navigator.vibrate(30);
+  await new Promise((r) => setTimeout(r, 60));
+  // face 파이프라인: 창별 ROI 융합 → 품질 미달이면 움직임 상쇄 → 그래도 미달이면 깨끗한 구간 선택
+  const r = cam.samples.length > 120 ? VF.analyze(cam.samples) : null;
+  closeScan();
+  if (!r || !r.quality.pass) {
+    return showRetry(r ? (VF.REASON_TEXT[r.quality.reason] || "신호를 충분히 못 모았어요.") : "신호를 충분히 못 모았어요.");
+  }
+  const metrics = VF.toMetrics(r);
   try {
     const r = await api("/api/c/scan", { metrics, ...PRE, kind: NEXT.kind, pair: NEXT.pair, member: ME.mid });
     NEXT = { kind: "normal", pair: null }; LAST = r; await refresh(); showResult(r);
@@ -688,7 +851,7 @@ function showResult(r) {
   }
   if ((r.checkins || []).some((c) => c.status === "ok")) html += '<p class="sub" style="padding:0 4px">그룹엔 인증 시각과 연속 일수만 보여요.</p>';
   html += '<div class="card"><div class="rhead">' + ring(r.score) + "<div><h2 style=\"font-size:18px; word-break:keep-all\">" + (r.score >= 75 ? "컨디션 좋아요" : r.score >= 55 ? "무난한 편이에요" : r.score != null ? "오늘은 쉬어 가요" : "점수 보류") +
-    '</h2><p class="sub">' + (r.vs.score != null ? "평소보다 " + sign(Math.round(r.vs.score)) + "점 · " : "") + '<span class="tag ' + cf[1] + '">' + cf[0] + "</span> " + tipBtn("signal") + '</p></div><img src="/assets/characters/' + charFor(r.score) + '.png" alt=""></div>' +
+    '</h2><p class="sub">' + (r.vs.score != null ? "평소보다 " + sign(Math.round(r.vs.score)) + "점 · " : "") + '<span class="tag ' + cf[1] + '">' + cf[0] + (r.snr == null ? "" : " " + r.snr.toFixed(1) + "dB") + "</span> " + tipBtn("signal") + '</p></div><img src="/assets/characters/' + charFor(r.score) + '.png" alt=""></div>' +
     '<div class="parts">' + PART.map(([k, n, w]) => { const v = r.parts[k]; return '<div class="p"><span>' + n + " <small>" + w + '%</small></span><div class="t"><i style="width:' + (v ?? 0) + '%"></i></div><span class="v num">' + (v ?? "–") + "</span></div>"; }).join("") +
     '</div><p class="sub">점수 = 스트레스(100 − 지수) 35% + HRV 20% + 심박(55–85 bpm) 15% + 생활(수면 · 카페인 · 기분) 30%. 신호가 약한 항목은 빼고 나머지로 다시 나눠요.</p></div>';
   if (r.before) {
@@ -702,7 +865,6 @@ function showResult(r) {
     metric("wind", "호흡", r.rr ?? "–", r.rr != null ? "회/분" : "", '<span class="tag ref" style="align-self:flex-start">참고값</span>', "안정 시 12–20") +
     metric("activity", "리듬", r.irregular == null ? "보류" : r.irregular ? "불규칙" : "고름", "", "", r.irregular == null ? "신호 좋을 때만 판단해요" : r.irregular ? "한 번 더 재 보세요" : "박동 간격이 고르게 잡혔어요") +
     metric("weight", "BMI", bmi ? bmi.bmi : "–", "", "", bmi ? bmi.zone + " (키 · 몸무게 입력값)" : '<button type="button" data-act="me" style="border:none; background:none; padding:0; color:var(--calm); font:inherit">내 정보에서 입력</button>') + "</div>";
-  if (r.study) html += studyCard(r.study, true);
   html += '<div class="card"><h2 class="ih">' + ic("clipboard-check") + "지금 해 볼 것</h2>" + r.tips.map((t) => {
     const icn = { breath: "wind", retry: "refresh-cw" }[t.action] || { sleep: "moon", caffeine: "coffee", mood: "heart", recovery: "moon", late: "moon", good: "brain", irregular: "triangle-alert", hr_high: "heart-pulse" }[t.id] || "info";
     return '<div class="tip"><span class="ic">' + ic(icn) + "</span><div><b>" + esc(t.title) + "</b><p>" + esc(t.body) + "</p>" +
@@ -734,33 +896,6 @@ $("bAgain").onclick = () => { $("breath").classList.remove("on"); NEXT = { kind:
 
 // ---------- 공부 모드 ----------
 const fmtMin = (m) => (m == null ? "" : m >= 60 ? Math.floor(m / 60) + "시간 " + (m % 60 ? (m % 60) + "분" : "") : m + "분");
-function studyCard(st, inResult) {
-  return '<div class="card study"><span class="k" style="display:flex; align-items:center; gap:6px">오늘의 공부 모드 · ' + esc(st.why) + tipBtn("study") + '</span><h2 style="font-size:18px">' + esc(st.title) + " · " + st.focus + "분 집중 + " + st.rest + "분 휴식</h2>" +
-    '<p class="sub" style="color:var(--ink2)">' + esc(st.body) + "</p>" +
-    '<button class="btn' + (inResult ? " small" : "") + '" type="button" data-act="timer" data-f="' + st.focus + '" data-r="' + st.rest + '">' + ic("timer", 20) + "공부 타이머 시작</button></div>";
-}
-let TM = { raf: 0, f: 25, r: 5, t0: 0, paused: 0, pausedAt: 0 };
-function startTimer(f, r) {
-  Object.assign(TM, { f, r, t0: performance.now(), paused: 0, pausedAt: 0 });
-  $("res").classList.remove("on"); $("timer").classList.add("on"); $("tmPause").textContent = "일시정지";
-  const tick = () => {
-    if (!$("timer").classList.contains("on")) return;
-    const now = TM.pausedAt || performance.now(), el = (now - TM.t0 - TM.paused) / 1000, cyc = (f + r) * 60;
-    const k = Math.floor(el / cyc), c = el - k * cyc, focus = c < f * 60, left = focus ? f * 60 - c : cyc - c;
-    $("tmPh").textContent = focus ? "집중" : "휴식"; $("tmT").textContent = String(Math.floor(left / 60)).padStart(2, "0") + ":" + String(Math.floor(left % 60)).padStart(2, "0");
-    $("tmSub").textContent = (k + 1) + "번째 · " + f + "분 집중 · " + r + "분 휴식";
-    if (TM.lastFocus !== undefined && TM.lastFocus !== focus && navigator.vibrate) navigator.vibrate([60, 80, 60]);
-    TM.lastFocus = focus;
-    TM.raf = requestAnimationFrame(tick);
-  };
-  TM.lastFocus = undefined; TM.raf = requestAnimationFrame(tick);
-}
-$("tmPause").onclick = () => {
-  if (TM.pausedAt) { TM.paused += performance.now() - TM.pausedAt; TM.pausedAt = 0; $("tmPause").textContent = "일시정지"; }
-  else { TM.pausedAt = performance.now(); $("tmPause").textContent = "다시 시작"; }
-};
-$("tmStop").onclick = () => { cancelAnimationFrame(TM.raf); $("timer").classList.remove("on"); };
-
 // ---------- 인증 그룹 ----------
 let leaving = false, gView = "list", WZ = null;
 const GICON = [["sleep", "기상"], ["coffee", "공부"], ["move", "운동"], ["calm", "기본"]];
@@ -774,13 +909,36 @@ function renderGroup() {
   const full = GS.length >= 5;
   h += GS.map((g) => '<button class="glist" type="button" data-gopen="' + g.code + '"><img src="/assets/characters/' + (g.icon || "calm") + '.png" alt=""><span><b>' + esc(g.name) + '</b><span class="n">매일 ' + g.start + "–" + g.end + " · " + g.total + "명 · " +
     (g.me_done ? "나 인증 완료" : g.phase === "open" ? "지금 인증 시간 · " + g.done + "/" + g.total : "오늘 " + g.done + "/" + g.total) + "</span></span>" + ic("chevron-right") + "</button>").join("");
-  h += '<button class="gadd" type="button" data-gnew="1"' + (full ? " disabled" : "") + ">" + ic("plus", 28) + "<span>" + (full ? "그룹은 5개까지 들어갈 수 있어요" : "새 그룹 만들기") + "</span></button>";
-  if (!full) h += '<div class="card"><h2 class="ih">' + ic("users") + '초대 코드로 들어가기</h2><div class="row"><label class="f">초대 코드<input class="f" id="gCode" maxlength="6" autocapitalize="characters" placeholder="K7Q2MX"></label>' +
-    '<label class="f">내 이름<input class="f" id="gNick1" maxlength="12" value="' + esc(ME.nick) + '"></label></div><button class="btn small" type="button" id="gJoin">들어가기</button></div>';
+  h += '<button class="gadd" type="button" data-gs="open"' + (full ? " disabled" : "") + ">" + ic("plus", 28) + "<span>" + (full ? "그룹은 5개까지 들어갈 수 있어요" : "새 그룹 만들기") + "</span></button>";
   h += '<p class="sub" style="padding:0 4px">' + ic("shield-check", 14) + " 그룹엔 이름 · 인증 시각 · 연속 일수만 보여요. 점수 · 심박 · 얼굴은 공유되지 않아요.</p>";
   v.innerHTML = h;
-  if ($("gJoin")) $("gJoin").onclick = () => groupCall("/api/c/group/join", { code: $("gCode").value, nick: $("gNick1").value });
 }
+// + 를 누르면 '새로 만들기 / 초대 코드로 들어가기' 를 먼저 고른다. 코드 입력칸을 늘 깔아 두지 않는다.
+let gsView = "pick";
+function openGroupSheet(v = "pick") { gsView = v; renderGroupSheet(); $("gsheet").classList.add("on"); }
+function closeGroupSheet() { $("gsheet").classList.remove("on"); }
+function renderGroupSheet() {
+  const el = $("gsheetIn");
+  if (gsView === "pick") {
+    const pick = (k, icon, title, sub) => '<button class="gpick" type="button" data-gs="' + k + '">' + ic(icon, 22) +
+      "<span><b>" + title + "</b><span>" + sub + "</span></span>" + ic("chevron-right") + "</button>";
+    el.innerHTML = "<h2>그룹 추가</h2>" +
+      pick("new", "plus", "새 그룹 만들기", "인증 시간을 정하고 초대 코드를 받아요") +
+      pick("join", "users", "초대 코드로 들어가기", "친구가 준 6자리 코드를 넣어요") +
+      '<button class="btn ghost small" type="button" data-gs="close">닫기</button>';
+    return;
+  }
+  el.innerHTML = '<div class="wzhead"><button class="back2" type="button" data-gs="pick" aria-label="뒤로">' + ic("chevron-left") + '</button><b style="font-size:16px">초대 코드로 들어가기</b></div>' +
+    '<label class="f">초대 코드<input class="f" id="gCode" maxlength="6" autocapitalize="characters" placeholder="K7Q2MX"></label>' +
+    '<label class="f">내 이름<input class="f" id="gNick1" maxlength="12" value="' + esc(ME.nick) + '"></label>' +
+    '<button class="btn" type="button" id="gJoin">들어가기</button>';
+  $("gJoin").onclick = async () => {
+    const g = await groupCall("/api/c/group/join", { code: $("gCode").value, nick: $("gNick1").value });
+    if (g) closeGroupSheet();
+  };
+  $("gCode").focus();
+}
+
 function renderGroupDetail(v) {
   const G = GS.find((g) => g.code === gSel);
   const left = G.phase === "open" ? "마감까지 " + fmtMin(G.left_min) : G.phase === "before" ? fmtMin(G.left_min) + " 뒤 시작" : "오늘 인증 시간 끝";
@@ -915,11 +1073,15 @@ async function onb(act) {
 async function renderLog() {
   const hs = await api("/api/c/history?member=" + encodeURIComponent(ME.mid)), by = {};
   for (const h of hs) (by[h.day] = by[h.day] || []).push(h);
-  $("logList").innerHTML = Object.entries(by).map(([d, rs]) => '<div class="card day"><h3>' + DAY(d) + "</h3>" + rs.map((h) =>
-    '<button class="rec" type="button" data-rid="' + h.id + '" style="border:none; border-bottom:1px solid var(--line); background:none; text-align:left; width:100%; padding:0; color:inherit">' +
-    '<span class="s num">' + (h.score ?? "–") + '</span><span><span style="font-weight:600">' + h.at.slice(11, 16) + (h.kind === "after_breath" ? " · 호흡 뒤" : "") + '</span><br><span class="n">심박 ' + Math.round(h.hr) + " · HRV " + (h.rmssd ?? "–") + " · 스트레스 " + (h.stress == null ? "–" : Math.round(h.stress)) + "</span></span>" +
-    '<span class="tag ' + (h.stress == null ? "" : h.stress >= 60 ? "warn" : h.stress < 30 ? "good" : "") + '">' + (VITALS.stressZone(h.stress) || "보류") + "</span></button>").join("") + "</div>").join("") ||
-    '<div class="card"><div class="empty"><img src="/assets/characters/idle.png" alt=""><p class="sub">아직 기록이 없어요.</p></div></div>';
+  $("logList").innerHTML = Object.entries(by).map(([d, rs]) => '<div class="day"><h3>' + DAY(d) + "</h3>" + rs.map((h) =>
+    '<button class="rec" type="button" data-rid="' + h.id + '">' +
+      '<b class="num">' + (h.score ?? "–") + "<small>점</small></b>" +
+      '<span class="tag ' + (h.stress == null ? "" : h.stress >= 60 ? "warn" : h.stress < 30 ? "good" : "") + '">' + (VF.stressZone(h.stress) || "보류") + "</span>" +
+      '<span class="n">' + h.at.slice(11, 16) + (h.kind === "after_breath" ? " · 호흡 뒤" : "") +
+        (h.hr == null ? "" : " · 심박 " + h.hr) + (h.rmssd == null ? "" : " · HRV " + h.rmssd + "ms") + "</span>" +
+    "</button>").join("") + "</div>").join("") ||
+    '<div class="empty"><img src="/assets/characters/sleep.png" alt="" width="120" height="120"><p>아직 기록이 없어요</p>' +
+    '<button class="btn" type="button" data-act="scan" style="max-width:240px">첫 측정 하기</button></div>';
 }
 
 // ---------- 내 정보 ----------
@@ -944,6 +1106,13 @@ document.addEventListener("click", async (e) => {
   if (b.dataset.htab) { homeTab = b.dataset.htab; return renderHome(); }
   if (b.dataset.gopen) { gSel = b.dataset.gopen; gView = "detail"; leaving = false; if (!$("v-group").classList.contains("on")) go("group"); return renderGroup(); }
   if (b.dataset.glist) { gView = "list"; return renderGroup(); }
+  if (b.dataset.gs) {
+    const a = b.dataset.gs;
+    if (a === "open") return openGroupSheet("pick");
+    if (a === "close") return closeGroupSheet();
+    if (a === "pick" || a === "join") { gsView = a === "join" ? "join" : "pick"; return renderGroupSheet(); }
+    if (a === "new") { closeGroupSheet(); WZ = { step: 1, name: "", icon: "sleep", start: "07:00", end: "09:00", rule: "" }; return renderGroup(); }
+  }
   if (b.dataset.gnew) { WZ = { step: 1, name: "", icon: "sleep", start: "07:00", end: "09:00", rule: "" }; return renderGroup(); }
   if (b.dataset.gshare) return shareCode(b.dataset.gshare);
   if (b.dataset.wz) return wizard(b.dataset.wz, b);
@@ -957,12 +1126,12 @@ document.addEventListener("click", async (e) => {
   else if (a === "breath") startBreath(+b.dataset.id);
   else if (a === "me") { $("res").classList.remove("on"); go("me"); }
   else if (a === "group") go("group");
-  else if (a === "timer") startTimer(+b.dataset.f, +b.dataset.r);
   else if (b.dataset.rid) { try { showResult(await api("/api/c/result?id=" + b.dataset.rid + "&member=" + encodeURIComponent(ME.mid))); } catch (err) { toast(err.message); } }
 });
 
 function render() { renderHome(); renderMe(); }
 async function refresh() {
+  await loadVF();                                  // 기록 · 결과 화면도 face 쪽 환산(스트레스 구간 등)을 쓴다
   const [st, g] = await Promise.all([api("/api/c/state?member=" + encodeURIComponent(ME.mid)), api("/api/c/groups?member=" + encodeURIComponent(ME.mid)).catch(() => ({ groups: GS }))]);
   S = st; setGroups(g.groups); render();
   if ($("v-group").classList.contains("on")) renderGroup();

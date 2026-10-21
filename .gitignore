@@ -48,3 +48,7 @@ webapp/face/node_modules/
 webapp/face/dist/
 webapp/face/shared-assets/
 webapp/face/public/mediapipe/
+
+# /check 가 쓰는 face 엔진 빌드 (webapp/face 에서 npm run build:lib). 소스는 webapp/face/src
+webapp/static/vity-face.js
+webapp/static/vity-face.js.map

@@ -44,7 +44,7 @@ src/pipeline/hrv.js      협대역 → 250Hz 보간 → 피크 → RR → RMSSD(
 src/pipeline/resp.js     호흡: 머리 움직임 · 밝기 두 주기가 ±2회/분 안에서 맞을 때만
 src/pipeline/face.js     깜빡임 횟수 · 눈 감긴 비율 · 하품 후보 · 머리 흔들림
 src/pipeline/quality.js  발표 4조건 + 견고성 조건(coverage · interference · roi), 사용자 문구
-src/pipeline/index.js    analyze()(G2: 창별 ROI 융합, 품질 미달이면 움직임 상쇄 재시도), liveEstimate(), stableEnough()(빠른 측정 조기 종료), quickBpm()
+src/pipeline/index.js    analyze()(G2: 창별 ROI 융합, 품질 미달이면 움직임 상쇄 재시도 → 그래도 미달이면 깨끗한 구간 선택), liveEstimate(), stableEnough()(빠른 측정 조기 종료), quickBpm()
 src/pipeline/fuse.js     fuseWindows(): 6초 창마다 SNR 가중 ROI 융합
 src/pipeline/motion.js   motionRefs() · nlmsCancel(): 얼굴 위치 · 크기 참조 NLMS 움직임 상쇄 (실패한 스캔에만)
 scripts/experiments/     흔들림 보정 · 측정 시간 단축 합성 실험과 결과(results_*.md)
@@ -85,14 +85,51 @@ FaceState = { durationSec, blinkPerMin, blinks, eyeClosedRatio, yawns, headMoveP
 
 샘플이 8초 분량 미만이면 품질 표는 '얼굴이 잡힌 시간' 한 줄만 보여 준다. faceState 의 시간 · 빈도는 얼굴이 잡혀 있던 시간 기준(0.25초 넘는 구멍 제외).
 
+## 앱이 하려는 말 — 평소와 다른가 (`src/pipeline/baseline.js`)
+심박 한 번의 값은 사람마다 달라 그 자체로 아무 말도 못 한다. 그래서 화면의 첫 줄은 숫자가 아니라 **평소 대비**다.
+
+| | |
+| --- | --- |
+| 왜 심박인가 | WESAD 에서 스트레스 때 심박은 15명 전원 상승(+21 bpm, p=0.0001)했고 가슴 ECG 와 거의 같았다. HRV(RMSSD)는 손목에서 3.6배 부풀려져 실제 변화(−13 ms)가 묻혔다 ([HRV_VERDICT](../research/HRV_VERDICT.md)) |
+| 왜 이탈인가 | 공개 데이터로 학습한 위험 모델도 평소 대비 이탈(`night_z`)과 최근 3일 중 이탈일 수(`dev3`)를 쓴다 ([RISK_MODEL](../research/RISK_MODEL.md)) |
+| 평소값 | 품질을 통과한 최근 30번의 **중앙값**, 흩어짐은 MAD×1.4826. 5번이 모이기 전에는 말하지 않는다 |
+| 다르다고 하는 선 | `max(5 bpm, 2 × 흩어짐)`. 5 bpm 아래는 측정 오차 안이라(POS 평균 오차 3.7–4.5) '평소와 비슷해요' |
+| 이유 묻기 | 평소와 다르면 움직임 · 커피 · 잠 · 긴장 · 몸 · **짚이는 게 없어요** 중에서 고른다 (`scan.why`) |
+| 쌓이는 것 | `why === 'none'` 인 날만 '설명되지 않은 변화'로 센다. 이어지면 기록 탭 맨 위에 알린다 |
+
+말하지 않는 것: **스트레스 지수 · 안색 · 긴장도.** 근거가 없다 (`webapp/face/CLAUDE.md`).
+이번 측정값은 자기 평소값에 넣지 않는다(`finish()`에서 자기 id 를 뺀다).
+
+## 화면
+탭은 홈 · 기록 · 내 정보 세 개다. 첫 실행이면 온보딩 5단계(`check.html` 의 컷씬을 그대로 가져옴)가 뜨고,
+동의해야 들어간다. 그룹 단계는 `check.py` 서버가 있어야 도는 기능이라 안내만 하고 넘어간다 — 이 앱은 백엔드가 없다.
+홈 하단 바 위 손잡이(`.peek`)를 누르거나 홈에서 위로 쓸면 준비 시트가 열린다.
+
 ## 품질 기준
-발표 슬라이드 11의 4조건(밝기 55–225 ≥ 90%, 움직임 < 얼굴폭 3.5% ≥ 90%, 깜빡임·말하기 < 30%, SNR ≥ 0 dB)은 그대로 두고, 합성 감사(scripts/robustness)에서 거짓 통과가 나온 경우를 막는 조건을 더했다.
+4조건은 **밝기 55–225 ≥ 90%, 움직임 < 얼굴폭 5% ≥ 85%, 깜빡임·말하기 < 30%, SNR ≥ -3 dB** 다.
+여기에 합성 감사(scripts/robustness)에서 거짓 통과가 나온 경우를 막는 조건을 더했다.
 
 | 조건 | 기준 | 막는 것 |
 |---|---|---|
 | coverage | 얼굴 잡힌 시간 ≥ 85%, 최대 놓침 ≤ 1.5 s | 얼굴 놓침으로 bpm이 낮게 나오는 것 |
 | interference | 머리 위치 · 밝기 스펙트럼에 같은 bpm 피크 없음 | 화면 깜빡임 · 끄덕임에 잠긴 bpm |
 | roi | 단일 ROI 3개 중 2개 이상이 ±3 bpm 안 | 한 영역만의 가짜 피크 |
+| 구간 선택 | 전체가 떨어지면 15초 구간을 5초 간격으로 훑어, 같은 bpm(±3)을 내는 구간이 2개 이상일 때 그중 SNR 최고를 쓴다 | 중간에 잠깐 흔들려 멀쩡한 나머지까지 버리는 것 |
+
+### 움직임 · SNR 기준을 푼 이유 (scripts/experiments/p3_gate.js)
+움직임 3.5% ≥ 90% · SNR ≥ 0 은 발표 슬라이드 11 의 값이었다. 손으로 든 폰은 이 선을 넘기 쉬운데, **넘었다고 bpm 이 틀리지는 않았다.**
+합성 280회(obs=hard)에서 bpm 은 100% 가 참값 ±5 안인데, 이전 기준은 그중 21% 를 거부했다. 실패 이유의 대부분이 움직임(14%)이었다.
+
+| 방식 | 통과 | 통과∧±5 | 거짓 통과 |
+|---|---|---|---|
+| 이전 기준, 전체 30초 | 78% | 78% | 0% |
+| 지금 기준, 전체 30초 | 91% | 91% | 0% |
+| 지금 기준 + 구간 선택 | 95% | 95% | 0% |
+
+거짓 통과 0% 가 조건이다. 구간 선택은 창을 여러 개 훑어 제일 좋은 것을 고르는 일이라 우연히 걸릴 기회를 준다 —
+합의 조건(같은 bpm 구간 2개 이상)이 없으면 **맥박 없는 신호가 7% 통과했다**(합성 100회). 합의 조건과 5초 간격으로 0% 로 돌아왔다.
+구간을 쓴 스캔은 `result.window = { startSec, endSec }` 가 차고, 화면 품질 표에 '쓴 구간'이 적히며, 15초라 박동 간격(HRV)은 보류된다.
+**발표 자료의 품질 기준 숫자도 같이 고쳐야 한다.**
 
 ## 무엇을 어떻게 보여 주나 (근거: src/ui/evidence.js)
 | 항목 | 표시 | 이유 |
@@ -115,7 +152,8 @@ npm run deploy       # 단독 Cloud Run (gcloud run deploy, Cloud Build 가 Dock
 
 ## 자주 할 작업
 - ROI 바꾸기: `src/capture/roi.js` ROI_INDEX.
-- 품질 기준 조정: `src/pipeline/quality.js` QUALITY(발표 4조건) · ROBUST(추가 조건). 바꾸면 `node scripts/robustness/11_key.js`로 전후 확인.
+- 품질 기준 조정: `src/pipeline/quality.js` QUALITY(4조건) · ROBUST(추가 조건) · `src/pipeline/index.js` WINDOW(구간 선택).
+  바꾸면 `N=20 node scripts/experiments/p3_gate.js`(통과율 · 거짓 통과)와 `node scripts/robustness/11_key.js`(맥박 없는 신호가 통과하지 않는지)로 전후 확인.
 - 화면에 지표 추가: pipeline 결과 필드 → `evidence.js`에 근거 → `main.js` tile/detail.
 - MediaPipe 버전 올리기: `package.json` 의 `@mediapipe/tasks-vision` → `npm install` (wasm 은 `sync-assets.mjs` 가 복사한다), `sw.js` MODEL_CACHE 이름 올리기. 모델을 바꾸면 `sync-assets.mjs` 의 MODEL_URL · MODEL_SHA256 도.
 

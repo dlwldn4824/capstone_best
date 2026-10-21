@@ -7,12 +7,13 @@
 // 맥파 고르기 (G2, scripts/experiments/p1_motion.js): 합친 RGB · 이마 · 양 볼 맥파를 6초 창마다 SNR 가중으로 융합한다.
 // 그 결과가 품질 기준에 떨어지면 한 번만, 머리 움직임 참조로 NLMS 상쇄를 한 뒤 다시 융합해 본다. 통과하면 그것을 쓴다.
 // 합성 움직임 9종: ±5 bpm 81% → 96%, 품질 통과 57% → 73%, 거짓 통과 0%.
+// 그래도 떨어지면 깨끗한 구간만 골라 다시 본다 (bestWindow, 아래).
 
 import { pos } from './pos.js';
 import { bandpass } from './filter.js';
 import { estimateBpm, amplitudeAt } from './spectrum.js';
 import { hrvFromPulse } from './hrv.js';
-import { assessQuality, ROBUST } from './quality.js';
+import { assessQuality, QUALITY, ROBUST } from './quality.js';
 import { toUniform, coverageOf, observedFs, GRID_FS } from './resample.js';
 import { respFromSamples } from './resp.js';
 import { fuseWindows } from './fuse.js';
@@ -89,6 +90,11 @@ export function analyze(samples, opts = {}) {
     const k = judge(samples, rows, fs, band, coverage, true);
     if (k.quality.pass) j = k;
   }
+  // 전체로는 떨어져도 깨끗한 구간이 있으면 그것을 쓴다. 재귀 한 단계 (안에서는 windowRetry: false).
+  if (!j.quality.pass && opts.windowRetry !== false) {
+    const w = bestWindow(samples, opts, opts.window || WINDOW);
+    if (w) return w;
+  }
   const chosen = j.fused, quality = j.quality;
   const hrv = hrvFromPulse(chosen.pulse, fs, chosen.bpm, 250, valid);
   const resp = opts.resp === false ? { rate: NaN, agree: false, head: NaN, light: NaN } : respFromSamples(samples);
@@ -111,8 +117,48 @@ export function analyze(samples, opts = {}) {
     coverage: { ratio: coverage.ratio, maxGapSec: coverage.maxGapSec },
     interference: j.interference,
     resp: { rate: resp.rate, agree: resp.agree, head: resp.head, light: resp.light },
+    window: null,
     debug: { pulse: chosen.pulse, spectrum: chosen.spectrum },
   };
+}
+
+// ---------- 구간 선택 ----------
+// 30초를 한 덩어리로 판정하면 중간에 2초 흔들린 것 때문에 멀쩡한 28초까지 같이 버려진다.
+// 전체가 품질에 떨어졌을 때만, WINDOW.sec 초짜리 구간을 stepSec 간격으로 훑어 품질을 통과하는 것 중 SNR 이 가장 높은 것을 쓴다.
+// 고른 구간은 result.window = { startSec, endSec } 로 알린다 (측정 전체가 아니라 그 구간의 값이라는 뜻).
+// 합성 280회(obs=hard, scripts/experiments/p3_gate.js): 기준 완화만 91% → 구간 선택까지 95%, 거짓 통과 0%.
+//
+// 15초라 박동 간격(HRV)은 쌍이 모자라 hrvReliable 이 꺼진다. 그게 맞다 — 심박은 살리고 HRV 는 보여 주지 않는다.
+// stepSec 5 · agreeMin 2: 간격을 좁히면 창이 서로 겹쳐 합의가 독립 증거가 못 된다. 5초 간격(30초에 4개)에서
+// 맥 없는 신호 통과 0%(합성 100회), 움직임 280회 통과 95%. 2.5초 간격은 같은 통과율에 맥 없음 1% 가 남았다.
+export const WINDOW = { sec: 15, stepSec: 5, agreeMin: 2 };
+
+function bestWindow(samples, opts, rule = WINDOW) {
+  if (samples.length < 2) return null;
+  const t0 = samples[0].t, span = (samples[samples.length - 1].t - t0) / 1000;
+  if (span < rule.sec + rule.stepSec) return null;          // 고를 만큼 길지 않다
+  // 창 시작점. 마지막 샘플은 30초보다 한 프레임 모자라므로(29.97초) 끝에서 한 번 더 잡아 뒷부분을 놓치지 않는다.
+  const starts = [];
+  for (let a = 0; a <= span - rule.sec + 1e-6; a += rule.stepSec) starts.push(a);
+  const tail = span - rule.sec;
+  if (tail > 0 && (!starts.length || tail - starts[starts.length - 1] > 0.5)) starts.push(tail);
+
+  const passed = [];
+  for (const a of starts) {
+    const lo = t0 + a * 1000, hi = lo + rule.sec * 1000;
+    const sub = samples.filter(s => s.t >= lo && s.t <= hi);
+    if (sub.length < QUALITY.minSamples) continue;
+    const r = analyze(sub, { ...opts, windowRetry: false });
+    if (r.quality.pass) passed.push({ r, startSec: a });
+  }
+  if (!passed.length) return null;
+  passed.sort((x, y) => y.r.snrDb - x.r.snrDb);
+  const top = passed[0];
+  // 구간을 여러 개 훑어 제일 좋은 것을 고르는 것은 그만큼 우연히 걸릴 기회를 주는 일이다.
+  // 맥박이 없는 신호에서 한 구간이 통과하는 일이 실제로 있었다(합성 100회, 겹치는 창 7%). 맥박은 시간이 지나도 같은 자리에 있고
+  // 잡음은 그렇지 않으므로, 다른 구간이 같은 bpm(±ROBUST.roiAgreeBpm)을 뒷받침할 때만 쓴다 → 0%.
+  if (passed.filter(x => Math.abs(x.r.bpm - top.r.bpm) <= ROBUST.roiAgreeBpm).length < rule.agreeMin) return null;
+  return { ...top.r, method: top.r.method + '+window', window: { startSec: +top.startSec.toFixed(1), endSec: +(top.startSec + rule.sec).toFixed(1) } };
 }
 
 export const QUICK = { minValidSec: 10 };

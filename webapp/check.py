@@ -135,7 +135,7 @@ def tips(m, life, base, hour):
     if caffeine is not None and caffeine >= 2 and hr is not None and (hr > 90 or (base.get("hr") and hr > base["hr"] + 8)):
         add("caffeine", "카페인이 심박을 올렸을 수 있어요", "오늘 커피는 여기까지, 대신 물 한 컵. 오후 3시 이후 카페인은 잠드는 걸 늦춰요.")
     if sleep_h is not None and sleep_h < 6:
-        add("sleep", "잠이 부족했어요", "집중 시간을 짧게 끊는 게 좋아요 (오늘의 공부 모드 참고). 낮잠은 20분 안으로, 밤엔 12시 전에.")
+        add("sleep", "잠이 부족했어요", "집중 시간을 짧게 끊어 가는 게 좋아요. 낮잠은 20분 안으로, 밤엔 12시 전에.")
     if rm is not None and base.get("rmssd") and rm < 0.7 * base["rmssd"]:
         add("recovery", "평소보다 회복이 덜 됐어요", "HRV 가 내 평소의 70% 아래예요. 오늘 밤은 밤샘보다 12시 전에 자는 쪽을 권해요.")
     if mood is not None and mood <= 2:

@@ -49,8 +49,20 @@ describe('결과 화면 규칙', () => {
     }
   });
 
-  it('얼굴 놓침 2초: 다시 재기, 심박 · 박동 간격 · 호흡은 – , 이유는 얼굴', () => {
+  it('얼굴 놓침 2초: 뒤쪽 깨끗한 구간으로 살리고, 쓴 구간을 적는다', () => {
     const s = synthSamples({ bpm: 72, seed: 2, gaps: [[10, 2]] });
+    const scan = scanOf(s);
+    const v = resultView(scan);
+    expect(v.status).toBe('ok');
+    expect(scan.r.window).not.toBe(null);
+    expect(Math.abs(Number(v.hr.value) - 72)).toBeLessThanOrEqual(5);
+    expect(v.quality.find(q => q.label === '쓴 구간')).toBeTruthy();
+    expect(tile(v, 'hrv').value).toBe('–');            // 15초는 박동 간격 쌍이 모자라다
+    expect(tile(v, 'hrv').sub).toContain('구간');
+  });
+
+  it('얼굴을 자주 놓치면 깨끗한 구간이 없어 다시 재기', () => {
+    const s = synthSamples({ bpm: 72, seed: 2, gaps: [[4, 2], [9, 2], [14, 2], [19, 2], [24, 2]] });
     const v = resultView(scanOf(s));
     expect(v.status).toBe('retry');
     expect(v.message).toContain('얼굴');
