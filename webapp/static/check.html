@@ -582,7 +582,8 @@ function renderHome() {
   } else {
     parts.push('<button class="card gcard" type="button" data-act="group"><img src="/assets/characters/sleep.png" alt=""><span><b style="font-size:16px">친구들과 기상 인증 하기</b><br><span class="sub">그룹을 만들거나 초대 코드로 들어가요</span></span></button>');
   }
-  parts.push('<div class="card"><h2 class="ih">' + ic("info") + '잘 재려면</h2><p class="sub">밝은 곳에서 얼굴 정면 · 30초 동안 말하지 않기 · 방금 뛰었다면 3분 쉬고 재기. 시험 직전, 공부 시작 전, 자기 전에 재 보면 차이가 잘 보여요.</p></div>');
+  // 카드가 아니라 흐린 주의 문구로 (화면의 주인공이 아니다)
+  parts.push('<p class="note">잘 재려면 — 밝은 곳에서 얼굴 정면 · 30초 동안 말하지 않기 · 방금 뛰었다면 3분 쉬고 재기. 시험 직전, 공부 시작 전, 자기 전에 재 보면 차이가 잘 보여요.</p>');
   $("v-home").innerHTML = parts.join("");
 }
 
