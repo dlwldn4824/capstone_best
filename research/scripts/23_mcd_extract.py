@@ -54,10 +54,45 @@ def fetch(rel, dest=None, tries=4):
             time.sleep(3 * (k + 1))
 
 
+YUNET_URL = ("https://github.com/opencv/opencv_zoo/raw/main/models/"
+             "face_detection_yunet/face_detection_yunet_2023mar.onnx")
+
+
+def make_detector(w, h):
+    """프레임 → [(x, y, w, h), ...]. OpenCV 4 는 Haar, 5 는 YuNet 을 쓴다.
+
+    OpenCV 5 에서 CascadeClassifier 가 빠졌다. YuNet 은 같은 자리에 쓸 수 있고 더 정확하다.
+    둘 중 무엇으로 뽑았는지에 따라 영역이 조금 달라지므로, 한 번 뽑은 트레이스로 v1 · v2 · v3 를 함께 비교한다.
+    """
+    import cv2
+    if hasattr(cv2, "CascadeClassifier"):
+        cas = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
+        def detect(frame):
+            g = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            return [b.astype(float) for b in cas.detectMultiScale(g, 1.2, 5, minSize=(80, 80))]
+        return detect
+
+    model = OUT.parent / "models" / "face_detection_yunet_2023mar.onnx"
+    if not model.exists():
+        model.parent.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(YUNET_URL, model)
+    det = cv2.FaceDetectorYN_create(str(model), "", (int(w), int(h)), 0.6)
+
+    def detect(frame):
+        det.setInputSize((frame.shape[1], frame.shape[0]))
+        _, faces = det.detect(frame)
+        if faces is None:
+            return []
+        return [f[:4].astype(float) for f in faces if f[2] >= 80 and f[3] >= 80]
+    return detect
+
+
 def face_traces(video_path):
     import cv2
-    cas = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
     cap = cv2.VideoCapture(str(video_path))
+    detect = make_detector(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 640,
+                           cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 480)
     box, rgb, ok_flags, per_roi = None, [], [], []
     i = 0
     while True:
@@ -65,8 +100,7 @@ def face_traces(video_path):
         if not ok:
             break
         if i % DETECT_EVERY == 0 or box is None:
-            g = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = cas.detectMultiScale(g, 1.2, 5, minSize=(80, 80))
+            faces = detect(frame)
             if len(faces):
                 f = max(faces, key=lambda b: b[2] * b[3]).astype(float)
                 box = f if box is None else 0.7 * box + 0.3 * f     # 흔들림 줄이기

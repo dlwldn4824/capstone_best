@@ -22,9 +22,16 @@ import { motionRefs, nlmsCancel } from './motion.js';
 export const ROIS = ['forehead', 'lcheek', 'rcheek'];
 export const PULSE_FILTER = [0.5, 4.0];     // 맥파 대역통과. 하한을 0.7보다 낮춰 서맥 기본파가 깎이지 않게 한다
 export const SEARCH_BAND = [0.7, 4.0];      // bpm 탐색 대역 (42–240 bpm)
-// 서맥 보정: f/2 가 45–57 bpm 일 때만. 2배 잠김은 실제 bpm ≤ 60 에서만 생겼고(scripts/robustness/05),
-// 범위를 열어 두면 약한 신호의 120–150 bpm 이 절반으로 떨어진다(최대 45%). ratio 0.2: 신호 좋은 84–120 bpm 에서 P(f/2)/P(f) ≤ 0.11
-export const SPEC_OPTS = { harmonics: 3, subharmonic: { ratio: 0.2, minHz: 0.75, maxHz: 0.95 } };
+// 서맥 보정: f/2 가 45–57 bpm 이고 그 세기가 기본파의 ratio 배 이상이면 f/2 를 고른다.
+//
+// ratio 를 0.2 에서 0.45 로 올렸다. 0.2 는 증거가 너무 약했다 — 참 90–114 bpm 이면 f/2 가 45–57 구간에
+// 들어오므로 그 자리의 잡음만으로 보정이 걸려 심박이 절반으로 깎였다. 공개 데이터 MCD-rPPG
+// 20명 · 20초 창 597개에서 참 90 bpm 이상 창의 18.8% 가 그렇게 읽혔다. 운동 후 · 긴장은 이 앱이 자주 만나는 상태다.
+// 0.45 는 2차 고조파가 기본파만큼 센 진짜 서맥(tests/robust.test.js 의 다섯 시드)을 그대로 구하는 가장 높은 문턱이다.
+// 0.5 부터는 그중 하나를 놓친다.
+// 0.2 → 0.45: 고심박 절반 읽기 18.8% → 13.0%, 통과분 MAE 3.37 → 2.62 bpm, 통과분 ±5 bpm 91.0% → 92.3%
+// (research/scripts/28_rppg_v3_face.py)
+export const SPEC_OPTS = { harmonics: 3, subharmonic: { ratio: 0.45, minHz: 0.75, maxHz: 0.95 } };
 // 10 dB: scripts/robustness/12_hrv_gate.js 에서 6–10 dB 구간 |RMSSD 오차| 중앙 19–26ms, ≥10 dB 에서 9–18ms
 export const HRV_GATE = { snrDbMin: 10, pairsMin: 20 };
 
