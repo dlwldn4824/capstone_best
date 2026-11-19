@@ -133,6 +133,7 @@ details.card summary::-webkit-details-marker{display:none}
 .hero.tone-left .kicker{color:var(--left)}
 .hero.tone-alert .kicker{color:var(--alert)}
 .kicker{margin:0; font-size:13px; font-weight:600; letter-spacing:0; color:var(--muted)}
+.hero .kicker.why,.tl strong .why,.cell small.why{color:#1A6DFF}
 .trust{display:flex; flex-direction:column; gap:6px; margin-top:2px}
 .trust-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:13px; font-weight:600}
 .trust-top b{font-weight:650; font-variant-numeric:tabular-nums}
@@ -374,8 +375,7 @@ const STATE_NAME = {
 
 function dayTitle(d) {
   if (d.state === "explained") {
-    const why = OVERLAP_KO[d.explained_by];
-    return why ? "설명됨 · " + why : "설명됨";
+    return causeRecordLabel(d.explained_by) || OVERLAP_KO[d.explained_by] || "설명됨";
   }
   if (d.state === "alert") return "설명 안 됨" + (d.run ? " · " + d.run + "일째" : "");
   if (d.state === "left") return "설명 안 됨";
@@ -408,9 +408,11 @@ function timelineItems(days) {
     if (d.face_hr != null && (d.state === "left" || d.state === "alert")) bits.push("얼굴 " + d.face_hr);
     const rec = dayRecord(d);
     if (rec && (d.state !== "explained" || String(d.note || "").trim())) bits.push(rec);
+    const title = dayTitle(d);
+    const titled = d.state === "explained" ? '<span class="why">' + esc(title) + "</span>" : esc(title);
     return '<li><button type="button" class="when" data-day="' + d.day + '">' +
       (dt.getMonth() + 1) + "/" + dt.getDate() + "<span>" + "일월화수목금토"[dt.getDay()] + "</span></button><div><strong><i class=\"mark-dot " +
-      d.state + "\"></i>" + esc(dayTitle(d)) + "</strong><p>" + esc(bits.join(" · ") || "기록 없음") + "</p></div></li>";
+      d.state + "\"></i>" + titled + "</strong><p>" + esc(bits.join(" · ") || "기록 없음") + "</p></div></li>";
   }).join("") + "</ol>";
 }
 
@@ -441,7 +443,7 @@ function renderToday() {
   const mascot = face ? "/characters/" + face + ".png" : "";
   parts.push('<article class="card hero tone-' + v.tone + (mascot ? " has-mascot" : "") + '">' +
     (mascot ? '<img class="mascot" src="' + mascot + '" alt="">' : "") +
-    '<div class="copy"><p class="kicker">' + esc(v.short) + "</p><h2>" +
+    '<div class="copy"><p class="kicker' + (pickedLabel(s) ? " why" : "") + '">' + esc(pickedLabel(s) || v.short) + "</p><h2>" +
     esc(v.title) + "</h2><p>" + esc(v.body) + "</p>" +
     (todayRecord(s) ? "<p><b>오늘 기록</b> " + esc(todayRecord(s)) + "</p>" : "") +
     extra + trustHtml(s) + "</div></article>");
@@ -610,10 +612,12 @@ function renderHistory() {
   $("grid").innerHTML = h.map((d) => {
     const day = Number(d.day.slice(8));
     const rec = dayRecord(d);
-    const tag = d.state === "explained" ? (OVERLAP_KO[d.explained_by] || "")
+    const tag = d.state === "explained"
+      ? (causeRecordLabel(d.explained_by) || OVERLAP_KO[d.explained_by] || "")
       : (rec && rec.length <= 12 ? rec : lab[d.state]);
     return '<button type="button" class="cell ' + d.state + (selDay === d.day ? " sel" : "") + '" data-day="' + d.day +
-      '" aria-label="' + fmtDay(d.day) + '"><span class="num">' + day + "</span><small>" + esc(tag) + "</small></button>";
+      '" aria-label="' + fmtDay(d.day) + '"><span class="num">' + day + '</span><small class="' +
+      (d.state === "explained" && tag ? "why" : "") + '">' + esc(tag) + "</small></button>";
   }).join("");
 
   const c = (st) => h.filter((x) => x.state === st).length;

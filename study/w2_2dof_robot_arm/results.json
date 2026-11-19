@@ -1,0 +1,471 @@
+{
+  "font": "Apple SD Gothic Neo",
+  "core": {
+    "fk_x": 1.1248444488869596,
+    "fk_y": 1.4659258262890682,
+    "elbow_x": 0.8660254037844387,
+    "elbow_y": 0.49999999999999994,
+    "orientation_deg": 74.99999999999999,
+    "ik_solution_count": 2,
+    "cross_check_points": 88,
+    "figure_xy": [
+      1.1248444488869596,
+      1.4659258262890682
+    ]
+  },
+  "agents": [
+    {
+      "target": [
+        1,
+        1
+      ],
+      "L1": 1,
+      "L2": 1,
+      "reachable": true,
+      "distance": 1.4142135623730951,
+      "reach_min": 0,
+      "reach_max": 2,
+      "reason": "도달 가능. 기하학 해 2개.",
+      "solutions": [
+        {
+          "posture": "elbow-down",
+          "theta1_deg": 0.0,
+          "theta2_deg": 90.0,
+          "fk": [
+            1.0,
+            1.0
+          ],
+          "error": 0.0,
+          "within_limits": true,
+          "valid": true
+        },
+        {
+          "posture": "elbow-up",
+          "theta1_deg": 90.0,
+          "theta2_deg": -90.0,
+          "fk": [
+            1.0,
+            1.0
+          ],
+          "error": 0.0,
+          "within_limits": true,
+          "valid": true
+        }
+      ],
+      "verdict": "유효한 해 2개. 목표와의 오차가 1e-06 이하입니다."
+    },
+    {
+      "target": [
+        1.8,
+        1.8
+      ],
+      "L1": 1,
+      "L2": 0.5,
+      "reachable": false,
+      "distance": 2.545584412271571,
+      "reach_min": 0.5,
+      "reach_max": 1.5,
+      "reason": "목표 거리 2.545584가 작업공간 [0.500000, 1.500000] 밖에 있습니다. cos(theta2)=5.230000는 [-1, 1] 밖입니다.",
+      "solutions": [],
+      "verdict": "도달 불가. 관절각을 만들지 않습니다."
+    },
+    {
+      "target": [
+        1,
+        1
+      ],
+      "L1": 1,
+      "L2": 1,
+      "reachable": true,
+      "distance": 1.4142135623730951,
+      "reach_min": 0,
+      "reach_max": 2,
+      "reason": "도달 가능. 기하학 해 2개.",
+      "solutions": [
+        {
+          "posture": "elbow-down",
+          "theta1_deg": 0.0,
+          "theta2_deg": 90.0,
+          "fk": [
+            1.0,
+            1.0
+          ],
+          "error": 0.0,
+          "within_limits": true,
+          "valid": true
+        },
+        {
+          "posture": "elbow-up",
+          "theta1_deg": 90.0,
+          "theta2_deg": -90.0,
+          "fk": [
+            1.0,
+            1.0
+          ],
+          "error": 0.0,
+          "within_limits": false,
+          "valid": false
+        }
+      ],
+      "verdict": "유효한 해 1개. 목표와의 오차가 1e-06 이하입니다."
+    },
+    {
+      "target": [
+        1.5,
+        0.5
+      ],
+      "L1": 1,
+      "L2": 1,
+      "reachable": true,
+      "distance": 1.5811388300841898,
+      "reach_min": 0,
+      "reach_max": 2,
+      "reason": "도달 가능. 기하학 해 2개.",
+      "solutions": [
+        {
+          "posture": "elbow-down",
+          "theta1_deg": -19.326295084113024,
+          "theta2_deg": 75.52248781407006,
+          "fk": [
+            1.5,
+            0.49999999999999994
+          ],
+          "error": 5.551115123125783e-17,
+          "within_limits": true,
+          "valid": true
+        },
+        {
+          "posture": "elbow-up",
+          "theta1_deg": 56.19619272995707,
+          "theta2_deg": -75.52248781407008,
+          "fk": [
+            1.5,
+            0.5000000000000004
+          ],
+          "error": 4.440892098500626e-16,
+          "within_limits": true,
+          "valid": true
+        }
+      ],
+      "verdict": "유효한 해 2개. 목표와의 오차가 1e-06 이하입니다."
+    },
+    {
+      "target": [
+        0.2,
+        1.6
+      ],
+      "L1": 1,
+      "L2": 1,
+      "reachable": true,
+      "distance": 1.61245154965971,
+      "reach_min": 0,
+      "reach_max": 2,
+      "reason": "도달 가능. 기하학 해 2개.",
+      "solutions": [
+        {
+          "posture": "elbow-down",
+          "theta1_deg": 46.60378521295924,
+          "theta2_deg": 72.5423968762779,
+          "fk": [
+            0.2000000000000005,
+            1.6
+          ],
+          "error": 4.996003610813204e-16,
+          "within_limits": true,
+          "valid": true
+        },
+        {
+          "posture": "elbow-up",
+          "theta1_deg": 119.14618208923714,
+          "theta2_deg": -72.54239687627789,
+          "fk": [
+            0.2000000000000003,
+            1.6
+          ],
+          "error": 2.7755575615628914e-16,
+          "within_limits": true,
+          "valid": true
+        }
+      ],
+      "verdict": "유효한 해 2개. 목표와의 오차가 1e-06 이하입니다."
+    }
+  ],
+  "different_links": {
+    "L1": 1.2,
+    "L2": 0.8,
+    "target": [
+      1.0,
+      0.5
+    ],
+    "solutions": [
+      {
+        "theta1": -0.23767434618787764,
+        "theta2": 2.0178289605084077,
+        "posture": "elbow-down",
+        "fk_x": 1.0,
+        "fk_y": 0.49999999999999967,
+        "error": 3.3306690738754696e-16,
+        "within_limits": true,
+        "theta1_deg": -13.617736935096636,
+        "theta2_deg": 115.61308321640182
+      },
+      {
+        "theta1": 1.16496956418949,
+        "theta2": -2.0178289605084077,
+        "posture": "elbow-up",
+        "fk_x": 0.9999999999999998,
+        "fk_y": 0.5000000000000002,
+        "error": 3.1401849173675503e-16,
+        "within_limits": true,
+        "theta1_deg": 66.74783928925262,
+        "theta2_deg": -115.61308321640182
+      }
+    ]
+  },
+  "joint_limits": {
+    "reason": "도달 가능. 기하학 해 2개.",
+    "solutions": [
+      {
+        "theta1": 0.0,
+        "theta2": 1.5707963267948966,
+        "posture": "elbow-down",
+        "fk_x": 1.0,
+        "fk_y": 1.0,
+        "error": 0.0,
+        "within_limits": true,
+        "theta1_deg": 0.0,
+        "theta2_deg": 90.0
+      },
+      {
+        "theta1": 1.5707963267948966,
+        "theta2": -1.5707963267948966,
+        "posture": "elbow-up",
+        "fk_x": 1.0,
+        "fk_y": 1.0,
+        "error": 0.0,
+        "within_limits": false,
+        "theta1_deg": 90.0,
+        "theta2_deg": -90.0
+      }
+    ]
+  },
+  "sequence": [
+    {
+      "order": 1,
+      "target": [
+        1.5,
+        0.2
+      ],
+      "theta1_deg": -33.236717036955696,
+      "theta2_deg": 81.66272081109429,
+      "error": 1.6653345369377348e-16
+    },
+    {
+      "order": 2,
+      "target": [
+        1.0,
+        1.0
+      ],
+      "theta1_deg": 0.0,
+      "theta2_deg": 90.0,
+      "error": 0.0
+    },
+    {
+      "order": 3,
+      "target": [
+        0.0,
+        1.5
+      ],
+      "theta1_deg": 48.590377890729144,
+      "theta2_deg": 82.81924421854171,
+      "error": 1.1102230246251565e-16
+    },
+    {
+      "order": 4,
+      "target": [
+        -0.8,
+        0.6
+      ],
+      "theta1_deg": 83.13010235415595,
+      "theta2_deg": 120.00000000000001,
+      "error": 6.473657049138938e-16
+    }
+  ],
+  "error_modes": {
+    "degree_bug_xy": [
+      1.0760027196123334,
+      -1.3758132595022923
+    ],
+    "absolute_bug_xy": [
+      1.5731321849709863,
+      1.2071067811865475
+    ],
+    "clamped_solution_deg": [
+      45.0,
+      0.0
+    ],
+    "clamped_xy": [
+      1.0606601717798214,
+      1.0606601717798212
+    ],
+    "errors": {
+      "올바른 FK": 0.0,
+      "도를 라디안으로 사용": 2.8421587827271106,
+      "θ2를 절대각으로 사용": 0.5176380902050415,
+      "불가 점을 경계로 투영": 1.0455844122715712
+    }
+  },
+  "model_comparison": {
+    "fk_main": {
+      "GPT": {
+        "reported_xy": [
+          1.124844449,
+          1.465925826
+        ],
+        "error_against_numpy": 3.103844631662099e-10,
+        "within_reported_rounding": true
+      },
+      "Claude": {
+        "reported_xy": [
+          1.124844,
+          1.465926
+        ],
+        "error_against_numpy": 4.813262826293415e-07,
+        "within_reported_rounding": true
+      },
+      "Gemini": {
+        "reported_xy": [
+          1.1248,
+          1.4659
+        ],
+        "error_against_numpy": 5.140720532159763e-05,
+        "within_reported_rounding": true
+      }
+    },
+    "ik_main_all_models": {
+      "elbow_down_deg": [
+        0.0,
+        90.0
+      ],
+      "elbow_up_deg": [
+        90.0,
+        -90.0
+      ],
+      "reachable_1_8": false
+    },
+    "gemini_case2_replug": [
+      {
+        "theta_deg": [
+          -19.3263,
+          75.5225
+        ],
+        "fk": [
+          1.499999866169462,
+          0.49999998962962855
+        ],
+        "error_vs_target_1_5_0_5": 1.3423173060559413e-07
+      },
+      {
+        "theta_deg": [
+          56.1962,
+          -75.5225
+        ],
+        "fk": [
+          1.499999866169462,
+          0.49999998962962855
+        ],
+        "error_vs_target_1_5_0_5": 1.3423173060559413e-07
+      }
+    ],
+    "code_case2": [
+      {
+        "theta1": -0.33730748142976674,
+        "theta2": 1.3181160716528177,
+        "posture": "elbow-down",
+        "fk_x": 1.5,
+        "fk_y": 0.49999999999999994,
+        "error": 5.551115123125783e-17,
+        "within_limits": true,
+        "theta1_deg": -19.326295084113024,
+        "theta2_deg": 75.52248781407006
+      },
+      {
+        "theta1": 0.9808085902230514,
+        "theta2": -1.318116071652818,
+        "posture": "elbow-up",
+        "fk_x": 1.5,
+        "fk_y": 0.5000000000000004,
+        "error": 4.440892098500626e-16,
+        "within_limits": true,
+        "theta1_deg": 56.19619272995707,
+        "theta2_deg": -75.52248781407008
+      }
+    ],
+    "gemini_stated_y_parts": [
+      -0.33092,
+      0.83092
+    ],
+    "numpy_y_parts": [
+      -0.3309475828947126,
+      0.8309475725243411
+    ],
+    "y_part_difference": [
+      -2.7582894712607775e-05,
+      2.7572524341157312e-05
+    ],
+    "equal_link_shortcut_when_lengths_differ": [
+      {
+        "L": [
+          1.2,
+          0.8
+        ],
+        "target": [
+          1.0,
+          0.5
+        ],
+        "true_theta1_deg": -13.617736935096636,
+        "shortcut_theta1_deg": -31.24149043112292,
+        "shortcut_error": 0.3425447767577748
+      },
+      {
+        "L": [
+          1.2,
+          0.8
+        ],
+        "target": [
+          1.0,
+          0.5
+        ],
+        "true_theta1_deg": 66.74783928925262,
+        "shortcut_theta1_deg": 84.37159278527893,
+        "shortcut_error": 0.3425447767577752
+      },
+      {
+        "L": [
+          1.0,
+          0.5
+        ],
+        "target": [
+          1.2,
+          0.2
+        ],
+        "true_theta1_deg": -14.11453624998176,
+        "shortcut_theta1_deg": -28.889141918369845,
+        "shortcut_error": 0.31283850078861486
+      },
+      {
+        "L": [
+          1.0,
+          0.5
+        ],
+        "target": [
+          1.2,
+          0.2
+        ],
+        "true_theta1_deg": 33.039180666033005,
+        "shortcut_theta1_deg": 47.81378633442109,
+        "shortcut_error": 0.31283850078861497
+      }
+    ]
+  }
+}

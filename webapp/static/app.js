@@ -290,6 +290,16 @@ function chosenFace(s) {
   return "";
 }
 
+function pickedLabel(s) {
+  if (!s || s.status === "ALERT") return "";
+  if (NOTE_FACE[s.choice]) return s.choice;
+  if (NOTE_FACE[shownNote(s)]) return shownNote(s);
+  if (CAUSE_FACE[s.choice]) return causeRecordLabel(s.choice);
+  const why = (s.night || {}).explained_by;
+  if (CAUSE_FACE[why]) return causeRecordLabel(why);
+  return "";
+}
+
 function characterName(s) {
   const chosen = chosenFace(s);
   if (chosen) return chosen;
@@ -406,7 +416,8 @@ function verdict(s) {
         "이미 잡힌 기록 중에서, 겹칠 수 있는 것만 물어볼게요.");
     case "EXPLAINED": {
       const why = OVERLAP_KO[n.explained_by] || n.explained_ko;
-      return say("calm", "생활 기록과 겹칩니다", "설명됨",
+      const label = causeRecordLabel(n.explained_by) || why || "설명됨";
+      return say("calm", "생활 기록과 겹칩니다", label,
         (why ? josa(why, "과", "와") + " 시점이 겹칩니다. 그 이유가 보통 만드는 크기 안이에요. " : "") +
           "원인을 단정하지 않고, 오늘은 알림을 내지 않아요.");
     }
