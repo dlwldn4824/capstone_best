@@ -9,7 +9,7 @@ export const QUALITY = {
   motionFrac: 0.05, motionRatioMin: 0.85,   // 이동이 기준 안인 프레임 비율
   blinkRatioMax: 0.3,
   snrMinDb: -3,
-  minSamples: 240,                          // 8초 미만이면 판정 불가
+  minSamples: 180,                          // 6초 미만이면 판정 불가 (조기 종료 하한과 같은 값)
 };
 
 // 발표 4조건과 별도로 붙는 견고성 조건. 각각 따로 보고해 UI가 이유를 설명할 수 있게 한다.

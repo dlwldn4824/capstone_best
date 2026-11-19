@@ -1,0 +1,6 @@
+1	[VIEWE] ESP32 4.3인치 800x480 RGB IPS 터치 LCD (UEDX80480043E-WB-A)	https://www.eleparts.co.kr/goods/view?no=18677449	미정	66,550	1	66,550	법인카드
+2	[SparkFun] Teensy 4.1 개발보드 (DEV-28370)	https://www.eleparts.co.kr/goods/view?no=19335643	미정	48,800	1	48,800	법인카드
+3	[SparkFun] Teensy 4 Audio Shield Rev D (DEV-15845)	https://www.eleparts.co.kr/goods/view?no=18091386	미정	16,300	2	32,600	법인카드
+4	[Hammond] 1590BB 알루미늄 인클로저	https://www.eleparts.co.kr/goods/view?no=6281379	미정	27,500	2	55,000	법인카드
+5	[SparkFun] 13416 메탈 푸시버튼 16mm (모멘터리)	https://www.eleparts.co.kr/goods/view?no=17259277	미정	10,700	2	21,400	법인카드
+6	[DFRobot] EC11 로터리 엔코더 모듈 (SEN0235)	https://www.eleparts.co.kr/goods/view?no=4310123	미정	4,840	4	19,360	법인카드

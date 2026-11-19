@@ -31,14 +31,14 @@ describe('빠른 측정: 조기 종료', () => {
   // 실시간처럼 1초마다 재고, 안정 + 전체 품질 통과면 멈춘다
   function simulate(samples) {
     const hist = [];
-    for (let t = 6; t <= EARLY_STOP.maxSec; t++) {
+    for (let t = 3; t <= EARLY_STOP.maxSec; t++) {
       const s = cut(samples, t), live = liveEstimate(s);
       hist.push({ t, bpm: live.bpm, snrDb: live.snrDb });
       if (stableEnough(hist, t) && analyze(s, { resp: false }).quality.pass) return { t, r: analyze(s) };
     }
     return { t: EARLY_STOP.maxSec, r: analyze(samples) };
   }
-  it('깨끗한 신호: 최소 시간(10초)에 끝나고 ±1 bpm 안', () => {
+  it('깨끗한 신호: 최소 시간에 끝나고 ±1 bpm 안', () => {
     for (const seed of [1, 2, 3]) {
       const { t, r } = simulate(synthSamples({ bpm: 75, seed, noise: 0.2 }));
       expect(t).toBe(EARLY_STOP.minSec);
@@ -56,10 +56,11 @@ describe('빠른 측정: 조기 종료', () => {
     expect(t).toBe(EARLY_STOP.maxSec);
   });
   it('stableEnough: 최소 시간 · 3개 · ±2 bpm · SNR 조건', () => {
-    const h = [{ bpm: 70, snrDb: 5 }, { bpm: 71, snrDb: 5 }, { bpm: 70.5, snrDb: 5 }];
-    expect(stableEnough(h, 9)).toBe(false);
-    expect(stableEnough(h, 10)).toBe(true);
-    expect(stableEnough([...h.slice(0, 2), { bpm: 74, snrDb: 5 }], 12)).toBe(false);
-    expect(stableEnough([...h.slice(0, 2), { bpm: 70.5, snrDb: 1 }], 12)).toBe(false);
+    const hi = EARLY_STOP.snrDbMin + 5, lo = EARLY_STOP.snrDbMin - 1;
+    const h = [{ bpm: 70, snrDb: hi }, { bpm: 71, snrDb: hi }, { bpm: 70.5, snrDb: hi }];
+    expect(stableEnough(h, EARLY_STOP.minSec - 1)).toBe(false);          // 최소 시간 전
+    expect(stableEnough(h, EARLY_STOP.minSec)).toBe(true);
+    expect(stableEnough([...h.slice(0, 2), { bpm: 74, snrDb: hi }], 12)).toBe(false);   // ±2 bpm 벗어남
+    expect(stableEnough([...h.slice(0, 2), { bpm: 70.5, snrDb: lo }], 12)).toBe(false); // SNR 모자람
   });
 });

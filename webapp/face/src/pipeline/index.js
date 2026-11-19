@@ -18,6 +18,7 @@ import { toUniform, coverageOf, observedFs, GRID_FS } from './resample.js';
 import { respFromSamples } from './resp.js';
 import { fuseWindows } from './fuse.js';
 import { motionRefs, nlmsCancel } from './motion.js';
+import { complexionOf } from './complexion.js';
 
 export const ROIS = ['forehead', 'lcheek', 'rcheek'];
 export const PULSE_FILTER = [0.5, 4.0];     // 맥파 대역통과. 하한을 0.7보다 낮춰 서맥 기본파가 깎이지 않게 한다
@@ -105,6 +106,8 @@ export function analyze(samples, opts = {}) {
   const chosen = j.fused, quality = j.quality;
   const hrv = hrvFromPulse(chosen.pulse, fs, chosen.bpm, 250, valid);
   const resp = opts.resp === false ? { rate: NaN, agree: false, head: NaN, light: NaN } : respFromSamples(samples);
+  // 안색은 맥박과 따로 간다 — 같은 측정에서 뽑아 기록만 하고 품질 · 점수 어디에도 넣지 않는다 (complexion.js)
+  const complexion = complexionOf(samples);
   const hrvReliable = Number.isFinite(chosen.snrDb) && chosen.snrDb >= HRV_GATE.snrDbMin && hrv.pairs >= HRV_GATE.pairsMin && quality.pass;
 
   return {
@@ -124,6 +127,7 @@ export function analyze(samples, opts = {}) {
     coverage: { ratio: coverage.ratio, maxGapSec: coverage.maxGapSec },
     interference: j.interference,
     resp: { rate: resp.rate, agree: resp.agree, head: resp.head, light: resp.light },
+    complexion,
     window: null,
     debug: { pulse: chosen.pulse, spectrum: chosen.spectrum },
   };
@@ -188,11 +192,18 @@ export function quickBpm(samples, windowSec = 10) {
 }
 
 // ---------- 빠른 측정: 조기 종료 ----------
-// 1초마다 최근 10초를 같은 방법(analyze)으로 잰 값을 쌓고, 최근 3개가 최신값 ±2 bpm 안이며 최신 SNR ≥ 3 dB 이고
-// 최소 10초가 지났으면 "멈춰도 되는지" 후보가 된다. 실제로 멈추는 것은 그때까지 전체 샘플의 analyze() 가 품질을 통과할 때뿐이다.
-// 합성 실험(scripts/experiments/results_p2b_earlystop.md): 중앙 10초 · 평균 13초, 맞게 끝남 99%, 일찍 틀린 값 수락 0%.
+// 1초마다 최근 10초를 같은 방법(analyze)으로 잰 값을 쌓고, 최근 3개가 최신값 ±2 bpm 안이며 최신 SNR ≥ 0 dB 이고
+// 최소 6초가 지났으면 "멈춰도 되는지" 후보가 된다. 실제로 멈추는 것은 그때까지 전체 샘플의 analyze() 가 품질을 통과할 때뿐이다.
 // 거짓 수락을 막은 것은 안정성 조건이 아니라 품질 조건이었다 → 품질 조건을 빼지 않는다.
-export const EARLY_STOP = { minSec: 10, maxSec: 30, K: 3, tolBpm: 2, snrDbMin: 3, windowSec: 10 };
+//
+// snrDbMin 3 → 0, minSec 10 → 6 (scripts/experiments/results_p2d_fast.md, 합성 150회).
+// 무엇이 시간을 잡아먹는지 하나씩 떼어 봤더니 최소 시간도, 안정 조건도 아니었다 —
+// 둘 다 풀어도 중앙값이 1초밖에 안 줄었고, 안정 조건은 통째로 빼도 숫자가 그대로였다.
+// 잡아먹던 것은 조기 종료만 따로 요구하던 SNR 문턱이었다. 품질 게이트는 -3 dB 면 통과시키는데 여기서 3 dB 를 받고 있었다.
+//   obs=hard 중앙 10 → 7초 · 평균 14.2 → 8.9초 · 30초까지 가는 비율 9% → 2% · ±5 bpm 100%, 품질 통과 98% 그대로
+// 0 dB 가 바닥이다. 한 칸 더 풀어 품질의 -3 dB 에 맡기면 맥 없는 입력이 4% 통과한다 (같은 실험, NOPULSE=1).
+// 0 dB 는 옛 앱이 쓰던 선이기도 하다 (docs/research/FACE_RPPG.md 3번 표: SNR ≥ 0 통과분 MAE 5.7, ±5 bpm 87%).
+export const EARLY_STOP = { minSec: 6, maxSec: 30, K: 3, tolBpm: 2, snrDbMin: 0, windowSec: 10 };
 
 // 최근 windowSec 의 실시간 추정. 조기 종료 판단과 화면의 실시간 숫자에 같이 쓴다.
 export function liveEstimate(samples, windowSec = EARLY_STOP.windowSec) {
@@ -200,7 +211,9 @@ export function liveEstimate(samples, windowSec = EARLY_STOP.windowSec) {
   const tEnd = samples[samples.length - 1].t;
   const recent = samples.filter(s => s.t >= tEnd - windowSec * 1000);
   const cov = coverageOf(recent);
-  if (recent.length < 60 || cov.validSec < windowSec * 0.8 || cov.maxGapSec > ROBUST.maxGapSecMax) return { bpm: NaN, snrDb: -Infinity, pulse: null };
+  // 아직 windowSec 만큼 안 찍혔으면 있는 만큼으로 본다. 창 길이로 재면 10초 전에는 늘 NaN 이라 6초 종료가 불가능하다.
+  const span = (tEnd - recent[0].t) / 1000;
+  if (recent.length < 60 || cov.validSec < Math.min(windowSec, span) * 0.8 || cov.maxGapSec > ROBUST.maxGapSecMax) return { bpm: NaN, snrDb: -Infinity, pulse: null };
   const r = analyze(recent, { resp: false });
   return { bpm: r.bpm, snrDb: r.snrDb, pulse: r.debug.pulse };
 }

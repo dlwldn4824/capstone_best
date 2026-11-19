@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Vity — 한 장 요약</title>
+<style>
+@page { size: A4; margin: 12mm 13mm; }
+body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'AppleGothic', sans-serif;
+       font-size: 9.5pt; line-height: 1.42; color: #111; }
+h1 { font-size: 15pt; margin: 0 0 3pt 0; }
+h2 { font-size: 10.5pt; margin: 11pt 0 4pt 0; border-bottom: 1px solid #c8cdd6; padding-bottom: 2pt; }
+p  { margin: 0 0 5.5pt 0; }
+.byline { color: #5b6472; font-size: 8.5pt; margin: 0 0 8pt 0; }
+.lead { background: #f3f6fb; padding: 6pt 8pt; margin: 0 0 7pt 0; }
+table { border-collapse: collapse; width: 100%; margin: 4pt 0 6pt 0; font-size: 9pt; }
+td { border: 1px solid #c8cdd6; padding: 3.5pt 6pt; vertical-align: top; }
+td.k { background: #eef1f6; font-weight: 600; width: 16%; white-space: nowrap; }
+img { margin: 3pt 0 1pt 0; }
+.cap { color: #5b6472; font-size: 8pt; margin: 0 0 6pt 0; }
+.foot { color: #5b6472; font-size: 7.5pt; border-top: 1px solid #c8cdd6; padding-top: 4pt; margin-top: 7pt; }
+</style>
+</head>
+<body>
+
+<h1>Vity — 얼굴 30초로 재는 '내 평소 대비' 컨디션</h1>
+<p class="byline">2026-11-11 · 팀 삼삼오오 (이지우 · 이교원 · 이지연) · 지도교수 조민수 · 광운대학교</p>
+
+<p class="lead"><b>친구는 안색이 눈에 띄게 나빴고 컨디션도 오래 안 좋았다. 백혈병이었고, 치료 시기를 놓쳤다.</b> 사람은 자기 컨디션을 말로 정의하지 못하고, 안색은 매일 거울로 보기 때문에 <b>오히려</b> 어제와 오늘의 차이를 못 잡는다. 그래서 진단이 아니라 기록으로 좁혔다 — 오늘이 내 평소와 다른가를, 매일 같은 방식으로 기계가 재서 남겨 둔다. 아이폰 전면 카메라만 쓴다.</p>
+
+<h2>어떻게 재나</h2>
+<img width="300" src="fig1_engine.png" alt="얼굴 색에서 심박까지 5단계와 분기">
+<p class="cap">webapp/face/src/pipeline/ · 전부 브라우저 안에서 돌아간다. 서버는 계산하지 않고 숫자 12개만 받는다.</p>
+<p>각 단계는 앞 단계가 못 지운 것을 지운다. 마지막 품질 7조건은 <b>값은 나왔지만 믿을 수 없는 경우</b>를 걸러낸다. 신호 세기가 4 dB 를 넘은 창은 평균 오차 0.2 bpm · ±5 bpm 안 100%, −2 dB 아래는 16.3 bpm 이다 — <b>측정이 자기가 맞았는지를 스스로 안다.</b></p>
+
+<h2>숫자</h2>
+<table border="1" cellspacing="0" cellpadding="4">
+<tr><td class="k" width="78">심박 정확도</td><td>품질 통과분 평균 오차 <b>2.62 bpm</b>, ±5 bpm 안 <b>92.3%</b> — 앱이 실제로 돌리는 엔진을 공개 데이터 MCD-rPPG 20초 창 597개에 돌린 값</td></tr>
+<tr><td class="k" width="78">측정 시간</td><td>중앙 <b>10초 → 7초</b>, 평균 14.2 → 8.9초. 정확도와 거짓 수락(0%)은 그대로</td></tr>
+<tr><td class="k" width="78">품질 통과율</td><td><b>78% → 95%</b> (기준 완화 + 구간 선택). 맥 없는 입력의 거짓 통과는 세 조건 모두 <b>0%</b></td></tr>
+<tr><td class="k" width="78">개인 기준선</td><td>사람끼리 비교하면 AUC <b>0.55</b> — 우연 수준. 같은 사람의 평소와 비교하면 <b>62%</b> (p = 0.027)</td></tr>
+</table>
+
+<h2>남은 것</h2>
+<p>실기기 2주 운용 전이다. 조명 · 기종별 오차는 아직 모르고, 공개 데이터에 랜드마크가 없어 품질 4조건 중 <b>머리 이동은 검증되지 않았다</b>. 지금 엔진(2.62 bpm)은 비교 구현 rPPG-Toolbox(0.56 bpm)보다 아직 못하다 — 대신 떨어진 이유를 말해 준다. 이 격차가 다음 과제다.</p>
+
+<p class="foot">본 서비스는 의료기기가 아니며 질병의 진단 · 치료를 목적으로 하지 않는다. · 데이터 MCD-rPPG (Egorov 2025) · WESAD (Schmidt 2018) · 방법 POS (Wang 2017)</p>
+
+</body>
+</html>

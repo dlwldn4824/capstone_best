@@ -363,7 +363,8 @@ def add_scan(con, metrics, sleep_h=None, caffeine=None, mood=None, kind="normal"
     if m["hr"] is None:
         raise ValueError("심박이 없어요")
     life = {"sleep_h": sleep_h, "caffeine": caffeine, "mood": mood}
-    hs = V.health_score(m, sleep_h, caffeine, mood)
+    # 못 잰 항목을 내 평소값으로 메우려고 먼저 평소를 꺼낸다 (vitals.health_score 의 base)
+    hs = V.health_score(m, sleep_h, caffeine, mood, base=baseline(con, at, mid=member))
     cur = con.execute(
         "INSERT INTO scans (at, day, kind, pair, hr, snr, signal, rmssd, sdnn, pnn50, si, stress, hrv_conf, irregular, rr, rr_conf, "
         "sleep_h, caffeine, mood, score, parts, mid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",

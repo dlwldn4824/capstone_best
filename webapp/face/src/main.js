@@ -86,7 +86,7 @@ function openPrep() {
   const mode = (k, t, d) => `<button class="mode" type="button" role="radio" aria-checked="${MODE === k}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
   openSheet(`<h2>어떻게 잴까요?</h2>
     <div class="modes" role="radiogroup" aria-label="측정 방식">
-      ${mode('quick', '빠르게', '심박 · 맥파<br>보통 10–20초')}
+      ${mode('quick', '빠르게', '심박 · 맥파<br>보통 7–10초')}
       ${mode('full', '전체', '박동 간격 · 호흡 · 깜빡임까지<br>30초')}
     </div>
     <ul class="prep-list prep">
@@ -283,7 +283,7 @@ function tick(now) {
     $('live').hidden = !show;
     live.bpm = show ? q.bpm : NaN;
     if (show) { $('liveBpm').textContent = Math.round(q.bpm); document.querySelector('.live .heart').style.animationDuration = (60 / q.bpm).toFixed(2) + 's'; }
-    // 빠르게: 최근 3번이 ±2 bpm 안 · SNR ≥ 3 dB · 10초 이상이고, 지금까지 전체가 품질을 통과하면 끝낸다
+    // 빠르게: 최근 3번이 ±2 bpm 안 · SNR ≥ 0 dB · 6초 이상이고, 지금까지 전체가 품질을 통과하면 끝낸다
     if (cam.mode === 'quick' && stableEnough(cam.hist, el) && analyze(cam.samples, { resp: false, windowRetry: false }).quality.pass) return finish();
   }
   if (el >= EARLY_STOP.maxSec) finish();
@@ -478,7 +478,7 @@ async function renderMe() {
     <div class="card">
       <p class="sec">측정 방식</p>
       <div class="modes" role="radiogroup" aria-label="측정 방식">
-        ${mode('quick', '빠르게', '심박 · 맥파<br>보통 10–20초')}
+        ${mode('quick', '빠르게', '심박 · 맥파<br>보통 7–10초')}
         ${mode('full', '전체', '박동 간격 · 호흡 · 깜빡임까지<br>30초')}
       </div>
     </div>

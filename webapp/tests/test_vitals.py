@@ -72,6 +72,27 @@ def test_health_score_reweights_missing_and_ignores_rr():
     c = V.health_score({**m, "rmssd": None, "stress": None}, 8, 0, 5)
     assert c["score"] is not None and "hrv" not in c["used"]
     assert V.health_score({"hr": 70, "signal": "high"}, 4, 3, 1)["score"] < a["score"]
+    assert a["cover"] == 1.0 and c["cover"] < 1.0 and c["filled"] == []
+
+
+def test_missing_parts_do_not_raise_the_score():
+    """못 잰 날이 잰 날보다 높게 나오면 안 된다 — 평소값으로 메운다."""
+    life = dict(sleep_h=6, caffeine=2, mood=4)
+    full = {"hr": 65, "signal": "high", "stress": 29.2, "rmssd": 45}
+    measured = V.health_score(full, **life)
+
+    # 같은 날인데 신호가 약해 HRV · 스트레스를 보류한 경우
+    partial = {"hr": 65, "signal": "high", "stress": None, "rmssd": None}
+    naive = V.health_score(partial, **life)                      # 평소가 없으면 예전처럼 다시 나눈다
+    assert naive["score"] > measured["score"]                    # ← 고치기 전의 뒤집힘
+
+    base = {"stress": 29.2, "rmssd": 45}                         # 내 평소가 오늘 잰 값과 같다면
+    filled = V.health_score(partial, **life, base=base)
+    assert filled["score"] == measured["score"]                  # 메우면 같은 점수가 된다
+    assert filled["filled"] == ["hrv", "stress"]
+    assert filled["used"] == ["hr", "life"]                      # 실제로 잰 것은 둘뿐이라고 적는다
+    assert filled["cover"] == 0.45
+    assert filled["parts"]["hrv"] is None                        # 메운 값을 잰 것처럼 적지 않는다
 
 
 def test_bmi_korean_cutoffs():

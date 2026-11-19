@@ -12,6 +12,7 @@ export { assessQuality, QUALITY, ROBUST, REASON_TEXT } from './pipeline/quality.
 export { baselineOf, deviationOf, unexplained, BASELINE, WHY, WHY_LABEL } from './pipeline/baseline.js';
 export { toMetrics, stressScore, stressZone, signalOf, SI_LO, SI_HI } from './pipeline/metrics.js';
 export { faceState } from './pipeline/face.js';
+export { complexionOf, toLab, COMPLEXION } from './pipeline/complexion.js';
 export { resultView, SIGNAL_GOOD_DB } from './ui/view.js';
 export { createOverlay } from './ui/overlay.js';
 export { EVIDENCE } from './ui/evidence.js';

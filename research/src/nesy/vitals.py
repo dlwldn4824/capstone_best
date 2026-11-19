@@ -236,21 +236,53 @@ def life_score(sleep_h, caffeine, mood):
     return float(np.mean(parts)) if parts else None
 
 
-def health_score(m, sleep_h=None, caffeine=None, mood=None):
+def _hrv_part(rmssd):
+    if not rmssd:
+        return None
+    return max(0.0, min(100.0, (math.log(rmssd) - math.log(10)) / (math.log(80) - math.log(10)) * 100))
+
+
+def health_score(m, sleep_h=None, caffeine=None, mood=None, base=None):
+    """오늘 점수. base 는 내 평소값 {"stress":…, "rmssd":…} (check.baseline 이 주는 중앙값).
+
+    못 잰 항목을 그냥 빼고 남은 가중치로 다시 나누면, 빠진 항목이 남은 항목보다 낮았을 때
+    **못 잰 날의 점수가 오히려 높아진다.** 실제로 심박 65 · 생활 82 인 날에 HRV 가 잡히면 79점,
+    같은 날 HRV 가 보류되면 88점이 나왔다. 그러면 '신호가 나쁜 날'이 좋은 날처럼 보인다.
+
+    그래서 못 잰 항목은 **내 평소값으로 메운다** — 그래야 잰 날과 못 잰 날을 나란히 놓을 수 있다.
+    메울 평소값이 아직 없으면(기록이 모자라면) 예전처럼 남은 가중치로 나누되, cover 에
+    실제로 잰 비중을 적어 둔다. filled 에는 평소값으로 메운 항목을 적는다.
+    """
     comp = {
         "stress": None if m.get("stress") is None else 100 - m["stress"],
-        "hrv": None if not m.get("rmssd") else max(0.0, min(100.0, (math.log(m["rmssd"]) - math.log(10)) / (math.log(80) - math.log(10)) * 100)),
+        "hrv": _hrv_part(m.get("rmssd")),
         "hr": _band_score(m.get("hr") if m.get("signal") != "low" else None, 55, 85, 2.5),
         "rr": _band_score(m.get("rr"), 12, 20, 8),
         "life": life_score(sleep_h, caffeine, mood),
     }
-    have = {k: v for k, v in comp.items() if v is not None and WEIGHTS[k] > 0}
+    measured = {k for k, v in comp.items() if v is not None and WEIGHTS[k] > 0}
+
+    filled = []
+    use = dict(comp)
+    if base:
+        if comp["stress"] is None and base.get("stress") is not None:
+            use["stress"] = 100 - base["stress"]; filled.append("stress")
+        if comp["hrv"] is None and base.get("rmssd") is not None:
+            v = _hrv_part(base["rmssd"])
+            if v is not None:
+                use["hrv"] = v; filled.append("hrv")
+
+    have = {k: v for k, v in use.items() if v is not None and WEIGHTS[k] > 0}
     if not have:
-        return {"score": None, "parts": comp}
+        return {"score": None, "parts": comp, "used": [], "filled": [], "cover": 0.0}
     w = sum(WEIGHTS[k] for k in have)
     score = sum(WEIGHTS[k] * v for k, v in have.items()) / w
-    return {"score": int(round(score)), "parts": {k: (None if v is None else int(round(v))) for k, v in comp.items()},
-            "used": sorted(have)}
+    total = sum(v for k, v in WEIGHTS.items() if v > 0)
+    return {"score": int(round(score)),
+            # parts 는 '실제로 잰 것'만 보여 준다 — 메운 값을 잰 것처럼 적지 않는다
+            "parts": {k: (None if v is None else int(round(v))) for k, v in comp.items()},
+            "used": sorted(measured), "filled": sorted(filled),
+            "cover": round(sum(WEIGHTS[k] for k in measured) / total, 2)}
 
 
 def bmi(height_cm, weight_kg):
